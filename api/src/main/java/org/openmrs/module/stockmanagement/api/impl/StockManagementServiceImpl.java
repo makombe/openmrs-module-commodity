@@ -40,6 +40,8 @@ import org.openmrs.notification.Alert;
 import org.openmrs.notification.Template;
 import org.openmrs.util.OpenmrsConstants;
 
+import liquibase.pro.packaged.s;
+
 import javax.mail.Session;
 import java.math.BigDecimal;
 import java.nio.file.Path;
@@ -1340,6 +1342,8 @@ public class StockManagementServiceImpl extends BaseOpenmrsService implements St
                             newStockBatches.add(stockBatch);
                             stockBatch.setStockItem(stockItem);
                             stockBatch.setBatchNo(itemDto.getBatchNo());
+                            stockBatch.setBrandName(itemDto.getBrandName());
+                            stockBatch.setManufacturerName(itemDto.getManufacturerName());
                             if (stockItem.getHasExpiration()) {
                                 stockBatch.setExpiration(itemDto.getExpiration());
                             }

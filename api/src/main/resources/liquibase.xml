@@ -4564,4 +4564,134 @@ CREATE TRIGGER stockmgmt_location_after_delete
       <where>operation_type in ('receipt', 'initial')</where>
     </update>
   </changeSet>
+    <changeSet id="stockmanagement-06-12-0700" author="slubwama">
+      <preConditions onFail="MARK_RAN">
+        <not>
+          <tableExists tableName="stockmgmt_stock_item_reference" />
+        </not>
+      </preConditions>
+      <comment>
+        Creating the stockmgmt_batch_job_owner table
+      </comment>
+      <createTable tableName="stockmgmt_stock_item_reference">
+        <column name="stock_item_reference_id" type="int" autoIncrement="true">
+          <constraints primaryKey="true" nullable="false"/>
+        </column>
+        <column name="stock_source_id" type="int">
+          <constraints nullable="false"/>
+        </column>
+        <column name="stock_item_id" type="int">
+          <constraints nullable="false"/>
+        </column>
+        <column name="stock_reference_code" type="varchar(255)">
+          <constraints nullable="false"/>
+        </column>
+        <column name="creator" type="int">
+          <constraints nullable="false"/>
+        </column>
+        <column name="date_created" type="date">
+          <constraints nullable="true"/>
+        </column>
+        <column name="changed_by" type="int">
+          <constraints nullable="true"/>
+        </column>
+        <column name="date_changed" type="date">
+          <constraints nullable="true"/>
+        </column>
+        <column name="voided" type="tinyint(1)">
+          <constraints nullable="true"/>
+        </column>
+        <column name="date_voided" type="date">
+          <constraints nullable="true"/>
+        </column>
+        <column name="voided_by" type="int">
+          <constraints nullable="true"/>
+        </column>
+        <column name="void_reason" type="varchar(255)">
+          <constraints nullable="true"/>
+        </column>
+      </createTable>
+
+      <addForeignKeyConstraint baseTableName="stockmgmt_stock_item_reference"
+                               baseColumnNames="stock_item_id"
+                               referencedTableName="stockmgmt_stock_item"
+                               referencedColumnNames="stock_item_id"
+                               constraintName="stock_item_reference_stock_item_stock_item_id_fk"/>
+
+      <addForeignKeyConstraint baseTableName="stockmgmt_stock_item_reference"
+                               baseColumnNames="stock_source_id"
+                               referencedTableName="stockmgmt_stock_source"
+                               referencedColumnNames="stock_source_id"
+                               constraintName="stock_item_reference_stock_source_stock_source_id_fk"/>
+
+      <addForeignKeyConstraint baseTableName="stockmgmt_stock_item_reference"
+                               baseColumnNames="changed_by"
+                               referencedTableName="users"
+                               referencedColumnNames="user_id"
+                               constraintName="stock_item_reference_users_changed_by_id_fk"/>
+
+      <addForeignKeyConstraint baseTableName="stockmgmt_stock_item_reference"
+                               baseColumnNames="creator"
+                               referencedTableName="users"
+                               referencedColumnNames="user_id"
+                               constraintName="stock_item_reference_users_creator_id_fk"/>
+
+      <addForeignKeyConstraint baseTableName="stockmgmt_stock_item_reference"
+                               baseColumnNames="voided_by"
+                               referencedTableName="users"
+                               referencedColumnNames="user_id"
+                               constraintName="stock_item_reference_users_voided_by_id_fk"/>
+    </changeSet>
+
+  <changeSet author="slubwama" id="stockmanagement-24-02-0700">
+    <preConditions onFail="MARK_RAN">
+      <tableExists tableName="stockmgmt_stock_item_reference" />
+      <sqlCheck expectedResult="0">
+        SELECT COUNT(*) FROM information_schema.table_constraints WHERE constraint_type = 'UNIQUE' AND table_name = 'stockmgmt_stock_item_reference' AND constraint_name = 'stockmgmt_stock_item_reference_source_code_pk';
+      </sqlCheck>
+   </preConditions>
+    <comment>
+      adding constraint unique to column reference_code and stock_source_id
+    </comment>
+    <addUniqueConstraint columnNames="stock_reference_code, stock_source_id" constraintName="stockmgmt_stock_item_reference_source_code_pk" tableName="stockmgmt_stock_item_reference"/>
+  </changeSet>
+  <changeSet author="slubwama" id="stockmanagement-2023-01-05-0700">
+    <preConditions onFail="MARK_RAN">
+      <tableExists tableName="stockmgmt_stock_item_reference" />
+      <not>
+        <columnExists columnName="uuid" tableName="stockmgmt_stock_item_reference"/>
+      </not>
+    </preConditions>
+    <comment>
+      adding column uuid on table stockmgmt_stock_item_reference
+    </comment>
+    <addColumn tableName="stockmgmt_stock_item_reference">
+      <column defaultValueBoolean="false" name="uuid" type="varchar(38)">
+        <constraints nullable="false" />
+      </column>
+    </addColumn>
+  </changeSet>
+
+  <changeSet author="makombe" id="stockmanagement-2024-05-22-1130">
+    <preConditions onFail="MARK_RAN">
+      <tableExists tableName="stockmgmt_stock_batch" />
+      <not>
+        <columnExists columnName="brand_name" tableName="stockmgmt_stock_batch"/>
+        <columnExists columnName="manufacturer_name" tableName="stockmgmt_stock_batch"/>
+      </not>
+    </preConditions>
+    <comment>
+      adding column brand_name,manufacturer_name on table stockmgmt_stock_batch
+    </comment>
+    <addColumn tableName="stockmgmt_stock_batch">
+      <column  name="brand_name" type="varchar(255)">
+        <constraints nullable="true" />
+      </column>
+    </addColumn>
+     <addColumn tableName="stockmgmt_stock_batch">
+      <column  name="manufacturer_name" type="varchar(255)">
+        <constraints nullable="true" />
+      </column>
+    </addColumn>
+  </changeSet>
 </databaseChangeLog>
