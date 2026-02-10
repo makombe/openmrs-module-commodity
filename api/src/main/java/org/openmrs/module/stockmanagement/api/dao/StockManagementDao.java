@@ -469,6 +469,7 @@ public class StockManagementDao extends DaoBase {
                 "dsou.factor as defaultStockOperationsUoMFactor,\n" +
                 "dsou.packagingUom.conceptId as defaultStockOperationsConceptId,\n" +
                 "si.commonName as commonName,\n" +
+                "si.etcdProductId as etcdProductId,\n" +
                 "si.acronym as acronym,\n" +
                 "si.reorderLevel as reorderLevel,\n" +
                 "si.reorderLevelUOM.id as reorderLevelUoMId,\n" +
@@ -740,6 +741,7 @@ public class StockManagementDao extends DaoBase {
                 "so.operationNumber as operationNumber,\n" +
                 "so.operationOrder as operationOrder,\n" +
                 "so.remarks as remarks,\n" +
+                "so.requestType as requestType,\n" +
                 "sorce.uuid as sourceUuid,\n" +
                 "coalesce(sorcel.name,sorces.name) as sourceName,\n" +
                 "so.status as status,\n" +
@@ -1432,11 +1434,13 @@ public class StockManagementDao extends DaoBase {
                 "so.id as stockOperationId,\n" +
                 "so.uuid as stockOperationUuid,\n" +
                 "soi.quantity as quantity,\n" +
+                "soi.reasonForRequestedQuantity as reasonForRequestedQuantity,\n" +
                 "soi.quantityReceived as quantityReceived,\n" +
                 "soi.quantityRequested as quantityRequested,\n" +
                 "soi.purchasePrice as purchasePrice,\n" +
                 "si.hasExpiration as hasExpiration,\n" +
                 "si.commonName as commonName,\n" +
+                "si.etcdProductId as etcdProductId,\n" +
                 "si.acronym as acronym\n" +
                 "from stockmanagement.StockOperationItem soi join\n" +
                 "\t soi.stockItem si left join\n" +
@@ -4288,7 +4292,7 @@ public class StockManagementDao extends DaoBase {
         HashMap<String, Collection> parameterWithList = new HashMap<>();
         StringBuilder hqlQuery = new StringBuilder("select so.id as stockOperationId,\n" +
                 "sot.name as operationTypeName,\n" +
-                "so.operationDate as operationDate,\n" +
+                "so.operationDate as operationDate,\n" + 
                 "so.operationNumber as operationNumber,\n" +
                 "so.completedBy.userId as completedBy,\n" +
                 "so.completedDate as completedDate,\n" +
@@ -4298,6 +4302,7 @@ public class StockManagementDao extends DaoBase {
                 "so.responsiblePerson.userId as responsiblePerson,\n" +
                 "so.responsiblePersonOther as responsiblePersonOther,\n" +
                 "so.remarks as remarks,\n" +
+                "so.requestType as requestType,\n" +
                 "so.status as stockOperationStatus,\n" +
                 "so.creator.userId as creator,\n" +
                 "so.dateCreated as dateCreated,\n" +
@@ -4306,11 +4311,13 @@ public class StockManagementDao extends DaoBase {
                 "si.drug.drugId as stockItemDrugId,\n" +
                 "si.concept.conceptId as stockItemConceptId,\n" +
                 "si.commonName as commonName,\n" +
+                "si.etcdProductId as etcdProductId,\n" +
                 "si.acronym as acronym,\n" +
                 "si.category.conceptId as stockItemCategoryConceptId,\n" +
                 "sb.batchNo as batchNo,\n" +
                 "sb.expiration as expiration,\n" +
                 "soi.quantity as quantity,\n" +
+                "soi.reasonForRequestedQuantity as reasonForRequestedQuantity,\n" +
                 "soi.purchasePrice as purchasePrice,\n" +
                 "sipu.packagingUom.conceptId as packagingUoMId,\n" +
                 "sipu.factor as stockItemPackagingUOMFactor,\n" +

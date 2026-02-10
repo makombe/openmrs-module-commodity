@@ -103,6 +103,7 @@ public class StockOperationLineItem {
 	private String brandName;
 	private String manufacturerName;
 	private String requestType;
+	private String etcdProductId;
 	
 	public Integer getStockOperationItemId() {
 		return stockOperationItemId;
@@ -481,5 +482,11 @@ public class StockOperationLineItem {
 
 	public void setRequestType(String requestType) {
 		this.requestType = requestType;
+	}
+	public String getEtcdProductId() {
+		return etcdProductId;
+	}
+	public void setEtcdProductId(String etcdProductId) {
+		this.etcdProductId = etcdProductId;
 	}
 }

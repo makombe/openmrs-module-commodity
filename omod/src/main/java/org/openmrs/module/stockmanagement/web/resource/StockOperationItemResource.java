@@ -188,6 +188,7 @@ public class StockOperationItemResource extends ResourceBase<StockOperationItemD
 			description.addProperty("brandName");
 			description.addProperty("manufacturerName");
 			description.addProperty("reasonForRequestedQuantity");
+			description.addProperty("etcdProductId");
 		}
 		
 		if (rep instanceof DefaultRepresentation) {}
@@ -226,7 +227,8 @@ public class StockOperationItemResource extends ResourceBase<StockOperationItemD
 			        .property("packagingUnits", new ArrayProperty())
 					.property("brandName", new StringProperty())
 					.property("reasonForRequestedQuantity", new StringProperty())
-					.property("manufacturerName", new StringProperty());
+					.property("manufacturerName", new StringProperty())
+					.property("etcdProductId", new StringProperty());
 		}
 		if (rep instanceof DefaultRepresentation) {}
 		
