@@ -23,7 +23,6 @@ import org.openmrs.api.ConceptNameType;
 import org.openmrs.api.context.Context;
 import org.openmrs.api.db.hibernate.DbSession;
 import org.openmrs.api.db.hibernate.search.LuceneQuery;
-import org.openmrs.module.stockmanagement.api.StockManagementService;
 import org.openmrs.module.stockmanagement.api.dto.*;
 import org.openmrs.module.stockmanagement.api.dto.reporting.*;
 import org.openmrs.module.stockmanagement.api.model.*;

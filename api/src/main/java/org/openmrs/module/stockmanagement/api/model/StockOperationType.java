@@ -104,6 +104,7 @@ public class StockOperationType extends BaseChangeableOpenmrsData implements Ser
 	public static final String STOCKTAKE = "stocktake";
 	
 	public static final String REQUISITION = "requisition";
+	public static final String EXTERNAL_REQUISITION = "externalrequisition";
 	
 	public StockOperationType() {
 	}
@@ -238,6 +239,9 @@ public class StockOperationType extends BaseChangeableOpenmrsData implements Ser
 					break;
 				case REQUISITION:
 					stockOperationTypeProcessor = new RequistionOperationTypeProcessor(this);
+					break;
+				case EXTERNAL_REQUISITION:
+					stockOperationTypeProcessor = new ExternalRequisitionOperationTypeProcessor(this);
 					break;
 				case STOCKTAKE:
 					stockOperationTypeProcessor = new StockTakeOperationTypeProcessor(this);

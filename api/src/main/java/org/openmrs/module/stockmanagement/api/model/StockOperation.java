@@ -93,6 +93,9 @@ public class StockOperation extends BaseChangeableOpenmrsData implements Seriali
 	
 	@Column(name = "remarks", length = 255)
 	private String remarks;
+
+	@Column(name = "request_type", length = 50)
+	private String requestType;
 	
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "source_id")
@@ -487,5 +490,13 @@ public class StockOperation extends BaseChangeableOpenmrsData implements Seriali
 	
 	public void setChildStockOperationLinks(Set<StockOperationLink> childStockOperationLinks) {
 		this.childStockOperationLinks = childStockOperationLinks;
+	}
+
+	public String getRequestType() {
+		return requestType;
+	}
+
+	public void setRequestType(String requestType) {
+		this.requestType = requestType;
 	}
 }

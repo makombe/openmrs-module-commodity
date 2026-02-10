@@ -212,6 +212,7 @@ public class StockOperationResource extends ResourceBase<StockOperationDTO> {
 		description.addProperty("responsiblePersonOther");
 		description.addProperty("requisitionStockOperationUuid");
 		description.addProperty("stockOperationItems");
+        description.addProperty("requestType");
 		return description;
 	}
 	
@@ -228,6 +229,7 @@ public class StockOperationResource extends ResourceBase<StockOperationDTO> {
 		description.addProperty("responsiblePersonUuid");
 		description.addProperty("responsiblePersonOther");
 		description.addProperty("stockOperationItems");
+        description.addProperty("requestType");
 		return description;
 	}
 	
@@ -286,6 +288,7 @@ public class StockOperationResource extends ResourceBase<StockOperationDTO> {
 			description.addProperty("returnedByGivenName");
 			description.addProperty("returnedByFamilyName");
 			description.addProperty("returnedDate");
+			description.addProperty("requestType");
 			description.addProperty("rejectedByGivenName");
 			description.addProperty("rejectedByFamilyName");
 			description.addProperty("rejectedDate");
@@ -546,7 +549,8 @@ public class StockOperationResource extends ResourceBase<StockOperationDTO> {
 			        .property("returnedByGivenName", new StringProperty())
 			        .property("returnedByFamilyName", new StringProperty()).property("returnedDate", new DateProperty())
 			        .property("rejectedByGivenName", new StringProperty())
-			        .property("rejectedByFamilyName", new StringProperty()).property("rejectedDate", new DateProperty());
+			        .property("rejectedByFamilyName", new StringProperty()).property("rejectedDate", new DateProperty())
+                    .property("requestType", new StringProperty());
 		}
 		if (rep instanceof DefaultRepresentation) {}
 		
