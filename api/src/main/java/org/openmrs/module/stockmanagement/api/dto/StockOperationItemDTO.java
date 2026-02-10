@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
+import liquibase.pro.packaged.p;
+
 public class StockOperationItemDTO {
 	
 	private Integer id;
@@ -79,6 +81,7 @@ public class StockOperationItemDTO {
 	private String brandName;
 	private String manufacturerName;
 	private String reasonForRequestedQuantity;
+	private String etcdProductId;
 	
 	public Integer getStockItemId() {
 		return stockItemId;
@@ -377,5 +380,12 @@ public class StockOperationItemDTO {
 
 	public void setReasonForRequestedQuantity(String reasonForRequestedQuantity) {
 		this.reasonForRequestedQuantity = reasonForRequestedQuantity;
+	}
+	public String getEtcdProductId() {
+		return etcdProductId;
+	}
+
+	public void setEtcdProductId(String etcdProductId) {
+		this.etcdProductId = etcdProductId;
 	}
 }
