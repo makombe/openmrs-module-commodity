@@ -27,6 +27,11 @@ public enum StockOperationStatus {
 	 * The operation has been submitted but not yet approved.
 	 */
 	SUBMITTED(),
+
+	/**
+	 * The operation has been authorized.
+	 */
+	AUTHORIZED(),
 	
 	/**
 	 * The operation has been dispatched but items not yet received.
@@ -59,6 +64,10 @@ public enum StockOperationStatus {
 	
 	public static boolean IsApproveable(StockOperationStatus stockOperationStatus) {
 		return stockOperationStatus != null && (stockOperationStatus == SUBMITTED);
+	}
+
+	public static boolean IsAuthorized(StockOperationStatus stockOperationStatus) {
+		return stockOperationStatus != null && (stockOperationStatus == AUTHORIZED);
 	}
 	
 	public static boolean canReceiveItems(StockOperationStatus stockOperationStatus) {

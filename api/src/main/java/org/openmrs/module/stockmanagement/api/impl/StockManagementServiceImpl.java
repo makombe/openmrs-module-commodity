@@ -1203,6 +1203,8 @@ public class StockManagementServiceImpl extends BaseOpenmrsService implements St
         stockOperation.setOperationDate(dto.getOperationDate());
         stockOperation.setExternalReference(dto.getExternalReference());
         stockOperation.setRemarks(StringUtils.isBlank(dto.getRemarks()) ? null : dto.getRemarks());
+        stockOperation.setRequestType(StringUtils.isBlank(dto.getRequestType()) ? null : dto.getRequestType());
+
 
         if (!StringUtils.isBlank(dto.getReasonUuid())) {
             Concept concept = Context.getConceptService().getConceptByUuid(dto.getReasonUuid());
@@ -1314,6 +1316,10 @@ public class StockManagementServiceImpl extends BaseOpenmrsService implements St
             if (itemDto.getPurchasePrice() != null) {
                 item.setPurchasePrice(itemDto.getPurchasePrice());
             }
+            if (itemDto.getReasonForRequestedQuantity() != null) {
+                item.setReasonForRequestedQuantity(itemDto.getReasonForRequestedQuantity());
+            }
+
 
             Optional<StockItem> stockItemOptional = preloadStockItems.stream()
                     .filter(p -> p.getUuid().equalsIgnoreCase(itemDto.getStockItemUuid())).findFirst();
@@ -2148,7 +2154,7 @@ public class StockManagementServiceImpl extends BaseOpenmrsService implements St
 
         } else if (action == StockOperationAction.Action.APPROVE) {
             stockOperation.setCompletedBy(Context.getAuthenticatedUser());
-            stockOperation.setStatus(StockOperationStatus.COMPLETED);
+            stockOperation.setStatus(StockOperationStatus.AUTHORIZED);
             stockOperation.setCompletedDate(new Date());
             stockOperation.setChangedBy(Context.getAuthenticatedUser());
             stockOperation.setDateChanged(new Date());

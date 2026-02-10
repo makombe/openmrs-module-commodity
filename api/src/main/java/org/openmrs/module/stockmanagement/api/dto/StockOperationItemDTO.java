@@ -78,6 +78,7 @@ public class StockOperationItemDTO {
 
 	private String brandName;
 	private String manufacturerName;
+	private String reasonForRequestedQuantity;
 	
 	public Integer getStockItemId() {
 		return stockItemId;
@@ -369,5 +370,12 @@ public class StockOperationItemDTO {
 	}
 	public void setManufacturerName(String manufacturerName) {
 		this.manufacturerName = manufacturerName;
+	}
+	public String getReasonForRequestedQuantity() {
+		return this.reasonForRequestedQuantity;
+	}
+
+	public void setReasonForRequestedQuantity(String reasonForRequestedQuantity) {
+		this.reasonForRequestedQuantity = reasonForRequestedQuantity;
 	}
 }

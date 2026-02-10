@@ -127,6 +127,7 @@ public class StockOperationDTO {
 	private Integer rejectedBy;
 	
 	private Date rejectedDate;
+	private String requestType;
 	
 	public Integer getSubmittedBy() {
 		return submittedBy;
@@ -643,5 +644,11 @@ public class StockOperationDTO {
 	
 	public void setDispatchedBy(Integer dispatchedBy) {
 		this.dispatchedBy = dispatchedBy;
+	}
+	public String getRequestType() {
+		return requestType;
+	}
+	public void setRequestType(String requestType) {
+		this.requestType = requestType;	
 	}
 }

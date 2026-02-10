@@ -48,6 +48,9 @@ public class StockOperationItem extends org.openmrs.BaseChangeableOpenmrsData im
 	@Column(name = "quantity_requested", nullable = true)
 	private BigDecimal quantityRequested;
 	
+	@Column(name = "reason_for_requested_quantity", nullable = true)
+	private String reasonForRequestedQuantity;
+	
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "qty_req_packaging_uom_id")
 	private StockItemPackagingUOM quantityRequestedPackagingUOM;
@@ -141,5 +144,13 @@ public class StockOperationItem extends org.openmrs.BaseChangeableOpenmrsData im
 	
 	public void setQuantityRequestedPackagingUOM(StockItemPackagingUOM quantityRequestedPackagingUOM) {
 		this.quantityRequestedPackagingUOM = quantityRequestedPackagingUOM;
+	}
+	
+	public String getReasonForRequestedQuantity() {
+		return reasonForRequestedQuantity;
+	}
+	
+	public void setReasonForRequestedQuantity(String reasonForRequestedQuantity) {
+		this.reasonForRequestedQuantity = reasonForRequestedQuantity;
 	}
 }
