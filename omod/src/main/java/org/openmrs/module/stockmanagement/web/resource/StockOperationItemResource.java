@@ -4,6 +4,8 @@ import io.swagger.models.Model;
 import io.swagger.models.ModelImpl;
 import io.swagger.models.properties.*;
 import io.swagger.models.properties.StringProperty;
+import liquibase.pro.packaged.de;
+
 import org.apache.commons.lang.StringUtils;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.stockmanagement.api.ModuleConstants;
@@ -88,6 +90,7 @@ public class StockOperationItemResource extends ResourceBase<StockOperationItemD
 		description.addProperty("quantityRequestedPackagingUOMUuid");
 		description.addProperty("brandName");
 		description.addProperty("manufacturerName");
+		description.addProperty("reasonForRequestedQuantity");
 		return description;
 	}
 	
@@ -104,6 +107,7 @@ public class StockOperationItemResource extends ResourceBase<StockOperationItemD
 		description.addProperty("purchasePrice");
 		description.addProperty("brandName");
 		description.addProperty("manufacturerName");
+		description.addProperty("reasonForRequestedQuantity");
 		return description;
 	}
 	
@@ -131,6 +135,14 @@ public class StockOperationItemResource extends ResourceBase<StockOperationItemD
 			instance.setQuantityRequested(null);
 		} else {
 			instance.setQuantityRequested(BigDecimal.valueOf(value));
+		}
+	}
+	@PropertySetter("reasonForRequestedQuantity")
+	public void setReasonForRequestedQuantity(StockOperationItemDTO instance, String value) {
+		if (value == null) {
+			instance.setReasonForRequestedQuantity(null);
+		} else {
+			instance.setReasonForRequestedQuantity(value);
 		}
 	}
 	
@@ -175,6 +187,7 @@ public class StockOperationItemResource extends ResourceBase<StockOperationItemD
 			description.addProperty("permission");
 			description.addProperty("brandName");
 			description.addProperty("manufacturerName");
+			description.addProperty("reasonForRequestedQuantity");
 		}
 		
 		if (rep instanceof DefaultRepresentation) {}
@@ -212,6 +225,7 @@ public class StockOperationItemResource extends ResourceBase<StockOperationItemD
 			        .property("purchasePrice", new DecimalProperty()).property("hasExpiration", new BooleanProperty())
 			        .property("packagingUnits", new ArrayProperty())
 					.property("brandName", new StringProperty())
+					.property("reasonForRequestedQuantity", new StringProperty())
 					.property("manufacturerName", new StringProperty());
 		}
 		if (rep instanceof DefaultRepresentation) {}

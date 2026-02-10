@@ -19,13 +19,13 @@ import java.util.stream.Collectors;
 
 @Handler(supports = { StockOperationDTO.class }, order = 50)
 public class StockOperationDTOValidator implements Validator {
-	
-	@Override
-	public boolean supports(Class<?> aClass) {
-		return StockOperationDTO.class.isAssignableFrom(aClass);
-	}
-	
-	@Override
+
+    @Override
+    public boolean supports(Class<?> aClass) {
+        return StockOperationDTO.class.isAssignableFrom(aClass);
+    }
+
+    @Override
     public void validate(Object target, Errors errors) {
         MessageSourceService messageSourceService = Context.getMessageSourceService();
         if (target == null) {
@@ -43,8 +43,9 @@ public class StockOperationDTOValidator implements Validator {
         StockOperation stockOperation = null;
         if (object.getUuid() != null) {
             stockOperation = service.getStockOperationByUuid(object.getUuid());
-            if(stockOperation == null || !stockOperation.isUpdateable()){
-                errors.rejectValue("uuid", messageSourceService.getMessage("stockmanagement.stockoperation.notupdateable"));
+            if (stockOperation == null || !stockOperation.isUpdateable()) {
+                errors.rejectValue("uuid",
+                        messageSourceService.getMessage("stockmanagement.stockoperation.notupdateable"));
                 return;
             }
             object.setOperationTypeUuid(stockOperation.getStockOperationType().getUuid());
@@ -52,47 +53,58 @@ public class StockOperationDTOValidator implements Validator {
 
         if (object.getOperationTypeUuid() == null) {
             if (StringUtils.isBlank(object.getOperationTypeUuid())) {
-                errors.rejectValue("operationTypeUuid", messageSourceService.getMessage("stockmanagement.stockoperation.operationtypeuuidrequired"));
+                errors.rejectValue("operationTypeUuid",
+                        messageSourceService.getMessage("stockmanagement.stockoperation.operationtypeuuidrequired"));
                 return;
             }
         }
 
         if (object.getOperationDate() == null) {
-            errors.rejectValue("operationDate", messageSourceService.getMessage("stockmanagement.stockoperation.sourcerequired"));
+            errors.rejectValue("operationDate",
+                    messageSourceService.getMessage("stockmanagement.stockoperation.sourcerequired"));
             return;
         }
 
         if (object.getOperationDate().after(new Date())) {
-            errors.rejectValue("operationDate", messageSourceService.getMessage("stockmanagement.stockoperation.operationdatenotfuture"));
+            errors.rejectValue("operationDate",
+                    messageSourceService.getMessage("stockmanagement.stockoperation.operationdatenotfuture"));
             return;
         }
 
         Location permissionLocation = null;
 
-        StockOperationType stockOperationType = stockOperation != null ? stockOperation.getStockOperationType() : service.getStockOperationTypeByUuid(object.getOperationTypeUuid());
+        StockOperationType stockOperationType = stockOperation != null ? stockOperation.getStockOperationType()
+                : service.getStockOperationTypeByUuid(object.getOperationTypeUuid());
         if (stockOperationType.getHasSource() != null && stockOperationType.getHasSource()) {
             if (object.getSourceUuid() == null) {
-                errors.rejectValue("sourceUuid", messageSourceService.getMessage("stockmanagement.stockoperation.sourcerequired"));
+                errors.rejectValue("sourceUuid",
+                        messageSourceService.getMessage("stockmanagement.stockoperation.sourcerequired"));
                 return;
             }
             Party party = service.getPartyByUuid(object.getSourceUuid());
             if (party == null || party.getVoided()) {
-                errors.rejectValue("sourceUuid", messageSourceService.getMessage("stockmanagement.stockoperation.sourceuuidinvalid"));
+                errors.rejectValue("sourceUuid",
+                        messageSourceService.getMessage("stockmanagement.stockoperation.sourceuuidinvalid"));
                 return;
             }
             if (stockOperationType.getSourceType() == LocationType.Location) {
                 if (party.getLocation() == null) {
-                    errors.rejectValue("sourceUuid", messageSourceService.getMessage("stockmanagement.stockoperation.sourcenotlocation"));
+                    errors.rejectValue("sourceUuid",
+                            messageSourceService.getMessage("stockmanagement.stockoperation.sourcenotlocation"));
                     return;
                 }
 
-                Set<StockOperationTypeLocationScope> locationScope = stockOperationType.getStockOperationTypeLocationScopes();
+                Set<StockOperationTypeLocationScope> locationScope = stockOperationType
+                        .getStockOperationTypeLocationScopes();
                 if (locationScope != null && !locationScope.isEmpty()) {
-                    List<StockOperationTypeLocationScope> sourceScope = locationScope.stream().filter(p -> p.getIsSource()).collect(Collectors.toList());
+                    List<StockOperationTypeLocationScope> sourceScope = locationScope.stream()
+                            .filter(p -> p.getIsSource()).collect(Collectors.toList());
                     if (!sourceScope.isEmpty()) {
                         Set<LocationTag> locationTags = party.getLocation().getTags();
-                        if (locationTags == null || locationTags.isEmpty() || !sourceScope.stream().anyMatch(p -> locationTags.stream().anyMatch(x -> x.getName().equals(p.getLocationTag())))) {
-                            errors.rejectValue("sourceUuid", messageSourceService.getMessage("stockmanagement.stockoperation.sourcelocationtagnotmatched"));
+                        if (locationTags == null || locationTags.isEmpty() || !sourceScope.stream().anyMatch(
+                                p -> locationTags.stream().anyMatch(x -> x.getName().equals(p.getLocationTag())))) {
+                            errors.rejectValue("sourceUuid", messageSourceService
+                                    .getMessage("stockmanagement.stockoperation.sourcelocationtagnotmatched"));
                             return;
                         }
                     }
@@ -100,166 +112,251 @@ public class StockOperationDTOValidator implements Validator {
                 permissionLocation = party.getLocation();
             } else {
                 if (party.getStockSource() == null) {
-                    errors.rejectValue("sourceUuid", messageSourceService.getMessage("stockmanagement.stockoperation.sourcenotstocksource"));
+                    errors.rejectValue("sourceUuid",
+                            messageSourceService.getMessage("stockmanagement.stockoperation.sourcenotstocksource"));
                     return;
                 }
             }
-        }
-        else if(object.getDestinationUuid() != null){
-            errors.rejectValue("sourceUuid", messageSourceService.getMessage("stockmanagement.stockoperation.sourcenotrequired"));
+        } else if (object.getDestinationUuid() != null) {
+            errors.rejectValue("sourceUuid",
+                    messageSourceService.getMessage("stockmanagement.stockoperation.sourcenotrequired"));
             return;
         }
 
         if (stockOperationType.getHasDestination() != null && stockOperationType.getHasDestination()) {
             if (object.getDestinationUuid() == null) {
-                errors.rejectValue("destinationUuid", messageSourceService.getMessage("stockmanagement.stockoperation.destinationrequired"));
+                errors.rejectValue("destinationUuid",
+                        messageSourceService.getMessage("stockmanagement.stockoperation.destinationrequired"));
                 return;
             }
-            Party party = service.getPartyByUuid(object.getDestinationUuid());
-            if (party == null || party.getVoided()) {
-                errors.rejectValue("destinationUuid", messageSourceService.getMessage("stockmanagement.stockoperation.destinationuuidinvalid"));
-                return;
-            }
-            if (stockOperationType.getDestinationType() == LocationType.Location) {
-                if (party.getLocation() == null) {
-                    errors.rejectValue("destinationUuid", messageSourceService.getMessage("stockmanagement.stockoperation.destinationnotlocation"));
-                    return;
-                }
 
-                Set<StockOperationTypeLocationScope> locationScope = stockOperationType.getStockOperationTypeLocationScopes();
-                if (locationScope != null && !locationScope.isEmpty()) {
-                    List<StockOperationTypeLocationScope> destinationScope = locationScope.stream().filter(p -> p.getIsDestination()).collect(Collectors.toList());
-                    if (!destinationScope.isEmpty()) {
-                        Set<LocationTag> locationTags = party.getLocation().getTags();
-                        if (locationTags == null || locationTags.isEmpty() || !destinationScope.stream().anyMatch(p -> locationTags.stream().anyMatch(x -> x.getName().equals(p.getLocationTag())))) {
-                            errors.rejectValue("destinationUuid", messageSourceService.getMessage("stockmanagement.stockoperation.destinationlocationtagnotmatched"));
-                            return;
+            // ────────────────────────────────────────────────────────────────
+            // Special handling for external requisition → allow direct StockSource UUID
+            // ────────────────────────────────────────────────────────────────
+            boolean isExternalRequisition = StockOperationType.EXTERNAL_REQUISITION
+                    .equals(stockOperationType.getOperationType());
+
+            Party destinationParty = null;
+            StockSource destinationStockSource = null;
+
+            if (isExternalRequisition) {
+                // Try to load as StockSource first
+                destinationStockSource = service.getStockSourceByUuid(object.getDestinationUuid());
+                if (destinationStockSource != null && !destinationStockSource.getVoided()) {
+                    // Valid external stock source → allowed
+                    // You can optionally set party = null or create a transient one if needed later
+                } else {
+                    // Fall back to Party (for cases where supplier has a party row)
+                    destinationParty = service.getPartyByUuid(object.getDestinationUuid());
+                }
+            } else {
+                // Normal internal requisition / other types → must be Party
+                destinationParty = service.getPartyByUuid(object.getDestinationUuid());
+            }
+
+            // Final validation
+            if (destinationParty == null && destinationStockSource == null) {
+                errors.rejectValue("destinationUuid",
+                        messageSourceService.getMessage("stockmanagement.stockoperation.destinationuuidinvalid"));
+                return;
+            }
+
+            if (destinationParty != null && destinationParty.getVoided()) {
+                errors.rejectValue("destinationUuid",
+                        messageSourceService.getMessage("stockmanagement.stockoperation.destinationuuidinvalid"));
+                return;
+            }
+
+            if (destinationStockSource != null && destinationStockSource.getVoided()) {
+                errors.rejectValue("destinationUuid",
+                        messageSourceService.getMessage("stockmanagement.stockoperation.destinationuuidinvalid"));
+                return;
+            }
+
+            // ────────────────────────────────────────────────────────────────
+            // Location tag / type validation – only apply to Party-based destinations
+            // ────────────────────────────────────────────────────────────────
+            if (destinationParty != null) {
+                if (stockOperationType.getDestinationType() == LocationType.Location) {
+                    if (destinationParty.getLocation() == null) {
+                        errors.rejectValue("destinationUuid", messageSourceService
+                                .getMessage("stockmanagement.stockoperation.destinationnotlocation"));
+                        return;
+                    }
+
+                    // ... existing location tag scope check ...
+                    Set<StockOperationTypeLocationScope> locationScope = stockOperationType
+                            .getStockOperationTypeLocationScopes();
+                    if (locationScope != null && !locationScope.isEmpty()) {
+                        List<StockOperationTypeLocationScope> destinationScope = locationScope.stream()
+                                .filter(p -> p.getIsDestination())
+                                .collect(Collectors.toList());
+                        if (!destinationScope.isEmpty()) {
+                            Set<LocationTag> locationTags = destinationParty.getLocation().getTags();
+                            if (locationTags == null || locationTags.isEmpty() ||
+                                    !destinationScope.stream().anyMatch(p -> locationTags.stream()
+                                            .anyMatch(x -> x.getName().equals(p.getLocationTag())))) {
+                                errors.rejectValue("destinationUuid", messageSourceService
+                                        .getMessage("stockmanagement.stockoperation.destinationlocationtagnotmatched"));
+                                return;
+                            }
                         }
                     }
-                }
 
-                if (permissionLocation == null)
-                    permissionLocation = party.getLocation();
-
-            } else {
-                if (party.getStockSource() == null) {
-                    errors.rejectValue("destinationUuid", messageSourceService.getMessage("stockmanagement.stockoperation.destinationnotstockdestination"));
-                    return;
+                    if (permissionLocation == null) {
+                        permissionLocation = destinationParty.getLocation();
+                    }
+                } else {
+                    if (destinationParty.getStockSource() == null) {
+                        errors.rejectValue("destinationUuid", messageSourceService
+                                .getMessage("stockmanagement.stockoperation.destinationnotstockdestination"));
+                        return;
+                    }
                 }
             }
-        }
-        else if(object.getDestinationUuid() != null){
-            errors.rejectValue("destinationUuid", messageSourceService.getMessage("stockmanagement.stockoperation.destinationnotrequired"));
+
+        } else if (object.getDestinationUuid() != null) {
+            errors.rejectValue("destinationUuid",
+                    messageSourceService.getMessage("stockmanagement.stockoperation.destinationnotrequired"));
             return;
         }
 
-        if(stockOperationType.requiresReason() && StringUtils.isBlank(object.getReasonUuid())){
-            errors.rejectValue("operationTypeUuid", messageSourceService.getMessage("stockmanagement.stockoperation.noreason"));
+        if (stockOperationType.requiresReason() && StringUtils.isBlank(object.getReasonUuid())) {
+            errors.rejectValue("operationTypeUuid",
+                    messageSourceService.getMessage("stockmanagement.stockoperation.noreason"));
             return;
         }
 
-        if(object.getStockOperationItems() == null  || object.getStockOperationItems().isEmpty()){
-            errors.rejectValue("operationTypeUuid", messageSourceService.getMessage("stockmanagement.stockoperation.itemsrequired"));
+        if (object.getStockOperationItems() == null || object.getStockOperationItems().isEmpty()) {
+            errors.rejectValue("operationTypeUuid",
+                    messageSourceService.getMessage("stockmanagement.stockoperation.itemsrequired"));
             return;
         }
 
-        if(permissionLocation == null){
-            errors.rejectValue("operationTypeUuid", messageSourceService.getMessage("stockmanagement.stockoperation.nopermission"));
+        if (permissionLocation == null) {
+            errors.rejectValue("operationTypeUuid",
+                    messageSourceService.getMessage("stockmanagement.stockoperation.nopermission"));
             return;
         }
 
         object.setAtLocationUuid(permissionLocation.getUuid());
         if (!stockOperationType.userCanProcess(Context.getAuthenticatedUser(), permissionLocation)) {
-            errors.rejectValue("operationTypeUuid", messageSourceService.getMessage("stockmanagement.stockoperation.nopermission"));
+            errors.rejectValue("operationTypeUuid",
+                    messageSourceService.getMessage("stockmanagement.stockoperation.nopermission"));
             return;
         }
         Result<StockOperationItemDTO> stockOperationItems = null;
-        if(object.getUuid() != null){
+        if (object.getUuid() != null) {
             StockOperationItemSearchFilter itemsFilter = new StockOperationItemSearchFilter();
             itemsFilter.setStockOperationUuids(Arrays.asList(object.getUuid()));
             stockOperationItems = service.findStockOperationItems(itemsFilter);
-            if(!stockOperationItems.getData().stream().allMatch(p-> object.getStockOperationItems().stream().anyMatch(x-> p.getUuid().equals(x.getUuid()) && p.getStockItemUuid().equals(x.getStockItemUuid())))){
-                errors.rejectValue("stockOperationItems", messageSourceService.getMessage("stockmanagement.stockoperation.itemsmissinginupdate"));
+            if (!stockOperationItems.getData().stream().allMatch(p -> object.getStockOperationItems().stream().anyMatch(
+                    x -> p.getUuid().equals(x.getUuid()) && p.getStockItemUuid().equals(x.getStockItemUuid())))) {
+                errors.rejectValue("stockOperationItems",
+                        messageSourceService.getMessage("stockmanagement.stockoperation.itemsmissinginupdate"));
                 return;
             }
         }
 
-        if(!StringUtils.isBlank(object.getRemarks()) && object.getRemarks().length() > 255){
+        if (!StringUtils.isBlank(object.getRemarks()) && object.getRemarks().length() > 255) {
             errors.rejectValue("remarks", messageSourceService.getMessage("stockmanagement.stockoperation.remarks255"));
             return;
         }
 
-        if(!StringUtils.isBlank(object.getResponsiblePersonOther()) && object.getResponsiblePersonOther().length() > 150){
-            errors.rejectValue("responsiblePersonOther", messageSourceService.getMessage("stockmanagement.stockoperation.responsiblePersonOther150"));
+        if (!StringUtils.isBlank(object.getResponsiblePersonOther())
+                && object.getResponsiblePersonOther().length() > 150) {
+            errors.rejectValue("responsiblePersonOther",
+                    messageSourceService.getMessage("stockmanagement.stockoperation.responsiblePersonOther150"));
             return;
         }
 
         int index = 1;
         BigDecimal zero = new BigDecimal(0);
-        for(StockOperationItemDTO stockOperationItemDTO : object.getStockOperationItems()){
-            if(stockOperationItemDTO.getStockItemUuid() == null){
-                errors.rejectValue("stockOperationItems", String.format(messageSourceService.getMessage("stockmanagement.stockoperation.itemuuidrequired"), index));
+        for (StockOperationItemDTO stockOperationItemDTO : object.getStockOperationItems()) {
+            if (stockOperationItemDTO.getStockItemUuid() == null) {
+                errors.rejectValue("stockOperationItems", String.format(
+                        messageSourceService.getMessage("stockmanagement.stockoperation.itemuuidrequired"), index));
                 return;
             }
 
-            if(stockOperationType.requiresBatchUuid() && stockOperationItemDTO.getStockBatchUuid() == null && !stockOperationType.getOperationType().equals(StockOperationType.STOCK_ISSUE)){
-                errors.rejectValue("stockOperationItems", String.format(messageSourceService.getMessage("stockmanagement.stockoperation.batchuuidrequired"), index));
+            if (stockOperationType.requiresBatchUuid() && stockOperationItemDTO.getStockBatchUuid() == null
+                    && !stockOperationType.getOperationType().equals(StockOperationType.STOCK_ISSUE)) {
+                errors.rejectValue("stockOperationItems", String.format(
+                        messageSourceService.getMessage("stockmanagement.stockoperation.batchuuidrequired"), index));
                 return;
             }
 
-            if(stockOperationType.requiresActualBatchInformation()) {
-                if (StringUtils.isBlank(stockOperationItemDTO.getBatchNo()) && !stockOperationType.getOperationType().equals(StockOperationType.STOCK_ISSUE)) {
-                    errors.rejectValue("stockOperationItems", String.format(messageSourceService.getMessage("stockmanagement.stockoperation.batchnorequired"), index));
+            if (stockOperationType.requiresActualBatchInformation()) {
+                if (StringUtils.isBlank(stockOperationItemDTO.getBatchNo())
+                        && !stockOperationType.getOperationType().equals(StockOperationType.STOCK_ISSUE)) {
+                    errors.rejectValue("stockOperationItems", String.format(
+                            messageSourceService.getMessage("stockmanagement.stockoperation.batchnorequired"), index));
                     return;
                 }
 
-                if(stockOperationItemDTO.getExpiration() != null && !stockOperationItemDTO.getExpiration().after(DateUtil.today())){
-                    errors.rejectValue("stockOperationItems", String.format(messageSourceService.getMessage("stockmanagement.stockoperation.expirydateinpast"), index));
+                if (stockOperationItemDTO.getExpiration() != null
+                        && !stockOperationItemDTO.getExpiration().after(DateUtil.today())) {
+                    errors.rejectValue("stockOperationItems", String.format(
+                            messageSourceService.getMessage("stockmanagement.stockoperation.expirydateinpast"), index));
                     return;
                 }
 
-                if(!StringUtils.isBlank(stockOperationItemDTO.getUuid())){
-                    Optional<StockOperationItemDTO> existingItemDto = stockOperationItems.getData().stream().filter(p->p.getUuid().equals(stockOperationItemDTO.getUuid())).findFirst();
-                    if(existingItemDto.isPresent() && existingItemDto.get().getHasExpiration()){
-                        if(stockOperationItemDTO.getExpiration() == null){
-                            errors.rejectValue("stockOperationItems", String.format(messageSourceService.getMessage("stockmanagement.stockoperation.expirydaterequired"), index));
+                if (!StringUtils.isBlank(stockOperationItemDTO.getUuid())) {
+                    Optional<StockOperationItemDTO> existingItemDto = stockOperationItems.getData().stream()
+                            .filter(p -> p.getUuid().equals(stockOperationItemDTO.getUuid())).findFirst();
+                    if (existingItemDto.isPresent() && existingItemDto.get().getHasExpiration()) {
+                        if (stockOperationItemDTO.getExpiration() == null) {
+                            errors.rejectValue("stockOperationItems", String.format(messageSourceService
+                                    .getMessage("stockmanagement.stockoperation.expirydaterequired"), index));
                             return;
                         }
                     }
                 }
             }
 
-            if(!stockOperationType.isQuantityOptional() && stockOperationItemDTO.getQuantity() == null){
-                errors.rejectValue("stockOperationItems", String.format(messageSourceService.getMessage("stockmanagement.stockoperation.qtyrequired"), index));
+            if (!stockOperationType.isQuantityOptional() && stockOperationItemDTO.getQuantity() == null) {
+                errors.rejectValue("stockOperationItems", String
+                        .format(messageSourceService.getMessage("stockmanagement.stockoperation.qtyrequired"), index));
                 return;
             }
 
-            if(stockOperationItemDTO.getQuantity() != null){
-                if(!stockOperationType.isNegativeItemQuantityAllowed() && stockOperationItemDTO.getQuantity().compareTo(zero) <= 0 && !stockOperationType.getOperationType().equals(StockOperationType.STOCK_ISSUE)){
-                    errors.rejectValue("stockOperationItems", String.format(messageSourceService.getMessage("stockmanagement.stockoperation.qtyrequired"), index));
+            if (stockOperationItemDTO.getQuantity() != null) {
+                if (!stockOperationType.isNegativeItemQuantityAllowed()
+                        && stockOperationItemDTO.getQuantity().compareTo(zero) <= 0
+                        && !stockOperationType.getOperationType().equals(StockOperationType.STOCK_ISSUE)) {
+                    errors.rejectValue("stockOperationItems", String.format(
+                            messageSourceService.getMessage("stockmanagement.stockoperation.qtyrequired"), index));
                     return;
                 }
 
-                if(stockOperationItemDTO.getStockItemPackagingUOMUuid() == null){
-                    errors.rejectValue("stockOperationItems", String.format(messageSourceService.getMessage("stockmanagement.stockoperation.uomrequired"), index));
+                if (stockOperationItemDTO.getStockItemPackagingUOMUuid() == null) {
+                    errors.rejectValue("stockOperationItems", String.format(
+                            messageSourceService.getMessage("stockmanagement.stockoperation.uomrequired"), index));
                     return;
                 }
             }
 
-            if(stockOperationItemDTO.getPurchasePrice() != null && stockOperationItemDTO.getPurchasePrice().compareTo(zero) < -1){
-                errors.rejectValue("stockOperationItems", String.format(messageSourceService.getMessage("stockmanagement.stockoperation.uomrequired"), index));
+            if (stockOperationItemDTO.getPurchasePrice() != null
+                    && stockOperationItemDTO.getPurchasePrice().compareTo(zero) < -1) {
+                errors.rejectValue("stockOperationItems", String
+                        .format(messageSourceService.getMessage("stockmanagement.stockoperation.uomrequired"), index));
                 return;
             }
 
-            if(stockOperationType.getOperationType().equals(StockOperationType.STOCK_ISSUE)){
-                if(stockOperationItemDTO.getQuantityRequested() != null || stockOperationItemDTO.getStockItemPackagingUOMUuid() != null){
-                    if(stockOperationItemDTO.getQuantityRequested() != null && stockOperationItemDTO.getQuantityRequested().compareTo(zero) < 0){
-                        errors.rejectValue("stockOperationItems", String.format(messageSourceService.getMessage("stockmanagement.stockoperation.qtyrequestedrequired"), index));
+            if (stockOperationType.getOperationType().equals(StockOperationType.STOCK_ISSUE)) {
+                if (stockOperationItemDTO.getQuantityRequested() != null
+                        || stockOperationItemDTO.getStockItemPackagingUOMUuid() != null) {
+                    if (stockOperationItemDTO.getQuantityRequested() != null
+                            && stockOperationItemDTO.getQuantityRequested().compareTo(zero) < 0) {
+                        errors.rejectValue("stockOperationItems", String.format(
+                                messageSourceService.getMessage("stockmanagement.stockoperation.qtyrequestedrequired"),
+                                index));
                         return;
                     }
 
-                    if(stockOperationItemDTO.getStockItemPackagingUOMUuid() == null){
-                        errors.rejectValue("stockOperationItems", String.format(messageSourceService.getMessage("stockmanagement.stockoperation.qtyrequesteduomrequired"), index));
+                    if (stockOperationItemDTO.getStockItemPackagingUOMUuid() == null) {
+                        errors.rejectValue("stockOperationItems", String.format(messageSourceService
+                                .getMessage("stockmanagement.stockoperation.qtyrequesteduomrequired"), index));
                         return;
                     }
                 }

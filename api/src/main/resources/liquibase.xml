@@ -5099,4 +5099,80 @@ CREATE TRIGGER stockmgmt_location_after_delete
         </addColumn>
     </changeSet>
 
+    <!-- New Operation Type for External Requisition -->
+  <changeSet id="stockmanagement-ex-req-20260209-1400" author="makombe">
+      <preConditions onFail="MARK_RAN">
+          <sqlCheck expectedResult="0">SELECT COUNT(*) FROM stockmgmt_stock_operation_type WHERE operation_type = 'externalrequisition'</sqlCheck>
+      </preConditions>
+      <comment>Creating the stock operation type for external requisition (main store to external supplier)</comment>
+      <insert tableName="stockmgmt_stock_operation_type">
+          <column name="name">External Requisition</column>
+          <column name="operation_type">externalrequisition</column>
+          <column name="description">Request for items from an external supplier, initiated only by the main store.</column>
+          <column name="has_source" valueBoolean="true"></column>
+          <column name="source_type">Location</column> <!-- Requesting from a location (main store) -->
+          <column name="has_destination" valueBoolean="true"></column>
+          <column name="destination_type">Other</column> <!-- Or 'Supplier' if adding the tag below; aligns with 'transferout' and 'receipt' -->
+          <column name="available_when_reserved" valueBoolean="false"></column>
+          <column name="acronym">EXREQ</column>
+          <column name="creator">1</column>
+          <column name="date_created">2026-02-09</column>
+          <column name="uuid">865d709e-cb34-4643-82ee-362073872e37</column>
+      </insert>
+  </changeSet>
+
+  <!-- Limit External Requisition Initiation to Main Store Only (as Source) -->
+  <changeSet id="stockmanagement-ex-req-20260209-1410" author="makombe">
+      <preConditions onFail="MARK_RAN">
+          <sqlCheck expectedResult="0">
+              SELECT COUNT(*)
+              FROM stockmgmt_operation_type_location_scope sotls
+              WHERE sotls.stock_operation_type_id = (SELECT sot.stock_operation_type_id FROM stockmgmt_stock_operation_type sot WHERE uuid='865d709e-cb34-4643-82ee-362073872e37') AND
+              location_tag='Main Store' AND is_source=1
+          </sqlCheck>
+      </preConditions>
+      <comment>Limiting initiation of external requisition to Main Store only (as source)</comment>
+      <sql>
+          INSERT INTO stockmgmt_operation_type_location_scope(stock_operation_type_id, location_tag, is_source, is_destination, creator, date_created, uuid)
+          SELECT sot.stock_operation_type_id, 'Main Store', 1, 0, 1, now(), 'a0040421-31be-4b38-82dd-f566df578887'
+          FROM stockmgmt_stock_operation_type sot
+          WHERE uuid='865d709e-cb34-4643-82ee-362073872e37'
+      </sql>
+  </changeSet>
+
+  <changeSet id="stockmanagement-20260209-2027" author="makombe">
+    <preConditions onFail="MARK_RAN">
+        <tableExists tableName="stockmgmt_stock_operation_item"/>
+        <not>
+            <columnExists tableName="stockmgmt_stock_operation_item" columnName="reason_for_requested_quantity"/>
+        </not>
+    </preConditions>
+
+    <comment>Add reason_for_requested_quantity column to stockmgmt_stock_operation_item (nullable VARCHAR)</comment>
+
+    <addColumn tableName="stockmgmt_stock_operation_item">
+        <column name="reason_for_requested_quantity" type="VARCHAR(500)">
+            <constraints nullable="true"/>
+        </column>
+    </addColumn>
+</changeSet>
+
+  <changeSet id="stockmanagement-20260210-0830" author="makombe">
+      <preConditions onFail="MARK_RAN">
+        <tableExists tableName="stockmgmt_stock_operation"/>
+        <not>
+          <columnExists tableName="stockmgmt_stock_operation" columnName="request_type"/>
+        </not>
+      </preConditions>
+
+      <comment>Add request_type column to stockmgmt_stock_operation (nullable VARCHAR)</comment>
+      <addColumn tableName="stockmgmt_stock_operation">
+        <column name="request_type" type="VARCHAR(50)">
+          <constraints nullable="true"/>
+        </column>
+      </addColumn>
+    </changeSet>
+
+ 
+
 </databaseChangeLog>

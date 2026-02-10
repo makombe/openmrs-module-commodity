@@ -3,6 +3,8 @@ package org.openmrs.module.stockmanagement.api.dto.reporting;
 import org.openmrs.module.stockmanagement.api.dto.StockItemPackagingUOMDTO;
 import org.openmrs.module.stockmanagement.api.model.StockOperationStatus;
 
+import liquibase.pro.packaged.p;
+
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
@@ -52,6 +54,7 @@ public class StockOperationLineItem {
 	private Integer quantityRequestedPackagingUoMId;
 	
 	private String quantityRequestedPackagingUOMName;
+	private String reasonForRequestedQuantity;
 	
 	// Stock Operation
 	private String operationTypeName;
@@ -99,6 +102,7 @@ public class StockOperationLineItem {
 	private String requisitionOperationNumber;
 	private String brandName;
 	private String manufacturerName;
+	private String requestType;
 	
 	public Integer getStockOperationItemId() {
 		return stockOperationItemId;
@@ -462,5 +466,20 @@ public class StockOperationLineItem {
 	}
 	public void setManufacturerName(String manufacturerName) {
 		this.manufacturerName = manufacturerName;
+	}
+
+	public String getReasonForRequestedQuantity() {
+		return reasonForRequestedQuantity;
+	}
+	public void setReasonForRequestedQuantity(String reasonForRequestedQuantity) {
+		this.reasonForRequestedQuantity = reasonForRequestedQuantity;
+	}
+
+	public String getRequestType() {
+		return requestType;
+	}
+
+	public void setRequestType(String requestType) {
+		this.requestType = requestType;
 	}
 }
