@@ -17,6 +17,7 @@ import org.hibernate.*;
 import org.hibernate.criterion.*;
 import org.hibernate.criterion.Order;
 import org.hibernate.transform.AliasToBeanResultTransformer;
+import org.hibernate.transform.Transformers;
 import org.hibernate.type.IntegerType;
 import org.openmrs.*;
 import org.openmrs.api.ConceptNameType;
@@ -5354,4 +5355,72 @@ public class StockManagementDao extends DaoBase {
 		criteria.add(Restrictions.eq("voided", false));
 		return criteria.list();
 	}
+
+    public Map<Integer, StockItemSummaryDTO> getAggregatedStockItemSummaries(
+            Collection<Integer> stockItemIds,
+            Date referenceDate,
+            Date periodStart,
+            Date periodEnd) {
+        if (stockItemIds == null || stockItemIds.isEmpty()) {
+            return new HashMap<>();
+        }
+        Date refDate = referenceDate != null ? referenceDate : new Date();
+
+        StringBuilder sql = new StringBuilder(
+                "SELECT sit.stock_item_id as stockItemId, " +
+                        "SUM(CASE WHEN sit.date_created <= :refDate " +
+                        "         AND (sb.expiration IS NULL OR sb.expiration > :refDate) " +
+                        "         THEN sit.quantity * sipu.factor ELSE 0 END) as currentBalance ");
+
+        if (periodStart != null && periodEnd != null) {
+            sql.append(
+                    ", SUM(CASE WHEN sit.date_created BETWEEN :start AND :end " +
+                            "          AND sit.quantity < 0 " +
+                            "          AND sit.patient_id IS NOT NULL " +
+                            "          THEN sit.quantity * -1 * sipu.factor ELSE 0 END) as dispensed, " +
+                            "SUM(CASE WHEN sit.date_created BETWEEN :start AND :end " +
+                            "         AND sit.quantity > 0 " +
+                            "         THEN sit.quantity * sipu.factor ELSE 0 END) as received ");
+        }
+
+        if (periodStart != null) {
+            sql.append(
+                    ", SUM(CASE WHEN sit.date_created < :start " +
+                            "          AND (sb.expiration IS NULL OR sb.expiration > :refDate) " +
+                            "          THEN sit.quantity * sipu.factor ELSE 0 END) as beginningBalance ");
+        } else {
+            sql.append(
+                    ", SUM(CASE WHEN sit.date_created <= :refDate " +
+                            "          AND (sb.expiration IS NULL OR sb.expiration > :refDate) " +
+                            "          THEN sit.quantity * sipu.factor ELSE 0 END) as beginningBalance ");
+        }
+
+        sql.append(
+                "FROM stockmgmt_stock_item_transaction sit " +
+                        "JOIN stockmgmt_stock_item_packaging_uom sipu ON sit.stock_item_packaging_uom_id = sipu.stock_item_packaging_uom_id "
+                        +
+                        "JOIN stockmgmt_stock_batch sb ON sit.stock_batch_id = sb.stock_batch_id " +
+                        "WHERE sit.stock_item_id IN (:ids) " +
+                        "GROUP BY sit.stock_item_id");
+
+        Query query = getSession().createSQLQuery(sql.toString())
+                .setResultTransformer(Transformers.aliasToBean(StockItemSummaryDTO.class));
+
+        query.setParameterList("ids", stockItemIds);
+        query.setParameter("refDate", refDate);
+        if (periodStart != null)
+            query.setParameter("start", periodStart);
+        if (periodEnd != null)
+            query.setParameter("end", periodEnd);
+
+        @SuppressWarnings("unchecked")
+        List<StockItemSummaryDTO> results = query.list();
+
+        return results.stream()
+                .collect(Collectors.toMap(
+                        StockItemSummaryDTO::getStockItemId,
+                        Function.identity(),
+                        (existing, replacement) -> existing));
+    }
+
 }

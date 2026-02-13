@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
-import liquibase.pro.packaged.p;
 
 public class StockOperationItemDTO {
 	
@@ -83,6 +82,10 @@ public class StockOperationItemDTO {
 	private String reasonForRequestedQuantity;
 	private String etcdProductId;
 	private String genericConceptCode;
+	private BigDecimal quantityDispensed;
+    private BigDecimal beginningBalance;
+    private BigDecimal stockInHand;
+    private Integer stockOutDays;
 	
 	public Integer getStockItemId() {
 		return stockItemId;
@@ -396,4 +399,36 @@ public class StockOperationItemDTO {
 	public void setGenericConceptCode(String genericConceptCode) {
 		this.genericConceptCode = genericConceptCode;
 	}
+
+	public BigDecimal getQuantityDispensed() {
+		return quantityDispensed;
+	}	
+
+	public void setQuantityDispensed(BigDecimal quantityDispensed) {
+		this.quantityDispensed = quantityDispensed;
+	}
+
+	public BigDecimal getBeginningBalance() {
+		return beginningBalance;
+	}
+
+	public void setBeginningBalance(BigDecimal beginningBalance) {
+		this.beginningBalance = beginningBalance;
+	}
+
+	public BigDecimal getStockInHand() {
+		return stockInHand;
+	}
+
+	public void setStockInHand(BigDecimal stockInHand) {
+		this.stockInHand = stockInHand;
+	}
+
+	public Integer getStockOutDays() {
+		return stockOutDays;
+	}
+
+	public void setStockOutDays(Integer stockOutDays) {
+		this.stockOutDays = stockOutDays;
+	}	
 }
