@@ -82,6 +82,7 @@ public class StockOperationItemDTO {
 	private String manufacturerName;
 	private String reasonForRequestedQuantity;
 	private String etcdProductId;
+	private String genericConceptCode;
 	
 	public Integer getStockItemId() {
 		return stockItemId;
@@ -387,5 +388,12 @@ public class StockOperationItemDTO {
 
 	public void setEtcdProductId(String etcdProductId) {
 		this.etcdProductId = etcdProductId;
+	}
+	public String getGenericConceptCode() {
+		return genericConceptCode;
+	}
+
+	public void setGenericConceptCode(String genericConceptCode) {
+		this.genericConceptCode = genericConceptCode;
 	}
 }
