@@ -2,9 +2,6 @@ package org.openmrs.module.stockmanagement.api.dto.reporting;
 
 import org.openmrs.module.stockmanagement.api.dto.StockItemPackagingUOMDTO;
 import org.openmrs.module.stockmanagement.api.model.StockOperationStatus;
-
-import liquibase.pro.packaged.p;
-
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
@@ -104,6 +101,7 @@ public class StockOperationLineItem {
 	private String manufacturerName;
 	private String requestType;
 	private String etcdProductId;
+	private String genericConceptCode;
 	
 	public Integer getStockOperationItemId() {
 		return stockOperationItemId;
@@ -488,5 +486,13 @@ public class StockOperationLineItem {
 	}
 	public void setEtcdProductId(String etcdProductId) {
 		this.etcdProductId = etcdProductId;
+	}
+
+	public String getGenericConceptCode() {
+		return genericConceptCode;
+	}
+
+	public void setGenericConceptCode(String genericConceptCode) {
+		this.genericConceptCode = genericConceptCode;
 	}
 }

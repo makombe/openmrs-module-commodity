@@ -470,6 +470,7 @@ public class StockManagementDao extends DaoBase {
                 "dsou.packagingUom.conceptId as defaultStockOperationsConceptId,\n" +
                 "si.commonName as commonName,\n" +
                 "si.etcdProductId as etcdProductId,\n" +
+                "si.genericConceptCode as genericConceptCode,\n" +
                 "si.acronym as acronym,\n" +
                 "si.reorderLevel as reorderLevel,\n" +
                 "si.reorderLevelUOM.id as reorderLevelUoMId,\n" +
@@ -1441,6 +1442,7 @@ public class StockManagementDao extends DaoBase {
                 "si.hasExpiration as hasExpiration,\n" +
                 "si.commonName as commonName,\n" +
                 "si.etcdProductId as etcdProductId,\n" +
+                "si.genericConceptCode as genericConceptCode,\n" +
                 "si.acronym as acronym\n" +
                 "from stockmanagement.StockOperationItem soi join\n" +
                 "\t soi.stockItem si left join\n" +
@@ -4312,6 +4314,7 @@ public class StockManagementDao extends DaoBase {
                 "si.concept.conceptId as stockItemConceptId,\n" +
                 "si.commonName as commonName,\n" +
                 "si.etcdProductId as etcdProductId,\n" +
+                "si.genericConceptCode as genericConceptCode,\n" +
                 "si.acronym as acronym,\n" +
                 "si.category.conceptId as stockItemCategoryConceptId,\n" +
                 "sb.batchNo as batchNo,\n" +
