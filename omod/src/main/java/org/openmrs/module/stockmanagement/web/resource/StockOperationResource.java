@@ -3,8 +3,9 @@ package org.openmrs.module.stockmanagement.web.resource;
 import io.swagger.models.Model;
 import io.swagger.models.ModelImpl;
 import io.swagger.models.properties.*;
-import io.swagger.models.properties.StringProperty;
+
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.DateUtils;
 import org.openmrs.Concept;
 import org.openmrs.Location;
 import org.openmrs.api.context.Context;
@@ -31,6 +32,7 @@ import org.openmrs.module.webservices.rest.web.response.ResourceDoesNotSupportOp
 import org.openmrs.module.webservices.rest.web.response.ResponseException;
 import org.springframework.web.client.RestClientException;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -480,11 +482,48 @@ public class StockOperationResource extends ResourceBase<StockOperationDTO> {
         itemSearchFilter.setIncludeStockUnitName(true);
         itemSearchFilter.setIncludePackagingUnitName(true);
         itemSearchFilter.setStockOperationUuids(Arrays.asList(stockOperationDTO.getUuid()));
-        Result<StockOperationItemDTO> items = getStockManagementService().findStockOperationItems(itemSearchFilter);
+        Result<StockOperationItemDTO> itemsResult = getStockManagementService().findStockOperationItems(itemSearchFilter);
+        List<StockOperationItemDTO> items = itemsResult.getData();
+
+        if (!items.isEmpty()) {
+            Set<Integer> stockItemIds = items.stream()
+                    .map(StockOperationItemDTO::getStockItemId)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+
+            Date operationOrToday = stockOperationDTO.getOperationDate() != null
+                    ? stockOperationDTO.getOperationDate()
+                    : new Date();
+
+            // Optional: define a period (e.g., last 30 days before operation date)
+            Date periodStart = DateUtils.addDays(operationOrToday, -30);
+            Date periodEnd = operationOrToday;
+
+            Map<Integer, StockItemSummaryDTO> summaries = getStockManagementService()
+                    .getAggregatedStockItemSummaries(stockItemIds, operationOrToday, periodStart, periodEnd);
+
+            for (StockOperationItemDTO item : items) {
+                StockItemSummaryDTO sum = summaries.get(item.getStockItemId());
+                if (sum != null) {
+                    item.setQuantityDispensed(sum.getDispensed());
+                    item.setQuantityReceived(sum.getReceived());
+                    item.setBeginningBalance(sum.getBeginningBalance());
+                    item.setStockInHand(sum.getCurrentBalance()); // ← this is the key one: stock as of that day
+                    // stockOutDays would require more logic (daily balance tracking)
+                    item.setStockOutDays(0); // placeholder - implement if needed
+                } else {
+                    item.setQuantityDispensed(BigDecimal.ZERO);
+                    item.setQuantityReceived(BigDecimal.ZERO);
+                    item.setBeginningBalance(BigDecimal.ZERO);
+                    item.setStockInHand(BigDecimal.ZERO);
+                    item.setStockOutDays(0);
+                }
+            }
+        }
 
         StockItemPackagingUOMSearchFilter filter = new StockItemPackagingUOMSearchFilter();
         filter.setIncludeVoided(false);
-        filter.setStockItemUuids(items.getData().stream().map(p -> p.getStockItemUuid()).distinct().collect(Collectors.toList()));
+        filter.setStockItemUuids(items.stream().map(p -> p.getStockItemUuid()).distinct().collect(Collectors.toList()));
         List<StockItemPackagingUOMDTO> packagingUnits = getStockManagementService().findStockItemPackagingUOMs(filter).getData();
 
         boolean canUpdateBatchInformation = false;
@@ -494,12 +533,12 @@ public class StockOperationResource extends ResourceBase<StockOperationDTO> {
             if(permissions.containsKey("canUpdateBatchInformation")) {
                 canUpdateBatchInformation = (boolean)permissions.get("canUpdateBatchInformation");
                 if(canUpdateBatchInformation){
-                    stockBatchHasTransactions = getStockManagementService().checkStockBatchHasTransactionsAfterOperation(stockOperationDTO.getId(), items.getData().stream().filter(p->p.getStockBatchId() != null).map(p -> p.getStockBatchId()).distinct().collect(Collectors.toList()));
+                    stockBatchHasTransactions = getStockManagementService().checkStockBatchHasTransactionsAfterOperation(stockOperationDTO.getId(), items.stream().filter(p->p.getStockBatchId() != null).map(p -> p.getStockBatchId()).distinct().collect(Collectors.toList()));
                 }
             }
         }
 
-        for (StockOperationItemDTO itemDTO : items.getData()) {
+        for (StockOperationItemDTO itemDTO : items) {
             List<StockItemPackagingUOMDTO> units = packagingUnits.stream().filter(p -> p.getStockItemUuid().equals(itemDTO.getStockItemUuid())).collect(Collectors.toList());
             if (!units.isEmpty()) {
                 itemDTO.setPackagingUnits(units);
@@ -509,7 +548,7 @@ public class StockOperationResource extends ResourceBase<StockOperationDTO> {
             }
         }
 
-        return items.getData();
+        return items;
     }
 	
 	@Override

@@ -190,6 +190,12 @@ public class StockOperationItemResource extends ResourceBase<StockOperationItemD
 			description.addProperty("reasonForRequestedQuantity");
 			description.addProperty("etcdProductId");
 			description.addProperty("genericConceptCode");
+			description.addProperty("beginningBalance");
+			description.addProperty("quantityDispensed");
+			description.addProperty("stockInHand");
+			description.addProperty("stockOutDays");
+
+
 		}
 		
 		if (rep instanceof DefaultRepresentation) {}

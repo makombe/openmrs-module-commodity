@@ -3695,4 +3695,13 @@ public class StockManagementServiceImpl extends BaseOpenmrsService implements St
             return null;
         }
     }
+   
+    @Override
+    public Map<Integer, StockItemSummaryDTO> getAggregatedStockItemSummaries(
+            Collection<Integer> stockItemIds,
+            Date referenceDate,
+            Date periodStart,
+            Date periodEnd) {
+        return dao.getAggregatedStockItemSummaries(stockItemIds, referenceDate, periodStart, periodEnd);
+    }
 }
