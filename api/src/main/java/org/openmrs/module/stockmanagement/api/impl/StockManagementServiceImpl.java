@@ -1205,7 +1205,6 @@ public class StockManagementServiceImpl extends BaseOpenmrsService implements St
         stockOperation.setRemarks(StringUtils.isBlank(dto.getRemarks()) ? null : dto.getRemarks());
         stockOperation.setRequestType(StringUtils.isBlank(dto.getRequestType()) ? null : dto.getRequestType());
 
-
         if (!StringUtils.isBlank(dto.getReasonUuid())) {
             Concept concept = Context.getConceptService().getConceptByUuid(dto.getReasonUuid());
             if (concept == null) {
@@ -1319,7 +1318,6 @@ public class StockManagementServiceImpl extends BaseOpenmrsService implements St
             if (itemDto.getReasonForRequestedQuantity() != null) {
                 item.setReasonForRequestedQuantity(itemDto.getReasonForRequestedQuantity());
             }
-
 
             Optional<StockItem> stockItemOptional = preloadStockItems.stream()
                     .filter(p -> p.getUuid().equalsIgnoreCase(itemDto.getStockItemUuid())).findFirst();
@@ -3695,7 +3693,7 @@ public class StockManagementServiceImpl extends BaseOpenmrsService implements St
             return null;
         }
     }
-   
+
     @Override
     public Map<Integer, StockItemSummaryDTO> getAggregatedStockItemSummaries(
             Collection<Integer> stockItemIds,
@@ -3703,5 +3701,26 @@ public class StockManagementServiceImpl extends BaseOpenmrsService implements St
             Date periodStart,
             Date periodEnd) {
         return dao.getAggregatedStockItemSummaries(stockItemIds, referenceDate, periodStart, periodEnd);
+    }
+
+    @Override
+    public DailyStockStatusResponseDTO getDailyStockStatus(Date reportDate) {
+        Date date = reportDate != null ? reportDate : new Date();
+        Result<DailyStockLineItemDTO> result = getDailyDispensedStockStatus(date);
+
+        DailyStockStatusResponseDTO response = new DailyStockStatusResponseDTO();
+        response.setStatus("SUCCESS");
+        response.setMessage("Daily stock status retrieved successfully");
+        response.setReportDate(date);
+        response.setLineItems(result.getData()); // ← .getData() to extract the List
+        return response;
+    }
+
+    @Override
+    public Result<DailyStockLineItemDTO> getDailyDispensedStockStatus(Date reportDate) {
+        Date date = reportDate != null ? reportDate : new Date();
+        List<DailyStockLineItemDTO> lineItems = dao.getDailyDispensedStockStatus(date);
+        lineItems.forEach(item -> item.setNotes("Daily consumption update"));
+        return new Result<>(lineItems, lineItems.size()); // ← pass size as second arg
     }
 }

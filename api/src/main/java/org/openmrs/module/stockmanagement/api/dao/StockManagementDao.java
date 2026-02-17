@@ -18,7 +18,9 @@ import org.hibernate.criterion.*;
 import org.hibernate.criterion.Order;
 import org.hibernate.transform.AliasToBeanResultTransformer;
 import org.hibernate.transform.Transformers;
+import org.hibernate.type.BigDecimalType;
 import org.hibernate.type.IntegerType;
+import org.hibernate.type.StringType;
 import org.openmrs.*;
 import org.openmrs.api.ConceptNameType;
 import org.openmrs.api.context.Context;
@@ -5421,6 +5423,74 @@ public class StockManagementDao extends DaoBase {
                         StockItemSummaryDTO::getStockItemId,
                         Function.identity(),
                         (existing, replacement) -> existing));
+    }
+
+
+    public List<DailyStockLineItemDTO> getDailyDispensedStockStatus(Date reportDate) {
+        Date effectiveDate = reportDate != null ? reportDate : new Date();
+        Date startOfDay = getStartOfDay(effectiveDate);
+        Date endOfDay = getEndOfDay(effectiveDate);
+
+        String sql = "SELECT " +
+                "    si.etcd_product_id AS etcdProductId, " +
+                "    COALESCE(SUM(CASE WHEN sit.date_created <= ? " +
+                "             AND (sb.expiration IS NULL OR sb.expiration > ?) " +
+                "             THEN sit.quantity * sipu.factor ELSE 0 END), 0) AS stockOnHand, " +
+                "    COALESCE(SUM(CASE WHEN sit.date_created BETWEEN ? AND ? " +
+                "             AND sit.quantity > 0 " +
+                "             THEN sit.quantity * sipu.factor ELSE 0 END), 0) AS quantityReceived, " +
+                "    COALESCE(SUM(CASE WHEN sit.date_created BETWEEN ? AND ? " +
+                "             AND sit.quantity < 0 " +
+                "             AND sit.patient_id IS NOT NULL " +
+                "             THEN sit.quantity * -1 * sipu.factor ELSE 0 END), 0) AS quantityDispensed " +
+                "FROM stockmgmt_stock_item_transaction sit " +
+                "JOIN stockmgmt_stock_item si ON sit.stock_item_id = si.stock_item_id " +
+                "JOIN stockmgmt_stock_item_packaging_uom sipu ON sit.stock_item_packaging_uom_id = sipu.stock_item_packaging_uom_id "
+                +
+                "JOIN stockmgmt_stock_batch sb ON sit.stock_batch_id = sb.stock_batch_id " +
+                "WHERE si.etcd_product_id IS NOT NULL " +
+                "GROUP BY si.etcd_product_id " +
+                "HAVING SUM(CASE WHEN sit.date_created <= ? " +
+                "                THEN ABS(sit.quantity) ELSE 0 END) > 0";
+
+        Query query = getSession().createSQLQuery(sql)
+                .addScalar("etcdProductId", StringType.INSTANCE)
+                .addScalar("stockOnHand", BigDecimalType.INSTANCE)
+                .addScalar("quantityReceived", BigDecimalType.INSTANCE)
+                .addScalar("quantityDispensed", BigDecimalType.INSTANCE)
+                .setResultTransformer(Transformers.aliasToBean(DailyStockLineItemDTO.class));
+
+        query.setParameter(1, endOfDay); // stockOnHand <= ?
+        query.setParameter(2, endOfDay); // expiration > ?
+        query.setParameter(3, startOfDay); // received BETWEEN ?
+        query.setParameter(4, endOfDay); // AND ?
+        query.setParameter(5, startOfDay); // dispensed BETWEEN ?
+        query.setParameter(6, endOfDay); // AND ?
+        query.setParameter(7, endOfDay); // HAVING <= ?
+
+        @SuppressWarnings("unchecked")
+        List<DailyStockLineItemDTO> results = query.list();
+        return results;
+    }
+    // Helper methods
+    private Date getStartOfDay(Date date) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date != null ? date : new Date());
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        return cal.getTime();
+    }
+
+    private Date getEndOfDay(Date date) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date != null ? date : new Date());
+        cal.set(Calendar.HOUR_OF_DAY, 23);
+        cal.set(Calendar.MINUTE, 59);
+        cal.set(Calendar.SECOND, 59);
+        cal.set(Calendar.MILLISECOND, 999);
+        return cal.getTime();
     }
 
 }

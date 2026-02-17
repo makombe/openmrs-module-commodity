@@ -565,4 +565,8 @@ public interface StockManagementService extends OpenmrsService {
         Date periodEnd
     );
 
+	public Result<DailyStockLineItemDTO> getDailyDispensedStockStatus(Date reportDate);
+	public DailyStockStatusResponseDTO getDailyStockStatus(Date reportDate);
+
+
 }
