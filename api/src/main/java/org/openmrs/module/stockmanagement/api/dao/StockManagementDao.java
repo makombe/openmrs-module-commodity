@@ -542,6 +542,15 @@ public class StockManagementDao extends DaoBase {
                 parameterWithList.putIfAbsent("conceptIds", filter.getConcepts().stream().map(p -> p.getConceptId()).collect(Collectors.toList()));
             }
         }
+        if (!StringUtils.isBlank(filter.getEtcdProductId())) {
+            appendORFilter(itemFilter, "si.etcdProductId = :etcdProductId");
+            parameterList.put("etcdProductId", filter.getEtcdProductId());
+        }
+
+        if (!StringUtils.isBlank(filter.getGenericConceptCode())) {
+            appendORFilter(itemFilter, "si.genericConceptCode = :genericConceptCode");
+            parameterList.put("genericConceptCode", filter.getGenericConceptCode());
+        }
 
         if (itemFilter.length() > 0) {
             appendFilter(hqlFilter, itemFilter.toString());

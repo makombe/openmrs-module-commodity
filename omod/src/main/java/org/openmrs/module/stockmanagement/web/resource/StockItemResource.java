@@ -3,7 +3,6 @@ package org.openmrs.module.stockmanagement.web.resource;
 import io.swagger.models.Model;
 import io.swagger.models.ModelImpl;
 import io.swagger.models.properties.*;
-import io.swagger.models.properties.StringProperty;
 
 import org.apache.commons.lang.StringUtils;
 import org.openmrs.*;
@@ -101,6 +100,16 @@ public class StockItemResource extends ResourceBase<StockItemDTO> {
 			}
 			filter.setCategoryId(concept.getConceptId());
 		}
+
+		param = context.getParameter("genericConceptCode");
+		if (!StringUtils.isBlank(param)) {
+			filter.setGenericConceptCode(param);
+		}
+
+		param = context.getParameter("etcdProductId");
+		if (!StringUtils.isBlank(param)) {
+			filter.setEtcdProductId(param);
+}
 		
 		filter.setStartIndex(context.getStartIndex());
 		filter.setLimit(context.getLimit());
@@ -125,6 +134,9 @@ public class StockItemResource extends ResourceBase<StockItemDTO> {
         filter.setIncludeVoided(context.getIncludeAll());
         filter.setStartIndex(context.getStartIndex());
         filter.setLimit(context.getLimit());
+		filter.setGenericConceptCode(searchToken);
+		filter.setEtcdProductId(searchToken);
+
 
         String param = context.getParameter("drugUuid");
         if (!StringUtils.isBlank(param)) {
@@ -152,6 +164,16 @@ public class StockItemResource extends ResourceBase<StockItemDTO> {
             }
             filter.setCategoryId(concept.getConceptId());
         }
+		
+		param = context.getParameter("genericConceptCode");
+		if (!StringUtils.isBlank(param)) {
+			filter.setGenericConceptCode(param);
+		}
+
+		param = context.getParameter("etcdProductId");
+		if (!StringUtils.isBlank(param)) {
+			filter.setEtcdProductId(param);
+		}
 
         ConceptService service = Context.getConceptService();
         Integer maxIntermediateResult = GlobalProperties.getStockItemSearchMaxDrugConceptIntermediateResult();
