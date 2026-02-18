@@ -33,6 +33,9 @@ public class StockItemSearchFilter {
 	private List<Concept> categories;
 	
 	private Integer categoryId;
+
+	private String genericConceptCode;
+	private String etcdProductId;
 	
 	public String getUuid() {
 		return uuid;
@@ -136,6 +139,18 @@ public class StockItemSearchFilter {
 	
 	public void setCategoryId(Integer categoryId) {
 		this.categoryId = categoryId;
+	}
+	public String getGenericConceptCode() {
+		return genericConceptCode;
+	}
+	public void setGenericConceptCode(String genericConceptCode) {
+		this.genericConceptCode = genericConceptCode;
+	}
+	public String getEtcdProductId() {
+		return etcdProductId;
+	}
+	public void setEtcdProductId(String etcdProductId) {
+		this.etcdProductId = etcdProductId;
 	}
 	
 	public static class ItemGroupFilter {
