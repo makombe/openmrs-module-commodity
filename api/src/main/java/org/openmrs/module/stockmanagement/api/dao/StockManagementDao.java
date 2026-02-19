@@ -5441,7 +5441,7 @@ public class StockManagementDao extends DaoBase {
         Date endOfDay = getEndOfDay(effectiveDate);
 
         String sql = "SELECT " +
-                "    si.etcd_product_id AS etcdProductId, " +
+                "    si.etcd_product_id AS productCode, " +
                 "    COALESCE(SUM(CASE WHEN sit.date_created <= ? " +
                 "             AND (sb.expiration IS NULL OR sb.expiration > ?) " +
                 "             THEN sit.quantity * sipu.factor ELSE 0 END), 0) AS stockOnHand, " +
@@ -5463,7 +5463,7 @@ public class StockManagementDao extends DaoBase {
                 "                THEN ABS(sit.quantity) ELSE 0 END) > 0";
 
         Query query = getSession().createSQLQuery(sql)
-                .addScalar("etcdProductId", StringType.INSTANCE)
+                .addScalar("productCode", StringType.INSTANCE)
                 .addScalar("stockOnHand", BigDecimalType.INSTANCE)
                 .addScalar("quantityReceived", BigDecimalType.INSTANCE)
                 .addScalar("quantityDispensed", BigDecimalType.INSTANCE)
