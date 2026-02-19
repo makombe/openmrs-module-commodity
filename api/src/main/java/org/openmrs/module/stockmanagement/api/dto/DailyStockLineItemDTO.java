@@ -5,7 +5,7 @@ import java.util.Date;
 
 public class DailyStockLineItemDTO {
     private String uuid;
-    private String etcdProductId;
+    private String productCode;
     private BigDecimal stockOnHand = BigDecimal.ZERO; // ← default to ZERO
     private BigDecimal quantityReceived = BigDecimal.ZERO; // ← default to ZERO
     private BigDecimal quantityDispensed = BigDecimal.ZERO; // ← default to ZERO
@@ -20,12 +20,12 @@ public class DailyStockLineItemDTO {
         this.uuid = uuid;
     }
 
-    public String getEtcdProductId() {
-        return etcdProductId;
+    public String getProductCode() {
+        return productCode;
     }
 
-    public void setEtcdProductId(String etcdProductId) {
-        this.etcdProductId = etcdProductId;
+    public void setProductCode(String productCode) {
+        this.productCode = productCode;
     }
 
     public BigDecimal getStockOnHand() {

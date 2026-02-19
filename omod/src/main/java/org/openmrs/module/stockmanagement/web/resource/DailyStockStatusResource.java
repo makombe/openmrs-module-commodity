@@ -86,7 +86,7 @@ public class DailyStockStatusResource extends ResourceBase<DailyStockLineItemDTO
         DelegatingResourceDescription description = new DelegatingResourceDescription();
 
         if (rep instanceof DefaultRepresentation || rep instanceof FullRepresentation) {
-            description.addProperty("etcdProductId");
+            description.addProperty("productCode");
             description.addProperty("stockOnHand");
             description.addProperty("quantityReceived");
             description.addProperty("quantityDispensed");
@@ -102,7 +102,7 @@ public class DailyStockStatusResource extends ResourceBase<DailyStockLineItemDTO
         }
 
         if (rep instanceof RefRepresentation) {
-            description.addProperty("etcdProductId");
+            description.addProperty("productCode");
         }
 
         return description;
@@ -119,7 +119,7 @@ public class DailyStockStatusResource extends ResourceBase<DailyStockLineItemDTO
         ModelImpl modelImpl = (ModelImpl) super.getGETModel(rep);
         if (rep instanceof DefaultRepresentation || rep instanceof FullRepresentation) {
             modelImpl
-                    .property("etcdProductId", new StringProperty())
+                    .property("productCode", new StringProperty())
                     .property("stockOnHand", new DecimalProperty())
                     .property("quantityReceived", new DecimalProperty())
                     .property("quantityDispensed", new DecimalProperty())
@@ -129,7 +129,7 @@ public class DailyStockStatusResource extends ResourceBase<DailyStockLineItemDTO
         if (rep instanceof RefRepresentation) {
             modelImpl
                     .property("uuid", new StringProperty())
-                    .property("etcdProductId", new StringProperty());
+                    .property("productCode", new StringProperty());
         }
         return modelImpl;
     }
@@ -139,7 +139,7 @@ public class DailyStockStatusResource extends ResourceBase<DailyStockLineItemDTO
         return new ModelImpl()
                 .property("lineItems", new ArrayProperty(
                         new ObjectProperty()
-                                .property("etcdProductId", new StringProperty().required(true))
+                                .property("productCode", new StringProperty().required(true))
                                 .property("stockOnHand", new DecimalProperty())
                                 .property("quantityReceived", new DecimalProperty())
                                 .property("quantityDispensed", new DecimalProperty())
