@@ -33,6 +33,7 @@
         <openmrsPlatformVersion>2.4.3</openmrsPlatformVersion>
         <javaCompilerVersion>1.8</javaCompilerVersion>
         <webservicesRestVersion>2.32.0</webservicesRestVersion>
+         <apacheHttpClientVersion>4.5.10</apacheHttpClientVersion>
     </properties>
 
     <dependencyManagement>
@@ -91,6 +92,21 @@
                 <version>${webservicesRestVersion}</version>
                 <scope>provided</scope>
             </dependency>
+
+
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpclient</artifactId>
+                <version>${apacheHttpClientVersion}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>commons-logging</groupId>
+                        <artifactId>commons-logging</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+
         </dependencies>
     </dependencyManagement>
 

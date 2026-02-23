@@ -5173,6 +5173,32 @@ CREATE TRIGGER stockmgmt_location_after_delete
       </addColumn>
     </changeSet>
 
+    <!--Adding scheduled Openmrs based Daily Stock Status task-->
+	<changeSet id="stockmanagement-20260219-0833" author="makombe">
+    <preConditions onFail="MARK_RAN">
+        <sqlCheck expectedResult="0">
+            SELECT COUNT(*) FROM scheduler_task_config
+            WHERE schedulable_class = 'org.openmrs.module.stockmanagement.tasks.DailyStockStatus'
+            AND name = 'Daily Stock Status Task'
+        </sqlCheck>
+    </preConditions>
+    <comment>Inserting Daily Stock Status Task into scheduler_task_config</comment>
+    <insert tableName="scheduler_task_config">
+        <column name="name" value="Daily Stock Status Task" />
+        <column name="description" value="Pushes daily stock status updates" />
+        <column name="schedulable_class" 
+                value="org.openmrs.module.stockmanagement.tasks.DailyStockStatus" />
+        <column name="start_time_pattern" value="MM/dd/yyyy HH:mm:ss" />
+        <column name="start_time" valueDate="2026-02-19T23:59:59" />
+        <column name="repeat_interval" value="7200" />
+        <column name="date_created" valueDate="CURRENT_TIMESTAMP" />
+        <column name="created_by" value="1" />
+        <column name="start_on_startup" value="0" />
+        <column name="started" value="0" />
+        <column name="uuid" value="7455a8cb-e8d1-435c-9e98-318870c23cf3" />
+    </insert>
+</changeSet>
+
  
 
 </databaseChangeLog>
