@@ -898,6 +898,7 @@ public class StockItemImportJob {
                 }
                 if(hasErrors){
                     for(String error: result.getErrors()){
+                        System.out.println("Errors found during import. Errors written to file =================================================: " + error );
                         writer.append(error);
                         writer.append("\r\n");
                     }
