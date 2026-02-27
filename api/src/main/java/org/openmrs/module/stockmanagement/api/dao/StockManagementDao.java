@@ -5441,26 +5441,35 @@ public class StockManagementDao extends DaoBase {
         Date endOfDay = getEndOfDay(effectiveDate);
 
         String sql = "SELECT " +
-                "    si.etcd_product_id AS productCode, " +
-                "    COALESCE(SUM(CASE WHEN sit.date_created <= ? " +
-                "             AND (sb.expiration IS NULL OR sb.expiration > ?) " +
-                "             THEN sit.quantity * sipu.factor ELSE 0 END), 0) AS stockOnHand, " +
-                "    COALESCE(SUM(CASE WHEN sit.date_created BETWEEN ? AND ? " +
-                "             AND sit.quantity > 0 " +
-                "             THEN sit.quantity * sipu.factor ELSE 0 END), 0) AS quantityReceived, " +
-                "    COALESCE(SUM(CASE WHEN sit.date_created BETWEEN ? AND ? " +
-                "             AND sit.quantity < 0 " +
-                "             AND sit.patient_id IS NOT NULL " +
-                "             THEN sit.quantity * -1 * sipu.factor ELSE 0 END), 0) AS quantityDispensed " +
+                "si.etcd_product_id AS productCode, " +
+                "COALESCE(SUM(CASE " +
+                "    WHEN sit.date_created <= ? " +
+                "         AND (sb.expiration IS NULL OR sb.expiration > ?) " +
+                "    THEN sit.quantity * sipu.factor ELSE 0 END), 0) AS stockOnHand, " +
+                "COALESCE(SUM(CASE " +
+                "    WHEN sit.date_created BETWEEN ? AND ? " +
+                "         AND sit.quantity > 0 " +
+                "         AND sot.uuid = '44444444-4444-4444-4444-444444444444' " +
+                "    THEN sit.quantity * sipu.factor ELSE 0 END), 0) AS quantityReceived, " +
+                "COALESCE(SUM(CASE " +
+                "    WHEN sit.date_created BETWEEN ? AND ? " +
+                "         AND sit.quantity < 0 " +
+                "         AND sit.patient_id IS NOT NULL " +
+                "    THEN sit.quantity * -1 * sipu.factor ELSE 0 END), 0) AS quantityDispensed " +
                 "FROM stockmgmt_stock_item_transaction sit " +
-                "JOIN stockmgmt_stock_item si ON sit.stock_item_id = si.stock_item_id " +
-                "JOIN stockmgmt_stock_item_packaging_uom sipu ON sit.stock_item_packaging_uom_id = sipu.stock_item_packaging_uom_id "
-                +
-                "JOIN stockmgmt_stock_batch sb ON sit.stock_batch_id = sb.stock_batch_id " +
+                "JOIN stockmgmt_stock_item si " +
+                "    ON sit.stock_item_id = si.stock_item_id " +
+                "JOIN stockmgmt_stock_item_packaging_uom sipu " +
+                "    ON sit.stock_item_packaging_uom_id = sipu.stock_item_packaging_uom_id " +
+                "JOIN stockmgmt_stock_batch sb " +
+                "    ON sit.stock_batch_id = sb.stock_batch_id " +
+                "JOIN stockmgmt_stock_operation so " +
+                "    ON sit.stock_operation_id = so.stock_operation_id " +
+                "JOIN stockmgmt_stock_operation_type sot " +
+                "    ON so.operation_type_id = sot.stock_operation_type_id " +
                 "WHERE si.etcd_product_id IS NOT NULL " +
                 "GROUP BY si.etcd_product_id " +
-                "HAVING SUM(CASE WHEN sit.date_created <= ? " +
-                "                THEN ABS(sit.quantity) ELSE 0 END) > 0";
+                "HAVING SUM(CASE WHEN sit.date_created <= ? THEN ABS(sit.quantity) ELSE 0 END) > 0";
 
         Query query = getSession().createSQLQuery(sql)
                 .addScalar("productCode", StringType.INSTANCE)
