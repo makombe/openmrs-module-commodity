@@ -5354,7 +5354,7 @@ public class StockManagementDao extends DaoBase {
 		getSession().saveOrUpdate(stockItemReference);
 		return stockItemReference;
 	}
-	
+
 	public StockItemReference getStockItemReferenceByUuid(String uuid) {
 		return (StockItemReference) getSession().createCriteria(StockItemReference.class).add(Restrictions.eq("uuid", uuid))
 		        .uniqueResult();
@@ -5490,6 +5490,73 @@ public class StockManagementDao extends DaoBase {
         List<DailyStockLineItemDTO> results = query.list();
         return results;
     }
+
+  
+    public ExternalRequisitionStatus getExternalRequisitionStatusByUuid(String uuid) {
+        Criteria criteria = sessionFactory.getCurrentSession().createCriteria(ExternalRequisitionStatus.class);
+        criteria.add(Restrictions.eq("uuid", uuid));
+        return (ExternalRequisitionStatus) criteria.uniqueResult();
+    }
+
+    public ExternalRequisitionStatus saveExternalRequisitionStatus(ExternalRequisitionStatus externalRequisitionStatus) {
+    if (StringUtils.isNotBlank(externalRequisitionStatus.getUuid())) {
+        Criteria criteria = getSession().createCriteria(ExternalRequisitionStatus.class);
+        criteria.add(Restrictions.eq("uuid", externalRequisitionStatus.getUuid()));
+        ExternalRequisitionStatus existing = (ExternalRequisitionStatus) criteria.uniqueResult();
+
+        if (existing != null) {
+            existing.setMessage(externalRequisitionStatus.getMessage());
+            existing.setStatus(externalRequisitionStatus.getStatus());
+            existing.setSource(externalRequisitionStatus.getSource());
+            existing.setOperationNumber(externalRequisitionStatus.getOperationNumber());
+            existing.setRetired(externalRequisitionStatus.getRetired());
+            existing.setDateUpdated(new Date());
+            getSession().update(existing);
+            return existing;
+        }
+    }
+
+    getSession().saveOrUpdate(externalRequisitionStatus);
+    return externalRequisitionStatus;
+}
+
+
+    
+    public Result<ExternalRequisitionStatusDTO> findExternalRequisitionStatuses(String status, String source,
+            boolean includeRetired) {
+        Criteria criteria = getSession().createCriteria(ExternalRequisitionStatus.class);
+
+        if (StringUtils.isNotBlank(status)) {
+            criteria.add(Restrictions.eq("status", status));
+        }
+        if (StringUtils.isNotBlank(source)) {
+            criteria.add(Restrictions.eq("source", source));
+        }
+        if (!includeRetired) {
+            criteria.add(Restrictions.eq("retired", 0));
+        }
+
+        Result<ExternalRequisitionStatus> rawResult = new Result<>();
+        rawResult.setData(executeCriteria(criteria, rawResult, Order.desc("dateCreated")));
+
+        Result<ExternalRequisitionStatusDTO> result = new Result<>();
+        result.setPageIndex(rawResult.getPageIndex());
+        result.setPageSize(rawResult.getPageSize());
+        result.setData(rawResult.getData().stream().map(e -> {
+            ExternalRequisitionStatusDTO dto = new ExternalRequisitionStatusDTO();
+            dto.setUuid(e.getUuid());
+            dto.setMessage(e.getMessage());
+            dto.setStatus(e.getStatus());
+            dto.setSource(e.getSource());
+            dto.setRetired(e.getRetired());
+            dto.setDateCreated(e.getDateCreated());
+            dto.setDateUpdated(e.getDateUpdated());
+            dto.setCreator(e.getCreator());
+            return dto;
+        }).collect(Collectors.toList()));
+
+        return result;
+    }
     // Helper methods
     private Date getStartOfDay(Date date) {
         Calendar cal = Calendar.getInstance();
@@ -5510,5 +5577,7 @@ public class StockManagementDao extends DaoBase {
         cal.set(Calendar.MILLISECOND, 999);
         return cal.getTime();
     }
+
+    
 
 }

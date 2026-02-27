@@ -3723,4 +3723,21 @@ public class StockManagementServiceImpl extends BaseOpenmrsService implements St
         lineItems.forEach(item -> item.setNotes("Daily consumption update"));
         return new Result<>(lineItems, lineItems.size()); // ← pass size as second arg
     }
+
+    @Override
+    public ExternalRequisitionStatus getExternalRequisitionStatusByUuid(String uuid) {
+        return dao.getExternalRequisitionStatusByUuid(uuid);
+    }
+
+    @Override
+    public ExternalRequisitionStatus saveExternalRequisitionStatus(
+            ExternalRequisitionStatus externalRequisitionStatus) {
+        return dao.saveExternalRequisitionStatus(externalRequisitionStatus);
+    }
+
+    @Override
+    public Result<ExternalRequisitionStatusDTO> findExternalRequisitionStatuses(String status, String source,
+            boolean includeRetired) {
+        return dao.findExternalRequisitionStatuses(status, source, includeRetired);
+    }
 }

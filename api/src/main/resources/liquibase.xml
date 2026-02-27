@@ -5199,6 +5199,29 @@ CREATE TRIGGER stockmgmt_location_after_delete
     </insert>
 </changeSet>
 
+ <changeSet id="stockmanagement-20260227-1600" author="makombe">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="external_requisition_status" /></not>
+        </preConditions>
+        <comment>
+            Create table for external requisition status
+        </comment>
+        <createTable tableName="stockmgmt_external_requisition_status">
+            <column name="message_id" autoIncrement="true" type="int">
+                <constraints nullable="false" primaryKey="true" />
+            </column>
+            <column name="message" type="text"></column>
+            <column name="creator" type="int"></column>
+            <column name="retired" type="int"></column>
+            <column name="status" type="varchar(100)"  ></column>
+            <column name="operation_number" type="varchar(100)"  ></column>
+            <column name="source" type="varchar(50)" ></column>
+            <column name="date_created" type="datetime"></column>
+            <column name="date_updated" type="datetime"></column>
+            <column name="uuid" type="varchar(38)"></column>
+        </createTable>
+    </changeSet>
+
  
 
 </databaseChangeLog>
