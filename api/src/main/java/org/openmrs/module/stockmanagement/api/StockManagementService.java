@@ -568,5 +568,15 @@ public interface StockManagementService extends OpenmrsService {
 	public Result<DailyStockLineItemDTO> getDailyDispensedStockStatus(Date reportDate);
 	public DailyStockStatusResponseDTO getDailyStockStatus(Date reportDate);
 
+	// Fetch by UUID (used by GET /{uuid})
+	ExternalRequisitionStatus getExternalRequisitionStatusByUuid(String uuid);
+
+	@Transactional
+	ExternalRequisitionStatus saveExternalRequisitionStatus(ExternalRequisitionStatus delegate);
+
+	// Search (used by GET with query params ?status=X&source=Y)
+	Result<ExternalRequisitionStatusDTO> findExternalRequisitionStatuses(String status, String source,
+			boolean includeRetired);
+
 
 }
