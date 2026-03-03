@@ -14,6 +14,8 @@ import org.openmrs.module.stockmanagement.api.dto.Result;
 import org.openmrs.module.stockmanagement.api.model.ExternalRequisitionStatus;
 import org.openmrs.module.webservices.rest.web.RequestContext;
 import org.openmrs.module.webservices.rest.web.RestConstants;
+import org.openmrs.module.webservices.rest.web.annotation.PropertyGetter;
+import org.openmrs.module.webservices.rest.web.annotation.PropertySetter;
 import org.openmrs.module.webservices.rest.web.annotation.Resource;
 import org.openmrs.module.webservices.rest.web.representation.DefaultRepresentation;
 import org.openmrs.module.webservices.rest.web.representation.FullRepresentation;
@@ -116,6 +118,16 @@ public class ExternalRequisitionStatusResource extends ResourceBase<ExternalRequ
         }
 
         return description;
+    }
+
+    @PropertyGetter("message")
+    public String getMessage(ExternalRequisitionStatus instance) {
+        return instance.getMessage();
+    }
+
+    @PropertySetter("message")
+    public void setMessage(ExternalRequisitionStatus instance, String message) {
+        instance.setMessage(message);
     }
 
     @Override
