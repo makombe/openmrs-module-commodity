@@ -5220,7 +5220,105 @@ CREATE TRIGGER stockmgmt_location_after_delete
             <column name="date_updated" type="datetime"></column>
             <column name="uuid" type="varchar(38)"></column>
         </createTable>
-    </changeSet>
+  </changeSet>
+
+  <changeSet id="stockmanagement-202260303-114120" author="makombe">
+    <preConditions onFail="MARK_RAN">
+      <sqlCheck expectedResult="0">SELECT COUNT(*) FROM stockmgmt_stock_operation_type WHERE operation_type =
+                'loss'
+            </sqlCheck>
+    </preConditions>
+    <comment>Creating the stock operation type loss</comment>
+    <insert tableName="stockmgmt_stock_operation_type">
+      <column name="name">Loss</column>
+      <column name="operation_type">loss</column>
+      <column name="description"> Stock loss caused by theft (internal/external), administrative errors, damage, or spoilage, which reduces inventory value.
+            </column>
+      <column name="has_source" valueBoolean="true">
+      </column>
+      <column name="source_type">Location</column>
+      <column name="has_destination" valueBoolean="false">
+      </column>
+      <column name="available_when_reserved" valueBoolean="true">
+      </column>
+      <column name="acronym">LOS</column>
+      <column name="creator">1</column>
+      <column name="date_created">2026-03-03</column>
+      <column name="uuid">92c1e378-e362-4cca-9f74-a25db0d38d19</column>
+    </insert>
+  </changeSet>
+
+  <changeSet id="stockmanagement-20260303-114121" author="makombe">
+    <preConditions onFail="MARK_RAN">
+      <sqlCheck expectedResult="0">
+        SELECT COUNT(*)
+        FROM stockmgmt_operation_type_location_scope sotls
+        WHERE sotls.stock_operation_type_id = (SELECT sot.stock_operation_type_id FROM stockmgmt_stock_operation_type sot WHERE uuid='92c1e378-e362-4cca-9f74-a25db0d38d19') AND
+        location_tag='Main Store'
+      </sqlCheck>
+    </preConditions>
+    <comment>Limiting stock loss from the main store only</comment>
+    <sql>
+      INSERT INTO stockmgmt_operation_type_location_scope(stock_operation_type_id,location_tag,is_source,is_destination,creator,date_created,uuid)
+      SELECT sot.stock_operation_type_id,'Main Store',1, 0,1,now(), '977efd06-8a39-43f1-ac73-22f57d330433'
+      FROM stockmgmt_stock_operation_type sot
+      WHERE uuid='92c1e378-e362-4cca-9f74-a25db0d38d19'
+    </sql>
+  </changeSet>
+
+  <changeSet id="stockmanagement-202603031-114122" author="makombe">
+    <preConditions onFail="MARK_RAN">
+      <sqlCheck expectedResult="0">
+      SELECT COUNT(*)
+      FROM stockmgmt_operation_type_location_scope sotls
+      WHERE sotls.stock_operation_type_id = (SELECT sot.stock_operation_type_id FROM stockmgmt_stock_operation_type sot WHERE uuid='92c1e378-e362-4cca-9f74-a25db0d38d19') AND
+      location_tag='Main Pharmacy'
+    </sqlCheck>
+    </preConditions>
+    <comment>Stock loss from the Main Pharmacy</comment>
+    <sql>
+      INSERT INTO stockmgmt_operation_type_location_scope(stock_operation_type_id,location_tag,is_source,is_destination,creator,date_created,uuid)
+      SELECT sot.stock_operation_type_id,'Main Pharmacy',1, 0,1,now(), '6fec7e0d-5e02-4433-83fd-e342c917e6dd'
+      FROM stockmgmt_stock_operation_type sot
+      WHERE uuid='92c1e378-e362-4cca-9f74-a25db0d38d19'
+    </sql>
+  </changeSet>
+
+  <changeSet id="stockmanagement-20260303-124123" author="makombe">
+    <preConditions onFail="MARK_RAN">
+      <sqlCheck expectedResult="0">
+        SELECT COUNT(*)
+        FROM stockmgmt_operation_type_location_scope sotls
+        WHERE sotls.stock_operation_type_id = (SELECT sot.stock_operation_type_id FROM stockmgmt_stock_operation_type sot WHERE uuid='92c1e378-e362-4cca-9f74-a25db0d38d19') AND
+        location_tag='Dispensary'
+      </sqlCheck>
+    </preConditions>
+    <comment>Stock loss from the Dispensary</comment>
+    <sql>
+      INSERT INTO stockmgmt_operation_type_location_scope(stock_operation_type_id,location_tag,is_source,is_destination,creator,date_created,uuid)
+      SELECT sot.stock_operation_type_id,'Dispensary',1, 0,1,now(), 'bc707d21-b20e-4b91-aba1-7b451255a974'
+      FROM stockmgmt_stock_operation_type sot
+      WHERE uuid='92c1e378-e362-4cca-9f74-a25db0d38d19'
+    </sql>
+  </changeSet>
+
+    <changeSet id="stockmanagement-20260303-1200" author="makombe">
+    <preConditions onFail="MARK_RAN">
+      <sqlCheck expectedResult="0">
+        SELECT COUNT(*)
+        FROM stockmgmt_operation_type_location_scope sotls
+        WHERE sotls.stock_operation_type_id = (SELECT sot.stock_operation_type_id FROM stockmgmt_stock_operation_type sot WHERE uuid='92c1e378-e362-4cca-9f74-a25db0d38d19') AND
+        location_tag='Sub Store'
+      </sqlCheck>
+    </preConditions>
+    <comment>Stock loss from the Sub Store</comment>
+    <sql>
+      INSERT INTO stockmgmt_operation_type_location_scope(stock_operation_type_id,location_tag,is_source,is_destination,creator,date_created,uuid)
+      SELECT sot.stock_operation_type_id,'Sub Store',1, 0,1,now(), 'b89f913b-839a-42e4-b29f-2153fea3faa9'
+      FROM stockmgmt_stock_operation_type sot
+      WHERE uuid='92c1e378-e362-4cca-9f74-a25db0d38d19'
+    </sql>
+  </changeSet>
 
  
 
