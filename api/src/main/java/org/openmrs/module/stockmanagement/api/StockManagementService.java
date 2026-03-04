@@ -577,6 +577,10 @@ public interface StockManagementService extends OpenmrsService {
 	// Search (used by GET with query params ?status=X&source=Y)
 	Result<ExternalRequisitionStatusDTO> findExternalRequisitionStatuses(String status, String source,
 			boolean includeRetired);
+	@Transactional(readOnly = true)
+	@Authorized(Privileges.APP_STOCKMANAGEMENT_STOCKITEMS)
+	Result<StockItemLossesAndAdjustmentsDTO> findStockItemLossesAndAdjustments(StockItemPackagingUOMSearchFilter filter);
+
 
 
 }

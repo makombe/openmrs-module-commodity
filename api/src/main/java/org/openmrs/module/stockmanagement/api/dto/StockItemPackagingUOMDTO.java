@@ -1,12 +1,6 @@
 package org.openmrs.module.stockmanagement.api.dto;
 
-import org.openmrs.Concept;
-import org.openmrs.module.stockmanagement.api.model.StockItem;
 
-import javax.persistence.Column;
-import javax.persistence.FetchType;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import java.math.BigDecimal;
 
 public class StockItemPackagingUOMDTO {

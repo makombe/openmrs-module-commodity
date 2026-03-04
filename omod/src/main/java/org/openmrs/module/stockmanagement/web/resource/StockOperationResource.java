@@ -3,6 +3,7 @@ package org.openmrs.module.stockmanagement.web.resource;
 import io.swagger.models.Model;
 import io.swagger.models.ModelImpl;
 import io.swagger.models.properties.*;
+import liquibase.pro.packaged.S;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
@@ -525,6 +526,8 @@ public class StockOperationResource extends ResourceBase<StockOperationDTO> {
         filter.setIncludeVoided(false);
         filter.setStockItemUuids(items.stream().map(p -> p.getStockItemUuid()).distinct().collect(Collectors.toList()));
         List<StockItemPackagingUOMDTO> packagingUnits = getStockManagementService().findStockItemPackagingUOMs(filter).getData();
+        List<StockItemLossesAndAdjustmentsDTO> lossesAndAdjustments = getStockManagementService().findStockItemLossesAndAdjustments(filter).getData();
+
 
         boolean canUpdateBatchInformation = false;
         SimpleObject permissions = getPermission(stockOperationDTO);
@@ -545,6 +548,13 @@ public class StockOperationResource extends ResourceBase<StockOperationDTO> {
             }
             if(canUpdateBatchInformation){
                 itemDTO.setCanUpdateBatchInformation( stockBatchHasTransactions != null && !stockBatchHasTransactions.containsKey(itemDTO.getStockBatchId()));
+            }
+        }
+
+        for (StockOperationItemDTO itemDTO : items) {
+            List<StockItemLossesAndAdjustmentsDTO> adj = lossesAndAdjustments.stream().filter(p -> p.getStockItemUuid().equals(itemDTO.getStockItemUuid())).collect(Collectors.toList());
+            if (!adj.isEmpty()) {
+                itemDTO.setLossesAndAdjustments(adj);
             }
         }
 
