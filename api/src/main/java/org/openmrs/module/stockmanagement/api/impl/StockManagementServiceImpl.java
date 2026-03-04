@@ -43,6 +43,8 @@ import org.openmrs.util.OpenmrsConstants;
 import javax.mail.Session;
 import java.math.BigDecimal;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -1402,9 +1404,6 @@ public class StockManagementServiceImpl extends BaseOpenmrsService implements St
 
             if (isStockItemNew && isStockIssue) {
                 if (itemDto.getQuantityRequested() != null) {
-                    System.out.println(
-                            "Setting quantity requested for stock issue operation============================================"
-                                    + itemDto.getQuantityRequested());
                     item.setQuantityRequested(itemDto.getQuantityRequested());
                     Optional<StockItemPackagingUOM> stockItemPackagingUOMOptional = preloadStockItemPackagingUOMs
                             .stream()
@@ -1428,8 +1427,17 @@ public class StockManagementServiceImpl extends BaseOpenmrsService implements St
 
         dao.saveStockOperation(stockOperation);
         if (isNew) {
-            stockOperation.setOperationNumber(String.format("%1s-%2s", stockOperationType.getAcronym(),
-                    StringUtils.leftPad(Integer.toString(stockOperation.getId()), 4, '0')));
+
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+
+            String timestamp = LocalDateTime.now().format(formatter);
+
+            stockOperation.setOperationNumber(
+                    String.format("%1s-%2s-%3s",
+                            stockOperationType.getAcronym(),
+                            StringUtils.leftPad(Integer.toString(stockOperation.getId()), 4, '0'),
+                            timestamp));
+
             dao.saveStockOperation(stockOperation);
         }
 
