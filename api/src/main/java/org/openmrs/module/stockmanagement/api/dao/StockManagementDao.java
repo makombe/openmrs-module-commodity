@@ -5498,8 +5498,12 @@ public class StockManagementDao extends DaoBase {
         return (ExternalRequisitionStatus) criteria.uniqueResult();
     }
 
-    public ExternalRequisitionStatus saveExternalRequisitionStatus(ExternalRequisitionStatus externalRequisitionStatus) {
-    if (StringUtils.isNotBlank(externalRequisitionStatus.getUuid())) {
+    public ExternalRequisitionStatus saveExternalRequisitionStatus(
+            ExternalRequisitionStatus externalRequisitionStatus) {
+        if (externalRequisitionStatus.getUuid() == null || StringUtils.isBlank(externalRequisitionStatus.getUuid())) {
+            throw new IllegalArgumentException("UUID is mandatory for saving external requisition status.");
+        }
+
         Criteria criteria = getSession().createCriteria(ExternalRequisitionStatus.class);
         criteria.add(Restrictions.eq("uuid", externalRequisitionStatus.getUuid()));
         ExternalRequisitionStatus existing = (ExternalRequisitionStatus) criteria.uniqueResult();
@@ -5511,14 +5515,18 @@ public class StockManagementDao extends DaoBase {
             existing.setOperationNumber(externalRequisitionStatus.getOperationNumber());
             existing.setRetired(externalRequisitionStatus.getRetired());
             existing.setDateUpdated(new Date());
+
             getSession().update(existing);
             return existing;
         }
-    }
 
-    getSession().saveOrUpdate(externalRequisitionStatus);
-    return externalRequisitionStatus;
-}
+        if (externalRequisitionStatus.getDateCreated() == null) {
+            externalRequisitionStatus.setDateCreated(new Date());
+        }
+
+        getSession().save(externalRequisitionStatus);
+        return externalRequisitionStatus;
+    }
 
 
     
