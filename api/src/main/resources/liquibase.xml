@@ -5222,6 +5222,18 @@ CREATE TRIGGER stockmgmt_location_after_delete
         </createTable>
   </changeSet>
 
+   <changeSet id="stockmanagement-20260305-12220" author="makombe">
+    <addNotNullConstraint 
+        columnDataType="varchar(38)" 
+        columnName="uuid" 
+        tableName="stockmgmt_external_requisition_status"/>
+        
+    <addUniqueConstraint 
+        columnNames="uuid" 
+        constraintName="uk_external_req_status_uuid" 
+        tableName="stockmgmt_external_requisition_status"/>
+  </changeSet>
+ 
   <changeSet id="stockmanagement-202260303-114120" author="makombe">
     <preConditions onFail="MARK_RAN">
       <sqlCheck expectedResult="0">SELECT COUNT(*) FROM stockmgmt_stock_operation_type WHERE operation_type =
