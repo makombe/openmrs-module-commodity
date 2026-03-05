@@ -3748,4 +3748,8 @@ public class StockManagementServiceImpl extends BaseOpenmrsService implements St
             boolean includeRetired) {
         return dao.findExternalRequisitionStatuses(status, source, includeRetired);
     }
+    @Override
+    public Result<StockItemLossesAndAdjustmentsDTO> findStockItemLossesAndAdjustments(StockItemPackagingUOMSearchFilter filter) {
+        return dao.findStockItemLossesAndAdjustments(filter);
+    }
 }

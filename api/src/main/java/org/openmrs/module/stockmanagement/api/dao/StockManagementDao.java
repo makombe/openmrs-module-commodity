@@ -5565,6 +5565,84 @@ public class StockManagementDao extends DaoBase {
 
         return result;
     }
+
+
+    public Result<StockItemLossesAndAdjustmentsDTO> findStockItemLossesAndAdjustments(
+            StockItemPackagingUOMSearchFilter filter) {
+        // The three operation type UUIDs that represent losses & adjustments
+        final List<String> LOSS_ADJUSTMENT_OP_TYPE_UUIDS = Arrays.asList(
+                "22222222-2222-2222-2222-222222222222", // Disposal
+                "92c1e378-e362-4cca-9f74-a25db0d38d19", // Loss
+                "11111111-1111-1111-1111-111111111111" // Adjustments
+        );
+
+        HashMap<String, Object> parameterList = new HashMap<>();
+        HashMap<String, Collection> parameterWithList = new HashMap<>();
+
+        // Sum quantity * factor * -1 so that outbound (negative) transactions are
+        // expressed
+        // as positive loss/adjustment quantities. Adjustments that are positive (stock
+        // added)
+        // will remain positive as-is since their transactions are already positive.
+        StringBuilder hqlQuery = new StringBuilder(
+                "SELECT sit.stockItem.id as stockItemId,\n" +
+                        "si.uuid as stockItemUuid,\n" +
+                        "sot.name as typeName,\n" +
+                        "sot.operationType as typeCode,\n" +
+                        "sum(sit.quantity * sipu.factor * -1) as quantity\n" +
+                        "from stockmanagement.StockItemTransaction sit\n" +
+                        "  join sit.stockItem si\n" +
+                        "  join sit.stockItemPackagingUOM sipu\n" +
+                        "  join sit.stockOperation so\n" +
+                        "  join so.stockOperationType sot\n");
+
+        StringBuilder hqlFilter = new StringBuilder();
+
+        // Always restrict to the three relevant operation types
+        appendFilter(hqlFilter, "sot.uuid in (:opTypeUuids)");
+        parameterWithList.put("opTypeUuids", LOSS_ADJUSTMENT_OP_TYPE_UUIDS);
+
+        // Optionally restrict to specific stock items by id
+        if (filter.getStockItemIds() != null && !filter.getStockItemIds().isEmpty()) {
+            appendFilter(hqlFilter, "si.id in (:stockItemIds)");
+            parameterWithList.put("stockItemIds", filter.getStockItemIds());
+        }
+
+        // Optionally restrict to specific stock items by uuid
+        if (filter.getStockItemUuids() != null && !filter.getStockItemUuids().isEmpty()) {
+            appendFilter(hqlFilter, "si.uuid in (:stockItemUuids)");
+            parameterWithList.put("stockItemUuids", filter.getStockItemUuids());
+        }
+
+        // Exclude voided operations unless caller requests otherwise
+        if (!filter.getIncludeVoided()) {
+            appendFilter(hqlFilter, "so.voided = :vdd");
+            parameterList.put("vdd", false);
+        }
+
+        if (hqlFilter.length() > 0) {
+            hqlQuery.append(" where ").append(hqlFilter);
+        }
+
+        // Group so each row represents one (stockItem, operationType) combination
+        hqlQuery.append(" group by sit.stockItem.id, si.uuid, sot.name, sot.operationType");
+
+        Result<StockItemLossesAndAdjustmentsDTO> result = new Result<>();
+        if (filter.getLimit() != null) {
+            result.setPageIndex(filter.getStartIndex());
+            result.setPageSize(filter.getLimit());
+        }
+
+        result.setData(executeQuery(
+                StockItemLossesAndAdjustmentsDTO.class,
+                hqlQuery,
+                result,
+                " order by sit.stockItem.id asc, sot.name asc",
+                parameterList,
+                parameterWithList));
+
+        return result;
+    }
     // Helper methods
     private Date getStartOfDay(Date date) {
         Calendar cal = Calendar.getInstance();

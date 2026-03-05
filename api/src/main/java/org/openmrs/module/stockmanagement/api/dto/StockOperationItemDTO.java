@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.List;
 
 
+
 public class StockOperationItemDTO {
 	
 	private Integer id;
@@ -74,6 +75,7 @@ public class StockOperationItemDTO {
 	private BigDecimal quantityRequestedPackagingUOMFactor;
 	
 	private List<StockItemPackagingUOMDTO> packagingUnits;
+	private List<StockItemLossesAndAdjustmentsDTO> lossesAndAdjustments;
 	
 	private Boolean canUpdateBatchInformation;
 
@@ -430,5 +432,11 @@ public class StockOperationItemDTO {
 
 	public void setStockOutDays(Integer stockOutDays) {
 		this.stockOutDays = stockOutDays;
+	}
+	public List<StockItemLossesAndAdjustmentsDTO> getLossesAndAdjustments() {
+		return lossesAndAdjustments;
+	}
+	public void setLossesAndAdjustments(List<StockItemLossesAndAdjustmentsDTO> lossesAndAdjustments) {
+		this.lossesAndAdjustments = lossesAndAdjustments;
 	}	
 }
