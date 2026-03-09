@@ -1324,15 +1324,20 @@ public class StockManagementDao extends DaoBase {
     }
 	
 	public List<PartyDTO> getAllParties() {
-		StringBuilder hqlQuery = new StringBuilder(
-		        "SELECT p.uuid as uuid, l.uuid as locationUuid, ss.uuid as stockSourceUuid,"
-		                + " coalesce(l.name, ss.name) as name, ss.acronym as acronym\n"
-		                + " FROM stockmanagement.Party p left join\n" + "   p.location l left join\n"
-		                + "   p.stockSource ss");
-		Query query = getSession().createQuery(hqlQuery.toString());
-		query = query.setResultTransformer(new AliasToBeanResultTransformer(PartyDTO.class));
-		return query.list();
-	}
+        StringBuilder hqlQuery = new StringBuilder(
+                "SELECT p.uuid as uuid, l.uuid as locationUuid, ss.uuid as stockSourceUuid,"
+                        + " coalesce(l.name, ss.name) as name, ss.acronym as acronym "
+                        + " FROM org.openmrs.module.stockmanagement.api.model.Party p "
+                        + " left join p.location l "
+                        + " left join p.stockSource ss "
+                        + " WHERE p.voided = 0 "
+                        + " AND (l is null OR l.retired = 0) "
+                        + " AND (ss is null OR ss.voided = 0)");
+
+        Query query = getSession().createQuery(hqlQuery.toString());
+        query.setResultTransformer(new AliasToBeanResultTransformer(PartyDTO.class));
+        return query.list();
+    }
 	
 	public Map<Integer, String> getPartyNames(List<Integer> partyIds) {
         if (partyIds == null || partyIds.isEmpty()) return new HashMap<>();
