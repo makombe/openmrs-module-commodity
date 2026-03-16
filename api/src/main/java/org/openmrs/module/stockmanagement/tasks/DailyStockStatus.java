@@ -51,20 +51,32 @@ public class DailyStockStatus extends AbstractTask {
 
         List<Map<String, Object>> lineItems = new ArrayList<>();
         for (DailyStockLineItemDTO item : result.getData()) {
+            int soh = item.getStockOnHand() != null ? item.getStockOnHand().intValue() : 0;
+            int recv = item.getQuantityReceived() != null ? item.getQuantityReceived().intValue() : 0;
+            int disp = item.getQuantityDispensed() != null ? item.getQuantityDispensed().intValue() : 0;
+
+            if (soh == 0 && recv == 0 && disp == 0) {
+                continue;
+            }
+
+            // guard against invalid product codes
+            if (item.getProductCode() == null || item.getProductCode().trim().isEmpty()) {
+                log.warn("Skipping item with missing/invalid productCode");
+                continue;
+            }
+
             Map<String, Object> lineItem = new LinkedHashMap<>();
             lineItem.put("productCode", item.getProductCode());
-            lineItem.put("stockOnHand", item.getStockOnHand() != null ? item.getStockOnHand().intValue() : 0);
-            lineItem.put("quantityReceived",
-                    item.getQuantityReceived() != null ? item.getQuantityReceived().intValue() : 0);
-            lineItem.put("quantityDispensed",
-                    item.getQuantityDispensed() != null ? item.getQuantityDispensed().intValue() : 0);
+            lineItem.put("stockOnHand", soh);
+            lineItem.put("quantityReceived", recv);
+            lineItem.put("quantityDispensed", disp);
             lineItem.put("fromFacilityId", "");
-            lineItem.put("notes", (item.getNotes() != null && !item.getNotes().isEmpty())
+            lineItem.put("notes", item.getNotes() != null && !item.getNotes().isEmpty()
                     ? item.getNotes()
                     : "Daily consumption update");
+
             lineItems.add(lineItem);
         }
-
         String hfrCode = getGlobalProperty("kenyaemr.hie.facility.registry.code", "FID-UNKNOWN");
         String program = getGlobalProperty("nlmis.program.code", "PHAR017");
         String sourceApp = getGlobalProperty("nlmis.source.application", "");
@@ -99,7 +111,7 @@ public class DailyStockStatus extends AbstractTask {
         if (statusCode >= 200 && statusCode < 300) {
             log.info("Daily stock status submitted successfully. HTTP {}, Response: {}",
                     statusCode, responseBody);
-        System.out.println("Daily stock status submitted successfully. =================== ");
+            System.out.println("Daily stock status submitted successfully. =================== ");
 
         } else {
             log.error("Daily stock status submission FAILED. HTTP {}, Response: {}",
