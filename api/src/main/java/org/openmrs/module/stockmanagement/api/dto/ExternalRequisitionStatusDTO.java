@@ -14,6 +14,10 @@ public class ExternalRequisitionStatusDTO {
     private Date dateUpdated;
     private String uuid;
     private String operationNumber;
+    private String receiptNumber;
+    private String receiptMessage;
+    private String deliveryStatus;
+    private String podNotificationStatus;
 
     public Integer getMessageId() {
         return messageId;
@@ -93,5 +97,37 @@ public class ExternalRequisitionStatusDTO {
 
     public void setOperationNumber(String operationNumber) {
         this.operationNumber = operationNumber; 
+    }
+
+    public String getReceiptNumber() {
+        return receiptNumber;
+    }
+
+    public void setReceiptNumber(String receiptNumber) {
+        this.receiptNumber = receiptNumber;
+    }
+
+    public String getReceiptMessage() {
+        return receiptMessage;
+    }
+
+    public void setReceiptMessage(String receiptMessage) {
+        this.receiptMessage = receiptMessage;
+    }
+
+    public String getDeliveryStatus() {
+        return deliveryStatus;
+    }
+
+    public void setDeliveryStatus(String deliveryStatus) {
+        this.deliveryStatus = deliveryStatus;
+    }
+
+    public String getPodNotificationStatus() {
+        return podNotificationStatus;
+    }
+
+    public void setPodNotificationStatus(String podNotificationStatus) {
+        this.podNotificationStatus = podNotificationStatus;
     }
 }

@@ -101,6 +101,10 @@ public class ExternalRequisitionStatusResource extends ResourceBase<ExternalRequ
             description.addProperty("dateCreated");
             description.addProperty("dateUpdated");
             description.addProperty("operationNumber");
+            description.addProperty("receiptNumber");
+            description.addProperty("receiptMessage");
+            description.addProperty("deliveryStatus");
+            description.addProperty("podNotificationStatus");
         }
 
         if (rep instanceof DefaultRepresentation) {
@@ -138,6 +142,10 @@ public class ExternalRequisitionStatusResource extends ResourceBase<ExternalRequ
         description.addProperty("source");
         description.addProperty("retired");
         description.addProperty("operationNumber");
+        description.addProperty("receiptNumber");
+        description.addProperty("receiptMessage");
+        description.addProperty("deliveryStatus");
+        description.addProperty("podNotificationStatus");
         return description;
     }
 
@@ -149,6 +157,10 @@ public class ExternalRequisitionStatusResource extends ResourceBase<ExternalRequ
         description.addProperty("source");
         description.addProperty("retired");
         description.addProperty("operationNumber");
+        description.addProperty("receiptNumber");
+        description.addProperty("receiptMessage");
+        description.addProperty("deliveryStatus");
+        description.addProperty("podNotificationStatus");
         return description;
     }
 
@@ -165,7 +177,11 @@ public class ExternalRequisitionStatusResource extends ResourceBase<ExternalRequ
                     .property("retired", new IntegerProperty())
                     .property("dateCreated", new DateTimeProperty())
                     .property("dateUpdated", new DateTimeProperty())
-                    .property("operationNumber", new IntegerProperty());
+                    .property("operationNumber", new IntegerProperty())
+                    .property("receiptNumber", new StringProperty())
+                    .property("receiptMessage", new StringProperty())
+                    .property("deliveryStatus", new StringProperty())
+                    .property("podNotificationStatus", new StringProperty());
         }
 
         if (rep instanceof FullRepresentation) {
@@ -188,7 +204,11 @@ public class ExternalRequisitionStatusResource extends ResourceBase<ExternalRequ
                 .property("status", new StringProperty())
                 .property("source", new StringProperty())
                 .property("retired", new IntegerProperty())
-                .property("operationNumber", new IntegerProperty());
+                .property("operationNumber", new IntegerProperty())
+                .property("receiptNumber", new StringProperty())
+                .property("receiptMessage", new StringProperty())
+                .property("deliveryStatus", new StringProperty())
+                .property("podNotificationStatus", new StringProperty());
     }
 
     @Override

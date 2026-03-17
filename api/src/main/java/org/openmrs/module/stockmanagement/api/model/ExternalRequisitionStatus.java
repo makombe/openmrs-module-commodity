@@ -37,6 +37,19 @@ public class ExternalRequisitionStatus {
     @Column(name = "source", length = 50)
     private String source;
 
+    @Column(name = "receipt_number", length = 100, nullable = true)
+    private String receiptNumber;
+
+    @Lob
+    @Column(name = "receipt_message", columnDefinition = "text", nullable = true)
+    private String receiptMessage;
+
+    @Column(name = "delivery_status", length = 100, nullable = true)
+    private String deliveryStatus;
+
+    @Column(name = "pod_notification_status", length = 100, nullable = true)
+    private String podNotificationStatus;
+
     @Column(name = "date_created")
     private Date dateCreated;
 
@@ -124,5 +137,37 @@ public class ExternalRequisitionStatus {
 
     public void setOperationNumber(String operationNumber) {
         this.operationNumber = operationNumber;
+    }
+
+    public String getReceiptNumber() {
+        return receiptNumber;
+    }
+
+    public void setReceiptNumber(String receiptNumber) {
+        this.receiptNumber = receiptNumber;
+    }
+
+    public String getReceiptMessage() {
+        return receiptMessage;
+    }
+
+    public void setReceiptMessage(String receiptMessage) {
+        this.receiptMessage = receiptMessage;
+    }
+
+    public String getDeliveryStatus() {
+        return deliveryStatus;
+    }
+
+    public void setDeliveryStatus(String deliveryStatus) {
+        this.deliveryStatus = deliveryStatus;
+    }
+
+    public String getPodNotificationStatus() {
+        return podNotificationStatus;
+    }
+
+    public void setPodNotificationStatus(String podNotificationStatus) {
+        this.podNotificationStatus = podNotificationStatus;
     }
 }

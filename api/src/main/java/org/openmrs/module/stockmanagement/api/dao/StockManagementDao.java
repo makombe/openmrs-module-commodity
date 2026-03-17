@@ -31,6 +31,7 @@ import org.openmrs.module.stockmanagement.api.dto.reporting.*;
 import org.openmrs.module.stockmanagement.api.model.*;
 import org.openmrs.module.stockmanagement.api.utils.DateUtil;
 
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -5519,6 +5520,10 @@ public class StockManagementDao extends DaoBase {
             existing.setSource(externalRequisitionStatus.getSource());
             existing.setOperationNumber(externalRequisitionStatus.getOperationNumber());
             existing.setRetired(externalRequisitionStatus.getRetired());
+            existing.setReceiptNumber(externalRequisitionStatus.getReceiptNumber());
+            existing.setReceiptMessage(externalRequisitionStatus.getReceiptMessage());
+            existing.setDeliveryStatus(externalRequisitionStatus.getDeliveryStatus());
+            existing.setPodNotificationStatus(externalRequisitionStatus.getPodNotificationStatus());
             existing.setDateUpdated(new Date());
 
             getSession().update(existing);
@@ -5565,6 +5570,11 @@ public class StockManagementDao extends DaoBase {
             dto.setDateCreated(e.getDateCreated());
             dto.setDateUpdated(e.getDateUpdated());
             dto.setCreator(e.getCreator());
+            dto.setOperationNumber(e.getOperationNumber());
+            dto.setReceiptNumber(e.getReceiptNumber());
+            dto.setReceiptMessage(e.getReceiptMessage());
+            dto.setDeliveryStatus(e.getDeliveryStatus());
+            dto.setPodNotificationStatus(e.getPodNotificationStatus());
             return dto;
         }).collect(Collectors.toList()));
 
