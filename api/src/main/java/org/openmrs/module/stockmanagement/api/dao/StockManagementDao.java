@@ -5515,17 +5515,35 @@ public class StockManagementDao extends DaoBase {
         ExternalRequisitionStatus existing = (ExternalRequisitionStatus) criteria.uniqueResult();
 
         if (existing != null) {
-            existing.setMessage(externalRequisitionStatus.getMessage());
-            existing.setStatus(externalRequisitionStatus.getStatus());
-            existing.setSource(externalRequisitionStatus.getSource());
-            existing.setOperationNumber(externalRequisitionStatus.getOperationNumber());
-            existing.setRetired(externalRequisitionStatus.getRetired());
-            existing.setReceiptNumber(externalRequisitionStatus.getReceiptNumber());
-            existing.setReceiptMessage(externalRequisitionStatus.getReceiptMessage());
-            existing.setDeliveryStatus(externalRequisitionStatus.getDeliveryStatus());
-            existing.setPodNotificationStatus(externalRequisitionStatus.getPodNotificationStatus());
-            existing.setDateUpdated(new Date());
+            if (externalRequisitionStatus.getMessage() != null) {
+                existing.setMessage(externalRequisitionStatus.getMessage());
+            }
+            if (externalRequisitionStatus.getStatus() != null) {
+                existing.setStatus(externalRequisitionStatus.getStatus());
+            }
+            if (externalRequisitionStatus.getSource() != null) {
+                existing.setSource(externalRequisitionStatus.getSource());
+            }
+            if (externalRequisitionStatus.getOperationNumber() != null) {
+                existing.setOperationNumber(externalRequisitionStatus.getOperationNumber());
+            }
+            if (externalRequisitionStatus.getRetired() != null) {
+                existing.setRetired(externalRequisitionStatus.getRetired());
+            }
+            if (externalRequisitionStatus.getReceiptNumber() != null) {
+                existing.setReceiptNumber(externalRequisitionStatus.getReceiptNumber());
+            }
+            if (externalRequisitionStatus.getReceiptMessage() != null) {
+                existing.setReceiptMessage(externalRequisitionStatus.getReceiptMessage());
+            }
+            if (externalRequisitionStatus.getDeliveryStatus() != null) {
+                existing.setDeliveryStatus(externalRequisitionStatus.getDeliveryStatus());
+            }
+            if (externalRequisitionStatus.getPodNotificationStatus() != null) {
+                existing.setPodNotificationStatus(externalRequisitionStatus.getPodNotificationStatus());
+            }
 
+            existing.setDateUpdated(new Date());
             getSession().update(existing);
             return existing;
         }
