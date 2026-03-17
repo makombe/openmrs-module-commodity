@@ -5199,7 +5199,7 @@ CREATE TRIGGER stockmgmt_location_after_delete
     </insert>
 </changeSet>
 
- <changeSet id="stockmanagement-20260227-1600" author="makombe">
+  <changeSet id="stockmanagement-20260227-1600" author="makombe">
         <preConditions onFail="MARK_RAN">
             <not><tableExists tableName="external_requisition_status" /></not>
         </preConditions>
@@ -5222,7 +5222,7 @@ CREATE TRIGGER stockmgmt_location_after_delete
         </createTable>
   </changeSet>
 
-   <changeSet id="stockmanagement-20260305-12220" author="makombe">
+  <changeSet id="stockmanagement-20260305-12220" author="makombe">
     <addNotNullConstraint 
         columnDataType="varchar(38)" 
         columnName="uuid" 
@@ -5314,7 +5314,7 @@ CREATE TRIGGER stockmgmt_location_after_delete
     </sql>
   </changeSet>
 
-    <changeSet id="stockmanagement-20260303-1200" author="makombe">
+  <changeSet id="stockmanagement-20260303-1200" author="makombe">
     <preConditions onFail="MARK_RAN">
       <sqlCheck expectedResult="0">
         SELECT COUNT(*)
@@ -5331,6 +5331,32 @@ CREATE TRIGGER stockmgmt_location_after_delete
       WHERE uuid='92c1e378-e362-4cca-9f74-a25db0d38d19'
     </sql>
   </changeSet>
+
+  <changeSet id="stockmanagement-20260317-1001" author="makombe">
+    <preConditions onFail="MARK_RAN">
+        <tableExists tableName="stockmgmt_external_requisition_status" />
+    </preConditions>
+    <comment>
+        Add receipt and delivery tracking columns to stockmgmt_external_requisition_status table
+    </comment>
+
+    <addColumn tableName="stockmgmt_external_requisition_status">
+        <column name="receipt_number" type="varchar(100)" />
+    </addColumn>
+
+    <addColumn tableName="stockmgmt_external_requisition_status">
+        <column name="receipt_message" type="text" />
+    </addColumn>
+
+    <addColumn tableName="stockmgmt_external_requisition_status">
+        <column name="delivery_status" type="varchar(100)" />
+    </addColumn>
+
+    <addColumn tableName="stockmgmt_external_requisition_status">
+        <column name="pod_notification_status" type="varchar(100)" />
+    </addColumn>
+
+</changeSet>
 
  
 
