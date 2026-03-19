@@ -3744,9 +3744,9 @@ public class StockManagementServiceImpl extends BaseOpenmrsService implements St
     }
 
     @Override
-    public Result<ExternalRequisitionStatusDTO> findExternalRequisitionStatuses(String status, String source,
+    public Result<ExternalRequisitionStatusDTO> findExternalRequisitionStatuses(String status, String source, String receiptNumber,
             boolean includeRetired) {
-        return dao.findExternalRequisitionStatuses(status, source, includeRetired);
+        return dao.findExternalRequisitionStatuses(status, source, receiptNumber, includeRetired);
     }
     @Override
     public Result<StockItemLossesAndAdjustmentsDTO> findStockItemLossesAndAdjustments(StockItemPackagingUOMSearchFilter filter) {
