@@ -29,9 +29,9 @@ import org.openmrs.module.webservices.rest.web.response.ResponseException;
 import java.util.Date;
 import java.util.UUID;
 
-@Resource(name = RestConstants.VERSION_1 + "/" + ModuleConstants.MODULE_ID + "/externalrequisitionstatus",
-        supportedClass = ExternalRequisitionStatus.class,
-        supportedOpenmrsVersions = { "1.9.*", "1.10.*", "1.11.*", "1.12.*", "2.*" })
+@Resource(name = RestConstants.VERSION_1 + "/" + ModuleConstants.MODULE_ID
+        + "/externalrequisitionstatus", supportedClass = ExternalRequisitionStatus.class, supportedOpenmrsVersions = {
+                "1.9.*", "1.10.*", "1.11.*", "1.12.*", "2.*" })
 public class ExternalRequisitionStatusResource extends ResourceBase<ExternalRequisitionStatus> {
 
     @Override
@@ -40,7 +40,8 @@ public class ExternalRequisitionStatusResource extends ResourceBase<ExternalRequ
     }
 
     @Override
-    protected void delete(ExternalRequisitionStatus delegate, String reason, RequestContext context) throws ResponseException {
+    protected void delete(ExternalRequisitionStatus delegate, String reason, RequestContext context)
+            throws ResponseException {
         throw new ResourceDoesNotSupportOperationException();
     }
 
@@ -66,6 +67,9 @@ public class ExternalRequisitionStatusResource extends ResourceBase<ExternalRequ
         if (delegate.getDateCreated() == null) {
             delegate.setDateCreated(new Date());
         }
+        if (delegate.getRetired() == null) {
+            delegate.setRetired(0);
+        }
         if (delegate.getCreator() == null && Context.getAuthenticatedUser() != null) {
             delegate.setCreator(Context.getAuthenticatedUser().getId());
         }
@@ -78,8 +82,9 @@ public class ExternalRequisitionStatusResource extends ResourceBase<ExternalRequ
         // Optional: support filtering by status or source
         String status = context.getParameter("status");
         String source = context.getParameter("source");
-        Result<ExternalRequisitionStatusDTO> result =
-                getStockManagementService().findExternalRequisitionStatuses(status, source, context.getIncludeAll());
+        String receiptNumber = context.getParameter("receiptNumber");
+        Result<ExternalRequisitionStatusDTO> result = getStockManagementService()
+                .findExternalRequisitionStatuses(status, source, receiptNumber, context.getIncludeAll());
         return toAlreadyPaged(result, context);
     }
 
@@ -92,46 +97,30 @@ public class ExternalRequisitionStatusResource extends ResourceBase<ExternalRequ
     public DelegatingResourceDescription getRepresentationDescription(Representation rep) {
         DelegatingResourceDescription description = new DelegatingResourceDescription();
 
-        if (rep instanceof DefaultRepresentation || rep instanceof FullRepresentation) {
-            description.addProperty("uuid");
-            description.addProperty("message");
-            description.addProperty("status");
-            description.addProperty("source");
-            description.addProperty("retired");
-            description.addProperty("dateCreated");
-            description.addProperty("dateUpdated");
-            description.addProperty("operationNumber");
-            description.addProperty("receiptNumber");
-            description.addProperty("receiptMessage");
-            description.addProperty("deliveryStatus");
-            description.addProperty("podNotificationStatus");
-        }
+        description.addProperty("uuid");
+        description.addProperty("message");
+        description.addProperty("status");
+        description.addProperty("source");
+        description.addProperty("retired");
+        description.addProperty("dateCreated");
+        description.addProperty("dateUpdated");
+        description.addProperty("operationNumber");
+        description.addProperty("receiptNumber");
+        description.addProperty("receiptMessage");
+        description.addProperty("deliveryStatus");
+        description.addProperty("podNotificationStatus");
 
         if (rep instanceof DefaultRepresentation) {
             description.addLink("full", ".?v=" + RestConstants.REPRESENTATION_FULL);
         }
 
-        if (rep instanceof FullRepresentation) {
+        if (rep instanceof FullRepresentation) {        description.addProperty("uuid");
+
             description.addProperty("creator");
             description.addSelfLink();
         }
 
-        if (rep instanceof RefRepresentation) {
-            description.addProperty("uuid");
-            description.addProperty("status");
-        }
-
         return description;
-    }
-
-    @PropertyGetter("message")
-    public String getMessage(ExternalRequisitionStatus instance) {
-        return instance.getMessage();
-    }
-
-    @PropertySetter("message")
-    public void setMessage(ExternalRequisitionStatus instance, String message) {
-        instance.setMessage(message);
     }
 
     @Override

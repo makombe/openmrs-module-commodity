@@ -575,7 +575,7 @@ public interface StockManagementService extends OpenmrsService {
 	ExternalRequisitionStatus saveExternalRequisitionStatus(ExternalRequisitionStatus delegate);
 
 	// Search (used by GET with query params ?status=X&source=Y)
-	Result<ExternalRequisitionStatusDTO> findExternalRequisitionStatuses(String status, String source,
+	Result<ExternalRequisitionStatusDTO> findExternalRequisitionStatuses(String status, String source, String receiptNumber,
 			boolean includeRetired);
 	@Transactional(readOnly = true)
 	@Authorized(Privileges.APP_STOCKMANAGEMENT_STOCKITEMS)

@@ -31,7 +31,6 @@ import org.openmrs.module.stockmanagement.api.dto.reporting.*;
 import org.openmrs.module.stockmanagement.api.model.*;
 import org.openmrs.module.stockmanagement.api.utils.DateUtil;
 
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -41,213 +40,223 @@ import java.util.stream.Collectors;
 
 @SuppressWarnings({ "unchecked" })
 public class StockManagementDao extends DaoBase {
-	
-	public List<LocationTree> getCompleteLocationTree() {
-		Criteria criteria = getSession().createCriteria(LocationTree.class);
-		return criteria.list();
-	}
-	
-	public void deleteLocation(Integer locationId) {
-		
-		DbSession session = getSession();
-		Query query = session.createQuery("DELETE FROM Location WHERE locationId = :p");
-		query.setParameter("p", locationId);
-		query.executeUpdate();
-	}
-	
-	public void deleteLocationAttributes(List<Integer> locationAttributeIds) {
-		
-		DbSession session = getSession();
-		Query query = session.createQuery("DELETE FROM LocationAttribute WHERE locationAttributeId in (:p)");
-		query.setParameterList("p", locationAttributeIds);
-		query.executeUpdate();
-	}
-	
-	public void deleteLocationTreeNodes(Integer locationId) {
-		
-		DbSession session = getSession();
-		Query query = session
-		        .createQuery("DELETE FROM stockmanagement.LocationTree WHERE parentLocationId = :p or childLocationId = :p");
-		query.setParameter("p", locationId);
-		query.executeUpdate();
-	}
-	
-	public void deleteLocationTreeNodes(List<LocationTree> nodes) {
+
+    public List<LocationTree> getCompleteLocationTree() {
+        Criteria criteria = getSession().createCriteria(LocationTree.class);
+        return criteria.list();
+    }
+
+    public void deleteLocation(Integer locationId) {
+
+        DbSession session = getSession();
+        Query query = session.createQuery("DELETE FROM Location WHERE locationId = :p");
+        query.setParameter("p", locationId);
+        query.executeUpdate();
+    }
+
+    public void deleteLocationAttributes(List<Integer> locationAttributeIds) {
+
+        DbSession session = getSession();
+        Query query = session.createQuery("DELETE FROM LocationAttribute WHERE locationAttributeId in (:p)");
+        query.setParameterList("p", locationAttributeIds);
+        query.executeUpdate();
+    }
+
+    public void deleteLocationTreeNodes(Integer locationId) {
+
+        DbSession session = getSession();
+        Query query = session
+                .createQuery(
+                        "DELETE FROM stockmanagement.LocationTree WHERE parentLocationId = :p or childLocationId = :p");
+        query.setParameter("p", locationId);
+        query.executeUpdate();
+    }
+
+    public void deleteLocationTreeNodes(List<LocationTree> nodes) {
 
         DbSession session = getSession();
         Query query = session.createQuery("DELETE FROM stockmanagement.LocationTree l WHERE l.id in (:p)");
         query.setParameterList("p", nodes.stream().map(p -> p.getId()).collect(Collectors.toList()));
         query.executeUpdate();
     }
-	
-	public void saveLocationTreeNodes(List<LocationTree> nodes) {
-		DbSession session = getSession();
-		for (LocationTree locationTree : nodes) {
-			session.save(locationTree);
-		}
-	}
-	
-	public List<LocationTree> getCompleteLocationTree(Integer atLocationId) {
-		Criteria criteria = getSession().createCriteria(LocationTree.class);
-		criteria.add(Restrictions.eq("parentLocationId", atLocationId));
-		return criteria.list();
-	}
-	
-	public UserRoleScopeLocation getUserRoleScopeLocationByUuid(String uuid) {
-		return (UserRoleScopeLocation) getSession().createCriteria(UserRoleScopeLocation.class)
-		        .add(Restrictions.eq("uuid", uuid)).uniqueResult();
-	}
-	
-	public UserRoleScopeLocation saveUserRoleScopeLocation(UserRoleScopeLocation userRoleScopeLocation) {
-		getSession().saveOrUpdate(userRoleScopeLocation);
-		return userRoleScopeLocation;
-	}
-	
-	public StockItemTransaction getStockItemTransactionByUuid(String uuid) {
-		return (StockItemTransaction) getSession().createCriteria(StockItemTransaction.class)
-		        .add(Restrictions.eq("uuid", uuid)).uniqueResult();
-	}
-	
-	public StockItemTransaction saveStockItemTransaction(StockItemTransaction stockItemTransaction) {
-		getSession().saveOrUpdate(stockItemTransaction);
-		return stockItemTransaction;
-	}
-	
-	public StockRule getStockRuleByUuid(String uuid) {
-		return (StockRule) getSession().createCriteria(StockRule.class).add(Restrictions.eq("uuid", uuid)).uniqueResult();
-	}
-	
-	public StockRule saveStockRule(StockRule stockRule) {
-		getSession().saveOrUpdate(stockRule);
-		return stockRule;
-	}
-	
-	public StockOperation getStockOperationByUuid(String uuid) {
-		return (StockOperation) getSession().createCriteria(StockOperation.class).add(Restrictions.eq("uuid", uuid))
-		        .uniqueResult();
-	}
-	
-	public StockOperation saveStockOperation(StockOperation stockOperation) {
-		getSession().saveOrUpdate(stockOperation);
-		return stockOperation;
-	}
-	
-	public StockItemPackagingUOM getStockItemPackagingUOMByUuid(String uuid) {
-		return (StockItemPackagingUOM) getSession().createCriteria(StockItemPackagingUOM.class)
-		        .add(Restrictions.eq("uuid", uuid)).uniqueResult();
-	}
-	
-	public StockItemPackagingUOM saveStockItemPackagingUOM(StockItemPackagingUOM stockItemPackagingUOM) {
-		getSession().saveOrUpdate(stockItemPackagingUOM);
-		return stockItemPackagingUOM;
-	}
-	
-	public UserRoleScopeOperationType getUserRoleScopeOperationTypeByUuid(String uuid) {
-		return (UserRoleScopeOperationType) getSession().createCriteria(UserRoleScopeOperationType.class)
-		        .add(Restrictions.eq("uuid", uuid)).uniqueResult();
-	}
-	
-	public UserRoleScopeOperationType saveUserRoleScopeOperationType(UserRoleScopeOperationType userRoleScopeOperationType) {
-		getSession().saveOrUpdate(userRoleScopeOperationType);
-		return userRoleScopeOperationType;
-	}
-	
-	public UserRoleScope getUserRoleScopeByUuid(String uuid) {
-		return (UserRoleScope) getSession().createCriteria(UserRoleScope.class).add(Restrictions.eq("uuid", uuid))
-		        .uniqueResult();
-	}
-	
-	public UserRoleScope saveUserRoleScope(UserRoleScope userRoleScope) {
-		getSession().saveOrUpdate(userRoleScope);
-		return userRoleScope;
-	}
-	
-	public StockOperationItem getStockOperationItemByUuid(String uuid) {
-		return (StockOperationItem) getSession().createCriteria(StockOperationItem.class).add(Restrictions.eq("uuid", uuid))
-		        .uniqueResult();
-	}
-	
-	public List<StockOperationItem> getStockOperationItemsByStockOperation(Integer stockOperationId) {
-		return getSession().createCriteria(StockOperationItem.class)
-		        .add(Restrictions.eq("stockOperation.id", stockOperationId)).add(Restrictions.eq("voided", false)).list();
-	}
-	
-	public StockOperationItem saveStockOperationItem(StockOperationItem stockOperationItem) {
-		getSession().saveOrUpdate(stockOperationItem);
-		return stockOperationItem;
-	}
-	
-	public LocationTree getLocationTreeByUuid(String uuid) {
-		return (LocationTree) getSession().createCriteria(LocationTree.class).add(Restrictions.eq("uuid", uuid))
-		        .uniqueResult();
-	}
-	
-	public LocationTree saveLocationTree(LocationTree locationTree) {
-		getSession().saveOrUpdate(locationTree);
-		return locationTree;
-	}
-	
-	public StockBatch getStockBatchByUuid(String uuid) {
-		return (StockBatch) getSession().createCriteria(StockBatch.class).add(Restrictions.eq("uuid", uuid)).uniqueResult();
-	}
-	
-	public StockBatch saveStockBatch(StockBatch stockBatch) {
-		getSession().saveOrUpdate(stockBatch);
-		return stockBatch;
-	}
-	
-	public StockItem getStockItemByUuid(String uuid) {
-		return (StockItem) getSession().createCriteria(StockItem.class).add(Restrictions.eq("uuid", uuid)).uniqueResult();
-	}
-	
-	public List<StockItem> getStockItemsByUuids(List<String> uuids) {
-        if (uuids.isEmpty()) return new ArrayList<>();
-        return getSession().createCriteria(StockItem.class).add(Restrictions.in("uuid", uuids)).add(Restrictions.eq("voided", false)).list();
+
+    public void saveLocationTreeNodes(List<LocationTree> nodes) {
+        DbSession session = getSession();
+        for (LocationTree locationTree : nodes) {
+            session.save(locationTree);
+        }
     }
-	
-	public StockItem saveStockItem(StockItem stockItem) {
-		getSession().saveOrUpdate(stockItem);
-		return stockItem;
-	}
-	
-	public StockOperationType getStockOperationTypeByUuid(String uuid) {
-		return (StockOperationType) getSession().createCriteria(StockOperationType.class).add(Restrictions.eq("uuid", uuid))
-		        .uniqueResult();
-	}
-	
-	public StockOperationType getStockOperationTypeByType(String type) {
-		return (StockOperationType) getSession().createCriteria(StockOperationType.class)
-		        .add(Restrictions.eq("operationType", type)).uniqueResult();
-	}
-	
-	public List<StockOperationType> getAllStockOperationTypes(boolean includeVoid) {
-		Criteria criteria = getSession().createCriteria(StockOperationType.class);
-		if (!includeVoid)
-			criteria.add(Restrictions.eq("voided", false));
-		return criteria.list();
-	}
-	
-	public StockOperationType saveStockOperationType(StockOperationType stockOperationType) {
-		getSession().saveOrUpdate(stockOperationType);
-		return stockOperationType;
-	}
-	
-	public StockOperationTypeLocationScope getStockOperationTypeLocationScopeByUuid(String uuid) {
-		return (StockOperationTypeLocationScope) getSession().createCriteria(StockOperationTypeLocationScope.class)
-		        .add(Restrictions.eq("uuid", uuid)).uniqueResult();
-	}
-	
-	public StockOperationTypeLocationScope saveStockOperationTypeLocationScope(
-	        StockOperationTypeLocationScope stockOperationTypeLocationScope) {
-		getSession().saveOrUpdate(stockOperationTypeLocationScope);
-		return stockOperationTypeLocationScope;
-	}
-	
-	private boolean isNotNullOrEmpty(String value) {
-		return value != null && !value.isEmpty();
-	}
-	
-	public Result<UserRoleScope> findUserRoleScopes(UserRoleScopeSearchFilter filter) {
+
+    public List<LocationTree> getCompleteLocationTree(Integer atLocationId) {
+        Criteria criteria = getSession().createCriteria(LocationTree.class);
+        criteria.add(Restrictions.eq("parentLocationId", atLocationId));
+        return criteria.list();
+    }
+
+    public UserRoleScopeLocation getUserRoleScopeLocationByUuid(String uuid) {
+        return (UserRoleScopeLocation) getSession().createCriteria(UserRoleScopeLocation.class)
+                .add(Restrictions.eq("uuid", uuid)).uniqueResult();
+    }
+
+    public UserRoleScopeLocation saveUserRoleScopeLocation(UserRoleScopeLocation userRoleScopeLocation) {
+        getSession().saveOrUpdate(userRoleScopeLocation);
+        return userRoleScopeLocation;
+    }
+
+    public StockItemTransaction getStockItemTransactionByUuid(String uuid) {
+        return (StockItemTransaction) getSession().createCriteria(StockItemTransaction.class)
+                .add(Restrictions.eq("uuid", uuid)).uniqueResult();
+    }
+
+    public StockItemTransaction saveStockItemTransaction(StockItemTransaction stockItemTransaction) {
+        getSession().saveOrUpdate(stockItemTransaction);
+        return stockItemTransaction;
+    }
+
+    public StockRule getStockRuleByUuid(String uuid) {
+        return (StockRule) getSession().createCriteria(StockRule.class).add(Restrictions.eq("uuid", uuid))
+                .uniqueResult();
+    }
+
+    public StockRule saveStockRule(StockRule stockRule) {
+        getSession().saveOrUpdate(stockRule);
+        return stockRule;
+    }
+
+    public StockOperation getStockOperationByUuid(String uuid) {
+        return (StockOperation) getSession().createCriteria(StockOperation.class).add(Restrictions.eq("uuid", uuid))
+                .uniqueResult();
+    }
+
+    public StockOperation saveStockOperation(StockOperation stockOperation) {
+        getSession().saveOrUpdate(stockOperation);
+        return stockOperation;
+    }
+
+    public StockItemPackagingUOM getStockItemPackagingUOMByUuid(String uuid) {
+        return (StockItemPackagingUOM) getSession().createCriteria(StockItemPackagingUOM.class)
+                .add(Restrictions.eq("uuid", uuid)).uniqueResult();
+    }
+
+    public StockItemPackagingUOM saveStockItemPackagingUOM(StockItemPackagingUOM stockItemPackagingUOM) {
+        getSession().saveOrUpdate(stockItemPackagingUOM);
+        return stockItemPackagingUOM;
+    }
+
+    public UserRoleScopeOperationType getUserRoleScopeOperationTypeByUuid(String uuid) {
+        return (UserRoleScopeOperationType) getSession().createCriteria(UserRoleScopeOperationType.class)
+                .add(Restrictions.eq("uuid", uuid)).uniqueResult();
+    }
+
+    public UserRoleScopeOperationType saveUserRoleScopeOperationType(
+            UserRoleScopeOperationType userRoleScopeOperationType) {
+        getSession().saveOrUpdate(userRoleScopeOperationType);
+        return userRoleScopeOperationType;
+    }
+
+    public UserRoleScope getUserRoleScopeByUuid(String uuid) {
+        return (UserRoleScope) getSession().createCriteria(UserRoleScope.class).add(Restrictions.eq("uuid", uuid))
+                .uniqueResult();
+    }
+
+    public UserRoleScope saveUserRoleScope(UserRoleScope userRoleScope) {
+        getSession().saveOrUpdate(userRoleScope);
+        return userRoleScope;
+    }
+
+    public StockOperationItem getStockOperationItemByUuid(String uuid) {
+        return (StockOperationItem) getSession().createCriteria(StockOperationItem.class)
+                .add(Restrictions.eq("uuid", uuid))
+                .uniqueResult();
+    }
+
+    public List<StockOperationItem> getStockOperationItemsByStockOperation(Integer stockOperationId) {
+        return getSession().createCriteria(StockOperationItem.class)
+                .add(Restrictions.eq("stockOperation.id", stockOperationId)).add(Restrictions.eq("voided", false))
+                .list();
+    }
+
+    public StockOperationItem saveStockOperationItem(StockOperationItem stockOperationItem) {
+        getSession().saveOrUpdate(stockOperationItem);
+        return stockOperationItem;
+    }
+
+    public LocationTree getLocationTreeByUuid(String uuid) {
+        return (LocationTree) getSession().createCriteria(LocationTree.class).add(Restrictions.eq("uuid", uuid))
+                .uniqueResult();
+    }
+
+    public LocationTree saveLocationTree(LocationTree locationTree) {
+        getSession().saveOrUpdate(locationTree);
+        return locationTree;
+    }
+
+    public StockBatch getStockBatchByUuid(String uuid) {
+        return (StockBatch) getSession().createCriteria(StockBatch.class).add(Restrictions.eq("uuid", uuid))
+                .uniqueResult();
+    }
+
+    public StockBatch saveStockBatch(StockBatch stockBatch) {
+        getSession().saveOrUpdate(stockBatch);
+        return stockBatch;
+    }
+
+    public StockItem getStockItemByUuid(String uuid) {
+        return (StockItem) getSession().createCriteria(StockItem.class).add(Restrictions.eq("uuid", uuid))
+                .uniqueResult();
+    }
+
+    public List<StockItem> getStockItemsByUuids(List<String> uuids) {
+        if (uuids.isEmpty())
+            return new ArrayList<>();
+        return getSession().createCriteria(StockItem.class).add(Restrictions.in("uuid", uuids))
+                .add(Restrictions.eq("voided", false)).list();
+    }
+
+    public StockItem saveStockItem(StockItem stockItem) {
+        getSession().saveOrUpdate(stockItem);
+        return stockItem;
+    }
+
+    public StockOperationType getStockOperationTypeByUuid(String uuid) {
+        return (StockOperationType) getSession().createCriteria(StockOperationType.class)
+                .add(Restrictions.eq("uuid", uuid))
+                .uniqueResult();
+    }
+
+    public StockOperationType getStockOperationTypeByType(String type) {
+        return (StockOperationType) getSession().createCriteria(StockOperationType.class)
+                .add(Restrictions.eq("operationType", type)).uniqueResult();
+    }
+
+    public List<StockOperationType> getAllStockOperationTypes(boolean includeVoid) {
+        Criteria criteria = getSession().createCriteria(StockOperationType.class);
+        if (!includeVoid)
+            criteria.add(Restrictions.eq("voided", false));
+        return criteria.list();
+    }
+
+    public StockOperationType saveStockOperationType(StockOperationType stockOperationType) {
+        getSession().saveOrUpdate(stockOperationType);
+        return stockOperationType;
+    }
+
+    public StockOperationTypeLocationScope getStockOperationTypeLocationScopeByUuid(String uuid) {
+        return (StockOperationTypeLocationScope) getSession().createCriteria(StockOperationTypeLocationScope.class)
+                .add(Restrictions.eq("uuid", uuid)).uniqueResult();
+    }
+
+    public StockOperationTypeLocationScope saveStockOperationTypeLocationScope(
+            StockOperationTypeLocationScope stockOperationTypeLocationScope) {
+        getSession().saveOrUpdate(stockOperationTypeLocationScope);
+        return stockOperationTypeLocationScope;
+    }
+
+    private boolean isNotNullOrEmpty(String value) {
+        return value != null && !value.isEmpty();
+    }
+
+    public Result<UserRoleScope> findUserRoleScopes(UserRoleScopeSearchFilter filter) {
         DbSession dbSession = getSession();
         Criteria criteria = dbSession.createCriteria(UserRoleScope.class, "urs");
         if (isNotNullOrEmpty(filter.getUuid())) {
@@ -281,8 +290,8 @@ public class StockManagementDao extends DaoBase {
         result.setData(executeCriteria(criteria, result, Order.desc("urs.dateCreated")));
         return result;
     }
-	
-	public Result<UserRoleScopeLocation> findUserRoleScopeLocations(UserRoleScopeLocationSearchFilter filter) {
+
+    public Result<UserRoleScopeLocation> findUserRoleScopeLocations(UserRoleScopeLocationSearchFilter filter) {
         Criteria criteria = getSession().createCriteria(UserRoleScopeLocation.class);
         if (isNotNullOrEmpty(filter.getUuid())) {
             criteria.add(Restrictions.eq("uuid", filter.getUuid()));
@@ -304,8 +313,9 @@ public class StockManagementDao extends DaoBase {
         result.setData(executeCriteria(criteria, result, Order.desc("dateCreated")));
         return result;
     }
-	
-	public Result<UserRoleScopeOperationType> findUserRoleScopeOperationTypeFilters(UserRoleScopeOperationTypeSearchFilter filter) {
+
+    public Result<UserRoleScopeOperationType> findUserRoleScopeOperationTypeFilters(
+            UserRoleScopeOperationTypeSearchFilter filter) {
         Criteria criteria = getSession().createCriteria(UserRoleScopeOperationType.class);
         if (isNotNullOrEmpty(filter.getUuid())) {
             criteria.add(Restrictions.eq("uuid", filter.getUuid()));
@@ -327,109 +337,116 @@ public class StockManagementDao extends DaoBase {
         result.setData(executeCriteria(criteria, result, Order.desc("dateCreated")));
         return result;
     }
-	
-	public List<StockOperationType> getAllStockOperationTypes() {
-		return getSession().createCriteria(StockOperationType.class).list();
-	}
-	
-	public List<StockOperationTypeLocationScope> getAllStockOperationTypeLocationScopes() {
-		return getSession().createCriteria(StockOperationTypeLocationScope.class).list();
-	}
-	
-	public void voidUserRoleScopes(List<String> userRoleScopeIds, String reason, int voidedBy) {
-		DbSession session = getSession();
-		Query query = session
-		        .createQuery("UPDATE stockmanagement.UserRoleScope SET voided=1, dateVoided=:dateVoided, voidedBy=:voidedBy, voidReason=:reason WHERE uuid in (:uuidList)");
-		query.setParameterList("uuidList", userRoleScopeIds);
-		query.setDate("dateVoided", new Date());
-		query.setInteger("voidedBy", voidedBy);
-		query.setString("reason", reason);
-		query.executeUpdate();
-	}
-	
-	public void voidUserRoleScopeLocations(List<String> userRoleScopeLocationIds, String reason, int voidedBy) {
-		DbSession session = getSession();
-		Query query = session
-		        .createQuery("UPDATE stockmanagement.UserRoleScopeLocation SET voided=1, dateVoided=:dateVoided, voidedBy=:voidedBy, voidReason=:reason WHERE uuid in (:uuidList)");
-		query.setParameterList("uuidList", userRoleScopeLocationIds);
-		query.setDate("dateVoided", new Date());
-		query.setInteger("voidedBy", voidedBy);
-		query.setString("reason", reason);
-		query.executeUpdate();
-	}
-	
-	public void voidUserRoleScopeOperationTypes(List<String> userRoleScopeOperationTypeIds, String reason, int voidedBy) {
-		DbSession session = getSession();
-		Query query = session
-		        .createQuery("UPDATE stockmanagement.UserRoleScopeOperationType SET voided=1, dateVoided=:dateVoided, voidedBy=:voidedBy, voidReason=:reason WHERE uuid in (:uuidList)");
-		query.setParameterList("uuidList", userRoleScopeOperationTypeIds);
-		query.setDate("dateVoided", new Date());
-		query.setInteger("voidedBy", voidedBy);
-		query.setString("reason", reason);
-		query.executeUpdate();
-	}
-	
-	private StringBuilder newStockCommonNameQuery(List<String> tokenizedName, String escapedName, boolean searchKeywords) {
-		StringBuilder query = new StringBuilder();
-		query.append("(");
-		if (searchKeywords) {
-			query.append(" commonName:(\"" + escapedName + "\")^0.7");
-			if (!tokenizedName.isEmpty()) {
-				query.append(" OR (");
-				Iterator var5 = tokenizedName.iterator();
-				
-				while (var5.hasNext()) {
-					String token = (String) var5.next();
-					query.append(" (commonName:(");
-					query.append(token);
-					query.append(")^0.6 OR commonName:(");
-					query.append(token);
-					query.append("*)^0.3 OR commonName:(");
-					query.append(token);
-					query.append("~0.8)^0.1)");
-				}
-				
-				query.append(")^0.3");
-			}
-		} else {
-			query.append(" commonName:\"" + escapedName + "\"");
-		}
-		
-		query.append(")");
-		return query;
-	}
-	
-	protected LuceneQuery<StockItem> newStockItemQuery(String itemName, Boolean isDrugSearch, boolean includeAll) {
-		if (StringUtils.isBlank(itemName)) {
-			return null;
-		}
-		StringBuilder query = new StringBuilder();
-		String drugsQuery = LuceneQuery.escapeQuery(itemName);
-		List tokenizedName = Arrays.asList(drugsQuery.trim().split("\\+"));
-		query.append("((");
-		query.append(this.newStockCommonNameQuery(tokenizedName, drugsQuery, true));
-		query.append(")^0.3 OR acronym:(\"").append(drugsQuery).append("\")^0.6)");
-		if (isDrugSearch != null) {
-			query.append(" AND isDrug:");
-			if (isDrugSearch) {
-				query.append("true");
-			} else {
-				query.append("false");
-			}
-		}
-		
-		Class stockItemClass = StockItem.class;
-		Session session = getCurrentHibernateSession();
-		LuceneQuery<StockItem> itemsQuery = LuceneQuery.newQuery(stockItemClass, session, query.toString());
-		if (!includeAll) {
-			itemsQuery.include("voided", Boolean.valueOf(false));
-		}
-		return itemsQuery;
-	}
-	
-	public List<Integer> searchStockItemCommonName(String text, Boolean isDrugSearch, boolean includeAll, int maxItems) {
+
+    public List<StockOperationType> getAllStockOperationTypes() {
+        return getSession().createCriteria(StockOperationType.class).list();
+    }
+
+    public List<StockOperationTypeLocationScope> getAllStockOperationTypeLocationScopes() {
+        return getSession().createCriteria(StockOperationTypeLocationScope.class).list();
+    }
+
+    public void voidUserRoleScopes(List<String> userRoleScopeIds, String reason, int voidedBy) {
+        DbSession session = getSession();
+        Query query = session
+                .createQuery(
+                        "UPDATE stockmanagement.UserRoleScope SET voided=1, dateVoided=:dateVoided, voidedBy=:voidedBy, voidReason=:reason WHERE uuid in (:uuidList)");
+        query.setParameterList("uuidList", userRoleScopeIds);
+        query.setDate("dateVoided", new Date());
+        query.setInteger("voidedBy", voidedBy);
+        query.setString("reason", reason);
+        query.executeUpdate();
+    }
+
+    public void voidUserRoleScopeLocations(List<String> userRoleScopeLocationIds, String reason, int voidedBy) {
+        DbSession session = getSession();
+        Query query = session
+                .createQuery(
+                        "UPDATE stockmanagement.UserRoleScopeLocation SET voided=1, dateVoided=:dateVoided, voidedBy=:voidedBy, voidReason=:reason WHERE uuid in (:uuidList)");
+        query.setParameterList("uuidList", userRoleScopeLocationIds);
+        query.setDate("dateVoided", new Date());
+        query.setInteger("voidedBy", voidedBy);
+        query.setString("reason", reason);
+        query.executeUpdate();
+    }
+
+    public void voidUserRoleScopeOperationTypes(List<String> userRoleScopeOperationTypeIds, String reason,
+            int voidedBy) {
+        DbSession session = getSession();
+        Query query = session
+                .createQuery(
+                        "UPDATE stockmanagement.UserRoleScopeOperationType SET voided=1, dateVoided=:dateVoided, voidedBy=:voidedBy, voidReason=:reason WHERE uuid in (:uuidList)");
+        query.setParameterList("uuidList", userRoleScopeOperationTypeIds);
+        query.setDate("dateVoided", new Date());
+        query.setInteger("voidedBy", voidedBy);
+        query.setString("reason", reason);
+        query.executeUpdate();
+    }
+
+    private StringBuilder newStockCommonNameQuery(List<String> tokenizedName, String escapedName,
+            boolean searchKeywords) {
+        StringBuilder query = new StringBuilder();
+        query.append("(");
+        if (searchKeywords) {
+            query.append(" commonName:(\"" + escapedName + "\")^0.7");
+            if (!tokenizedName.isEmpty()) {
+                query.append(" OR (");
+                Iterator var5 = tokenizedName.iterator();
+
+                while (var5.hasNext()) {
+                    String token = (String) var5.next();
+                    query.append(" (commonName:(");
+                    query.append(token);
+                    query.append(")^0.6 OR commonName:(");
+                    query.append(token);
+                    query.append("*)^0.3 OR commonName:(");
+                    query.append(token);
+                    query.append("~0.8)^0.1)");
+                }
+
+                query.append(")^0.3");
+            }
+        } else {
+            query.append(" commonName:\"" + escapedName + "\"");
+        }
+
+        query.append(")");
+        return query;
+    }
+
+    protected LuceneQuery<StockItem> newStockItemQuery(String itemName, Boolean isDrugSearch, boolean includeAll) {
+        if (StringUtils.isBlank(itemName)) {
+            return null;
+        }
+        StringBuilder query = new StringBuilder();
+        String drugsQuery = LuceneQuery.escapeQuery(itemName);
+        List tokenizedName = Arrays.asList(drugsQuery.trim().split("\\+"));
+        query.append("((");
+        query.append(this.newStockCommonNameQuery(tokenizedName, drugsQuery, true));
+        query.append(")^0.3 OR acronym:(\"").append(drugsQuery).append("\")^0.6)");
+        if (isDrugSearch != null) {
+            query.append(" AND isDrug:");
+            if (isDrugSearch) {
+                query.append("true");
+            } else {
+                query.append("false");
+            }
+        }
+
+        Class stockItemClass = StockItem.class;
+        Session session = getCurrentHibernateSession();
+        LuceneQuery<StockItem> itemsQuery = LuceneQuery.newQuery(stockItemClass, session, query.toString());
+        if (!includeAll) {
+            itemsQuery.include("voided", Boolean.valueOf(false));
+        }
+        return itemsQuery;
+    }
+
+    public List<Integer> searchStockItemCommonName(String text, Boolean isDrugSearch, boolean includeAll,
+            int maxItems) {
         LuceneQuery commonNameAcronyQuery = this.newStockItemQuery(text, isDrugSearch, includeAll);
-        if (commonNameAcronyQuery == null) return new ArrayList<>();
+        if (commonNameAcronyQuery == null)
+            return new ArrayList<>();
         List stockItemIds = commonNameAcronyQuery.listProjection("id");
         if (!stockItemIds.isEmpty()) {
             CollectionUtils.transform(stockItemIds, new Transformer() {
@@ -443,8 +460,8 @@ public class StockManagementDao extends DaoBase {
         }
         return new ArrayList<>();
     }
-	
-	public Result<StockItemDTO> findStockItems(StockItemSearchFilter filter) {
+
+    public Result<StockItemDTO> findStockItems(StockItemSearchFilter filter) {
         HashMap<String, Object> parameterList = new HashMap<>();
         HashMap<String, Collection> parameterWithList = new HashMap<>();
         StringBuilder hqlQuery = new StringBuilder("select si.uuid as uuid, si.id as id,\n" +
@@ -526,21 +543,26 @@ public class StockManagementDao extends DaoBase {
 
         boolean appledDrugConceptsSearch = false;
         if (filter.getSearchEitherDrugsOrConcepts()) {
-            if (filter.getDrugs() != null && !filter.getDrugs().isEmpty() && filter.getConcepts() != null && !filter.getConcepts().isEmpty()) {
+            if (filter.getDrugs() != null && !filter.getDrugs().isEmpty() && filter.getConcepts() != null
+                    && !filter.getConcepts().isEmpty()) {
                 appledDrugConceptsSearch = true;
                 appendORFilter(itemFilter, "si.drug.drugId in (:drugIds) or si.concept.conceptId in (:conceptIds)");
-                parameterWithList.putIfAbsent("drugIds", filter.getDrugs().stream().map(p -> p.getId()).collect(Collectors.toList()));
-                parameterWithList.putIfAbsent("conceptIds", filter.getConcepts().stream().map(p -> p.getConceptId()).collect(Collectors.toList()));
+                parameterWithList.putIfAbsent("drugIds",
+                        filter.getDrugs().stream().map(p -> p.getId()).collect(Collectors.toList()));
+                parameterWithList.putIfAbsent("conceptIds",
+                        filter.getConcepts().stream().map(p -> p.getConceptId()).collect(Collectors.toList()));
             }
         }
         if (!appledDrugConceptsSearch) {
             if (filter.getDrugs() != null && !filter.getDrugs().isEmpty()) {
                 appendORFilter(itemFilter, "si.drug.drugId in (:drugIds)");
-                parameterWithList.putIfAbsent("drugIds", filter.getDrugs().stream().map(p -> p.getId()).collect(Collectors.toList()));
+                parameterWithList.putIfAbsent("drugIds",
+                        filter.getDrugs().stream().map(p -> p.getId()).collect(Collectors.toList()));
             }
             if (filter.getConcepts() != null && !filter.getConcepts().isEmpty()) {
                 appendORFilter(itemFilter, "si.concept.conceptId in (:conceptIds)");
-                parameterWithList.putIfAbsent("conceptIds", filter.getConcepts().stream().map(p -> p.getConceptId()).collect(Collectors.toList()));
+                parameterWithList.putIfAbsent("conceptIds",
+                        filter.getConcepts().stream().map(p -> p.getConceptId()).collect(Collectors.toList()));
             }
         }
         if (!StringUtils.isBlank(filter.getEtcdProductId())) {
@@ -590,7 +612,8 @@ public class StockManagementDao extends DaoBase {
             result.setPageIndex(filter.getStartIndex());
             result.setPageSize(filter.getLimit());
         }
-        result.setData(executeQuery(StockItemDTO.class, hqlQuery, result, " order by si.id asc", parameterList, parameterWithList));
+        result.setData(executeQuery(StockItemDTO.class, hqlQuery, result, " order by si.id asc", parameterList,
+                parameterWithList));
 
         if (!result.getData().isEmpty()) {
             List<Integer> conceptNamesToFetch = result.getData()
@@ -602,37 +625,51 @@ public class StockManagementDao extends DaoBase {
                             p.getDispensingUnitPackagingConceptId(),
                             p.getDefaultStockOperationsConceptId(),
                             p.getReorderLevelConceptId(),
-                            p.getCategoryId()
-                    )).flatMap(Collection::stream)
+                            p.getCategoryId()))
+                    .flatMap(Collection::stream)
                     .filter(p -> p != null).distinct().collect(Collectors.toList());
             if (!conceptNamesToFetch.isEmpty()) {
-                Map<Integer, List<ConceptNameDTO>> conceptNameDTOs = getConceptNamesByConceptIds(conceptNamesToFetch).stream().collect(Collectors.groupingBy(ConceptNameDTO::getConceptId));
+                Map<Integer, List<ConceptNameDTO>> conceptNameDTOs = getConceptNamesByConceptIds(conceptNamesToFetch)
+                        .stream().collect(Collectors.groupingBy(ConceptNameDTO::getConceptId));
                 for (StockItemDTO stockItemDTO : result.getData()) {
-                    if (stockItemDTO.getConceptId() != null && conceptNameDTOs.containsKey(stockItemDTO.getConceptId())) {
+                    if (stockItemDTO.getConceptId() != null
+                            && conceptNameDTOs.containsKey(stockItemDTO.getConceptId())) {
                         stockItemDTO.setConceptName(conceptNameDTOs.get(stockItemDTO.getConceptId()).get(0).getName());
                     }
 
-                    if (stockItemDTO.getDispensingUnitId() != null && conceptNameDTOs.containsKey(stockItemDTO.getDispensingUnitId())) {
-                        stockItemDTO.setDispensingUnitName(conceptNameDTOs.get(stockItemDTO.getDispensingUnitId()).get(0).getName());
+                    if (stockItemDTO.getDispensingUnitId() != null
+                            && conceptNameDTOs.containsKey(stockItemDTO.getDispensingUnitId())) {
+                        stockItemDTO.setDispensingUnitName(
+                                conceptNameDTOs.get(stockItemDTO.getDispensingUnitId()).get(0).getName());
                     }
 
-                    if (stockItemDTO.getPurchasePriceConceptId() != null && conceptNameDTOs.containsKey(stockItemDTO.getPurchasePriceConceptId())) {
-                        stockItemDTO.setPurchasePriceUoMName(conceptNameDTOs.get(stockItemDTO.getPurchasePriceConceptId()).get(0).getName());
+                    if (stockItemDTO.getPurchasePriceConceptId() != null
+                            && conceptNameDTOs.containsKey(stockItemDTO.getPurchasePriceConceptId())) {
+                        stockItemDTO.setPurchasePriceUoMName(
+                                conceptNameDTOs.get(stockItemDTO.getPurchasePriceConceptId()).get(0).getName());
                     }
 
-                    if (stockItemDTO.getDispensingUnitPackagingConceptId() != null && conceptNameDTOs.containsKey(stockItemDTO.getDispensingUnitPackagingConceptId())) {
-                        stockItemDTO.setDispensingUnitPackagingUoMName(conceptNameDTOs.get(stockItemDTO.getDispensingUnitPackagingConceptId()).get(0).getName());
+                    if (stockItemDTO.getDispensingUnitPackagingConceptId() != null
+                            && conceptNameDTOs.containsKey(stockItemDTO.getDispensingUnitPackagingConceptId())) {
+                        stockItemDTO.setDispensingUnitPackagingUoMName(conceptNameDTOs
+                                .get(stockItemDTO.getDispensingUnitPackagingConceptId()).get(0).getName());
                     }
 
-                    if (stockItemDTO.getDefaultStockOperationsConceptId() != null && conceptNameDTOs.containsKey(stockItemDTO.getDefaultStockOperationsConceptId())) {
-                        stockItemDTO.setDefaultStockOperationsUoMName(conceptNameDTOs.get(stockItemDTO.getDefaultStockOperationsConceptId()).get(0).getName());
+                    if (stockItemDTO.getDefaultStockOperationsConceptId() != null
+                            && conceptNameDTOs.containsKey(stockItemDTO.getDefaultStockOperationsConceptId())) {
+                        stockItemDTO.setDefaultStockOperationsUoMName(conceptNameDTOs
+                                .get(stockItemDTO.getDefaultStockOperationsConceptId()).get(0).getName());
                     }
 
-                    if (stockItemDTO.getReorderLevelConceptId() != null && conceptNameDTOs.containsKey(stockItemDTO.getReorderLevelConceptId())) {
-                        stockItemDTO.setReorderLevelUoMName(conceptNameDTOs.get(stockItemDTO.getReorderLevelConceptId()).get(0).getName());
+                    if (stockItemDTO.getReorderLevelConceptId() != null
+                            && conceptNameDTOs.containsKey(stockItemDTO.getReorderLevelConceptId())) {
+                        stockItemDTO.setReorderLevelUoMName(
+                                conceptNameDTOs.get(stockItemDTO.getReorderLevelConceptId()).get(0).getName());
                     }
-                    if (stockItemDTO.getCategoryId() != null && conceptNameDTOs.containsKey(stockItemDTO.getCategoryId())) {
-                        stockItemDTO.setCategoryName(conceptNameDTOs.get(stockItemDTO.getCategoryId()).get(0).getName());
+                    if (stockItemDTO.getCategoryId() != null
+                            && conceptNameDTOs.containsKey(stockItemDTO.getCategoryId())) {
+                        stockItemDTO
+                                .setCategoryName(conceptNameDTOs.get(stockItemDTO.getCategoryId()).get(0).getName());
                     }
                 }
             }
@@ -640,8 +677,8 @@ public class StockManagementDao extends DaoBase {
 
         return result;
     }
-	
-	public Result<StockItem> findStockItemEntities(StockItemSearchFilter filter) {
+
+    public Result<StockItem> findStockItemEntities(StockItemSearchFilter filter) {
         DbSession dbSession = getSession();
         Criteria criteria = dbSession.createCriteria(StockItem.class, "si");
         if (isNotNullOrEmpty(filter.getUuid())) {
@@ -662,9 +699,11 @@ public class StockManagementDao extends DaoBase {
 
         boolean appledDrugConceptsSearch = false;
         if (filter.getSearchEitherDrugsOrConcepts()) {
-            if (filter.getDrugs() != null && !filter.getDrugs().isEmpty() && filter.getConcepts() != null && !filter.getConcepts().isEmpty()) {
+            if (filter.getDrugs() != null && !filter.getDrugs().isEmpty() && filter.getConcepts() != null
+                    && !filter.getConcepts().isEmpty()) {
                 appledDrugConceptsSearch = true;
-                criteria.add(Restrictions.or(Restrictions.in("si.drug", filter.getDrugs()), Restrictions.in("si.concept", filter.getConcepts())));
+                criteria.add(Restrictions.or(Restrictions.in("si.drug", filter.getDrugs()),
+                        Restrictions.in("si.concept", filter.getConcepts())));
             }
         }
         if (!appledDrugConceptsSearch) {
@@ -685,9 +724,11 @@ public class StockManagementDao extends DaoBase {
 
         return result;
     }
-	
-	public List<StockItemDTO> getExistingStockItemIds(Collection<StockItemSearchFilter.ItemGroupFilter> stockItemFilters) {
-        if (stockItemFilters == null || stockItemFilters.isEmpty()) return new ArrayList<>();
+
+    public List<StockItemDTO> getExistingStockItemIds(
+            Collection<StockItemSearchFilter.ItemGroupFilter> stockItemFilters) {
+        if (stockItemFilters == null || stockItemFilters.isEmpty())
+            return new ArrayList<>();
         StringBuilder itemGroupFilters = new StringBuilder();
         HashMap<String, Object> parameterList = new HashMap<>();
         int paramIndex = 0;
@@ -718,8 +759,10 @@ public class StockManagementDao extends DaoBase {
             paramIndex++;
         }
 
-        if (parameterList.isEmpty()) return new ArrayList<>();
-        StringBuilder hqlQuery = new StringBuilder("select si.id as id, si.drug.drugId as drugId, si.concept.conceptId as conceptId from stockmanagement.StockItem si");
+        if (parameterList.isEmpty())
+            return new ArrayList<>();
+        StringBuilder hqlQuery = new StringBuilder(
+                "select si.id as id, si.drug.drugId as drugId, si.concept.conceptId as conceptId from stockmanagement.StockItem si");
         hqlQuery.append(" where ");
         hqlQuery.append(itemGroupFilters.toString());
 
@@ -727,8 +770,9 @@ public class StockManagementDao extends DaoBase {
         result.setData(executeQuery(StockItemDTO.class, hqlQuery, result, null, parameterList, null));
         return result.getData();
     }
-	
-	public Result<StockOperationDTO> findStockOperations(StockOperationSearchFilter filter, HashSet<RecordPrivilegeFilter> recordPrivilegeFilters) {
+
+    public Result<StockOperationDTO> findStockOperations(StockOperationSearchFilter filter,
+            HashSet<RecordPrivilegeFilter> recordPrivilegeFilters) {
         HashMap<String, Object> parameterList = new HashMap<>();
         HashMap<String, Collection> parameterWithList = new HashMap<>();
         StringBuilder hqlQuery = new StringBuilder("select so.uuid as uuid, so.id as id,\n" +
@@ -836,15 +880,18 @@ public class StockManagementDao extends DaoBase {
         }
 
         if (filter.getIsLocationOther() != null && filter.getIsLocationOther()) {
-            appendFilter(hqlFilter, "dest.stockSource.conceptId is not null or sorce.stockSource.conceptId is not null");
+            appendFilter(hqlFilter,
+                    "dest.stockSource.conceptId is not null or sorce.stockSource.conceptId is not null");
         }
 
         if (filter.getSourceTypeIds() != null && filter.getSourceTypeIds().size() > 0) {
             if (filter.getSourceTypeIds().size() == 1) {
-                appendFilter(hqlFilter, "dests.sourceType.conceptId = :sourceTypes or sorces.sourceType.conceptId = :sourceTypes");
+                appendFilter(hqlFilter,
+                        "dests.sourceType.conceptId = :sourceTypes or sorces.sourceType.conceptId = :sourceTypes");
                 parameterList.putIfAbsent("sourceTypes", filter.getSourceTypeIds().get(0));
             } else {
-                appendFilter(hqlFilter, "dests.sourceType.conceptId in (:sourceTypes) or sorces.sourceType.conceptId in (:sourceTypes)");
+                appendFilter(hqlFilter,
+                        "dests.sourceType.conceptId in (:sourceTypes) or sorces.sourceType.conceptId in (:sourceTypes)");
                 parameterWithList.putIfAbsent("sourceTypes", filter.getSourceTypeIds());
             }
         }
@@ -862,7 +909,8 @@ public class StockManagementDao extends DaoBase {
             }
             q = q + "%";
             if (partyIds != null && partyIds.size() > 0) {
-                appendFilter(hqlFilter, "(so.source.id in (:partyList) OR so.destination.id in (:partyList)) OR so.operationNumber like :qtxt");
+                appendFilter(hqlFilter,
+                        "(so.source.id in (:partyList) OR so.destination.id in (:partyList)) OR so.operationNumber like :qtxt");
                 parameterWithList.putIfAbsent("partyList", partyIds);
             } else {
                 appendFilter(hqlFilter, "so.operationNumber like :qtxt");
@@ -876,22 +924,28 @@ public class StockManagementDao extends DaoBase {
         }
 
         if (filter.getStockItemId() != null) {
-            appendFilter(hqlFilter, " exists ( from stockmanagement.StockOperationItem soi where soi.stockOperation.id = so.id and soi.stockItem.id = :soiid and soi.voided = 0 )");
+            appendFilter(hqlFilter,
+                    " exists ( from stockmanagement.StockOperationItem soi where soi.stockOperation.id = so.id and soi.stockItem.id = :soiid and soi.voided = 0 )");
             parameterList.putIfAbsent("soiid", filter.getStockItemId());
         }
 
         if (recordPrivilegeFilters != null) {
             PartySearchFilter partySearchFilter = new PartySearchFilter();
             partySearchFilter.setIncludeVoided(true);
-            partySearchFilter.setLocationIds(recordPrivilegeFilters.stream().map(p -> p.getLocationId()).collect(Collectors.toList()));
+            partySearchFilter.setLocationIds(
+                    recordPrivilegeFilters.stream().map(p -> p.getLocationId()).collect(Collectors.toList()));
             List<PartyDTO> partyDTOs = findParty(partySearchFilter).getData().stream().collect(Collectors.toList());
 
             int paramIndex = 0;
             StringBuilder recordPrivileges = new StringBuilder();
             for (PartyDTO party : partyDTOs) {
-                appendORFilter(recordPrivileges, String.format(" (dest.id = :rpfl%1$s OR sorce.id = :rpfl%1$s ) AND so.stockOperationType.id in (:rpft%1$s)", paramIndex));
+                appendORFilter(recordPrivileges, String.format(
+                        " (dest.id = :rpfl%1$s OR sorce.id = :rpfl%1$s ) AND so.stockOperationType.id in (:rpft%1$s)",
+                        paramIndex));
                 parameterList.putIfAbsent("rpfl" + Integer.toString(paramIndex), party.getId());
-                parameterWithList.putIfAbsent("rpft" + Integer.toString(paramIndex), recordPrivilegeFilters.stream().filter(p -> p.getLocationId().equals(party.getLocationId())).map(p -> p.getOperationTypeId()).collect(Collectors.toList()));
+                parameterWithList.putIfAbsent("rpft" + Integer.toString(paramIndex),
+                        recordPrivilegeFilters.stream().filter(p -> p.getLocationId().equals(party.getLocationId()))
+                                .map(p -> p.getOperationTypeId()).collect(Collectors.toList()));
                 paramIndex++;
             }
 
@@ -908,14 +962,18 @@ public class StockManagementDao extends DaoBase {
             result.setPageIndex(filter.getStartIndex());
             result.setPageSize(filter.getLimit());
         }
-        result.setData(executeQuery(StockOperationDTO.class, hqlQuery, result, " order by so.id desc", parameterList, parameterWithList));
+        result.setData(executeQuery(StockOperationDTO.class, hqlQuery, result, " order by so.id desc", parameterList,
+                parameterWithList));
 
         if (!result.getData().isEmpty()) {
-            List<StockOperationDTO> operationsWithReason = result.getData().stream().filter(p -> p.getReasonId() != null).collect(Collectors.toList());
+            List<StockOperationDTO> operationsWithReason = result.getData().stream()
+                    .filter(p -> p.getReasonId() != null).collect(Collectors.toList());
             if (!operationsWithReason.isEmpty()) {
-                List<ConceptNameDTO> conceptNameDTOs = getConceptNamesByConceptIds(operationsWithReason.stream().map(p -> p.getReasonId()).collect(Collectors.toList()));
+                List<ConceptNameDTO> conceptNameDTOs = getConceptNamesByConceptIds(
+                        operationsWithReason.stream().map(p -> p.getReasonId()).collect(Collectors.toList()));
                 for (StockOperationDTO stockOperationDTO : operationsWithReason) {
-                    Optional<ConceptNameDTO> conceptNameDTO = conceptNameDTOs.stream().filter(p -> p.getConceptId().equals(stockOperationDTO.getReasonId())).findFirst();
+                    Optional<ConceptNameDTO> conceptNameDTO = conceptNameDTOs.stream()
+                            .filter(p -> p.getConceptId().equals(stockOperationDTO.getReasonId())).findFirst();
                     if (conceptNameDTO.isPresent()) {
                         stockOperationDTO.setReasonName(conceptNameDTO.get().getName());
                     }
@@ -925,8 +983,8 @@ public class StockManagementDao extends DaoBase {
 
         return result;
     }
-	
-	public Result<PartyDTO> findParty(PartySearchFilter filter) {
+
+    public Result<PartyDTO> findParty(PartySearchFilter filter) {
         HashMap<String, Object> parameterList = new HashMap<>();
         HashMap<String, Collection> parameterWithList = new HashMap<>();
         StringBuilder hqlQuery = new StringBuilder("select p.id as id, p.uuid as uuid,\n" +
@@ -984,13 +1042,16 @@ public class StockManagementDao extends DaoBase {
             result.setPageIndex(filter.getStartIndex());
             result.setPageSize(filter.getLimit());
         }
-        result.setData(executeQuery(PartyDTO.class, hqlQuery, result, " order by name asc", parameterList, parameterWithList));
+        result.setData(
+                executeQuery(PartyDTO.class, hqlQuery, result, " order by name asc", parameterList, parameterWithList));
         return result;
     }
-	
-	public Map<String, String> getLocationNamesByUuid(List<String> locationUuids) {
-        if (locationUuids == null || locationUuids.isEmpty()) return new HashMap<>();
-        Query query = getSession().createQuery("select l.uuid as uuid, l.name as name from Location l where l.uuid in (:uuids)")
+
+    public Map<String, String> getLocationNamesByUuid(List<String> locationUuids) {
+        if (locationUuids == null || locationUuids.isEmpty())
+            return new HashMap<>();
+        Query query = getSession()
+                .createQuery("select l.uuid as uuid, l.name as name from Location l where l.uuid in (:uuids)")
                 .setParameterList("uuids", locationUuids);
         List result = query.list();
         Map<String, String> resultMap = new HashMap<>();
@@ -999,78 +1060,96 @@ public class StockManagementDao extends DaoBase {
         }
         return resultMap;
     }
-	
-	public Map<Integer, String> getLocationNames(List<Integer> locationIds) {
-        if (locationIds == null || locationIds.isEmpty()) return new HashMap<>();
-        Query query = getSession().createQuery("select l.locationId as locationId, l.name as name from Location l where l.locationId in (:ids)")
+
+    public Map<Integer, String> getLocationNames(List<Integer> locationIds) {
+        if (locationIds == null || locationIds.isEmpty())
+            return new HashMap<>();
+        Query query = getSession().createQuery(
+                "select l.locationId as locationId, l.name as name from Location l where l.locationId in (:ids)")
                 .setParameterList("ids", locationIds);
         List result = query.list();
         Map<Integer, String> resultMap = new HashMap<>();
         for (Object object : result) {
-            resultMap.putIfAbsent(Integer.valueOf(((Number) (((Object[]) object)[0])).intValue()), (String) (((Object[]) object)[1]));
+            resultMap.putIfAbsent(Integer.valueOf(((Number) (((Object[]) object)[0])).intValue()),
+                    (String) (((Object[]) object)[1]));
         }
         return resultMap;
     }
-	
-	public Map<Integer, String> getConceptNames(List<Integer> conceptIds) {
-        if (conceptIds == null || conceptIds.isEmpty()) return new HashMap<>();
-        Query query = getSession().createQuery("select cc.concept.conceptId as conceptId, cc.name as name from ConceptName cc where cc.concept.conceptId in (:ids) and cc.conceptNameType = (:cnt)")
+
+    public Map<Integer, String> getConceptNames(List<Integer> conceptIds) {
+        if (conceptIds == null || conceptIds.isEmpty())
+            return new HashMap<>();
+        Query query = getSession().createQuery(
+                "select cc.concept.conceptId as conceptId, cc.name as name from ConceptName cc where cc.concept.conceptId in (:ids) and cc.conceptNameType = (:cnt)")
                 .setParameterList("ids", conceptIds)
                 .setParameter("cnt", ConceptNameType.FULLY_SPECIFIED);
         List result = query.list();
         Map<Integer, String> resultMap = new HashMap<>();
         for (Object object : result) {
-            resultMap.putIfAbsent(Integer.valueOf(((Number) (((Object[]) object)[0])).intValue()), (String) (((Object[]) object)[1]));
+            resultMap.putIfAbsent(Integer.valueOf(((Number) (((Object[]) object)[0])).intValue()),
+                    (String) (((Object[]) object)[1]));
         }
         return resultMap;
     }
-	
-	public List<ConceptNameDTO> getConceptNamesByConceptIds(List<Integer> ids) {
-        if (ids == null || ids.isEmpty()) return new ArrayList<>();
-        Query query = getSession().createQuery("select cc.concept.conceptId as conceptId, cc.name as name from ConceptName cc where cc.concept.conceptId in (:ids) and cc.conceptNameType = (:cnt)")
+
+    public List<ConceptNameDTO> getConceptNamesByConceptIds(List<Integer> ids) {
+        if (ids == null || ids.isEmpty())
+            return new ArrayList<>();
+        Query query = getSession().createQuery(
+                "select cc.concept.conceptId as conceptId, cc.name as name from ConceptName cc where cc.concept.conceptId in (:ids) and cc.conceptNameType = (:cnt)")
                 .setParameterList("ids", ids)
                 .setParameter("cnt", ConceptNameType.FULLY_SPECIFIED);
         query = query.setResultTransformer(new AliasToBeanResultTransformer(ConceptNameDTO.class));
         return query.list();
     }
-	
-	public List<ConceptNameDTO> getDrugNamesByDrugIds(List<Integer> ids) {
-        if (ids == null || ids.isEmpty()) return new ArrayList<>();
-        Query query = getSession().createQuery("select d.drugId as conceptId, d.name as name from Drug d where d.drugId in (:ids)")
+
+    public List<ConceptNameDTO> getDrugNamesByDrugIds(List<Integer> ids) {
+        if (ids == null || ids.isEmpty())
+            return new ArrayList<>();
+        Query query = getSession()
+                .createQuery("select d.drugId as conceptId, d.name as name from Drug d where d.drugId in (:ids)")
                 .setParameterList("ids", ids);
         query = query.setResultTransformer(new AliasToBeanResultTransformer(ConceptNameDTO.class));
         return query.list();
     }
-	
-	private List<UserPersonNameDTO> getPatientNameByPatientIds(List<Integer> ids, boolean includePatientIdentifier) {
-        if (ids == null || ids.isEmpty()) return new ArrayList<>();
-        Query query = sessionFactory.getCurrentSession().createSQLQuery("select p.uuid as uuid, up.person_id as patientId, p.given_name as givenName, p.middle_name as middleName, p.family_name as familyName " +
-                        (includePatientIdentifier ? ",(select pi.identifier from patient_identifier pi where pi.patient_id = up.person_id order by pi.preferred desc, pi.patient_identifier_id asc limit 1) as patientIdentifier" : "") +
+
+    private List<UserPersonNameDTO> getPatientNameByPatientIds(List<Integer> ids, boolean includePatientIdentifier) {
+        if (ids == null || ids.isEmpty())
+            return new ArrayList<>();
+        Query query = sessionFactory.getCurrentSession().createSQLQuery(
+                "select p.uuid as uuid, up.person_id as patientId, p.given_name as givenName, p.middle_name as middleName, p.family_name as familyName "
+                        +
+                        (includePatientIdentifier
+                                ? ",(select pi.identifier from patient_identifier pi where pi.patient_id = up.person_id order by pi.preferred desc, pi.patient_identifier_id asc limit 1) as patientIdentifier"
+                                : "")
+                        +
                         " from person up join person_name p on up.person_id = p.person_id where up.person_id in (:ids)")
                 .setParameterList("ids", ids);
         query = query.setResultTransformer(new AliasToBeanResultTransformer(UserPersonNameDTO.class));
         return query.list();
     }
-	
-	public List<UserPersonNameDTO> getPersonNameByUserIds(List<Integer> ids) {
-        if (ids == null || ids.isEmpty()) return new ArrayList<>();
-        Query query = sessionFactory.getCurrentSession().createQuery("select u.uuid as uuid, u.userId as userId, p.givenName as givenName, p.middleName as middleName, p.familyName as familyName from User u join u.person up join up.names p where u.userId in (:ids)")
+
+    public List<UserPersonNameDTO> getPersonNameByUserIds(List<Integer> ids) {
+        if (ids == null || ids.isEmpty())
+            return new ArrayList<>();
+        Query query = sessionFactory.getCurrentSession().createQuery(
+                "select u.uuid as uuid, u.userId as userId, p.givenName as givenName, p.middleName as middleName, p.familyName as familyName from User u join u.person up join up.names p where u.userId in (:ids)")
                 .setParameterList("ids", ids);
         query = query.setResultTransformer(new AliasToBeanResultTransformer(UserPersonNameDTO.class));
         return query.list();
     }
-	
-	public StockSource getStockSourceByUuid(String uuid) {
-		return (StockSource) getSession().createCriteria(StockSource.class).add(Restrictions.eq("uuid", uuid))
-		        .uniqueResult();
-	}
-	
-	public StockSource saveStockSource(StockSource stockSource) {
-		getSession().saveOrUpdate(stockSource);
-		return stockSource;
-	}
-	
-	public Result<StockSource> findStockSources(StockSourceSearchFilter filter) {
+
+    public StockSource getStockSourceByUuid(String uuid) {
+        return (StockSource) getSession().createCriteria(StockSource.class).add(Restrictions.eq("uuid", uuid))
+                .uniqueResult();
+    }
+
+    public StockSource saveStockSource(StockSource stockSource) {
+        getSession().saveOrUpdate(stockSource);
+        return stockSource;
+    }
+
+    public Result<StockSource> findStockSources(StockSourceSearchFilter filter) {
         DbSession dbSession = getSession();
         Criteria criteria = dbSession.createCriteria(StockSource.class, "ss");
         if (isNotNullOrEmpty(filter.getUuid())) {
@@ -1090,7 +1169,8 @@ public class StockManagementDao extends DaoBase {
             if (textSearch.length() == 0)
                 return new Result<>(new ArrayList<>(), 0);
             textSearch = textSearch + "%";
-            criteria.add(Restrictions.or(Restrictions.ilike("ss.name", textSearch), Restrictions.ilike("ss.acronym", textSearch)));
+            criteria.add(Restrictions.or(Restrictions.ilike("ss.name", textSearch),
+                    Restrictions.ilike("ss.acronym", textSearch)));
         }
 
         Result<StockSource> result = new Result<>();
@@ -1102,114 +1182,119 @@ public class StockManagementDao extends DaoBase {
 
         return result;
     }
-	
-	public void voidStockItemPackagingUOM(String uuid, String reason, int voidedBy) {
-		DbSession session = getSession();
-		Query query = session
-		        .createQuery("UPDATE stockmanagement.StockItemPackagingUOM SET voided=1, dateVoided=:dateVoided, voidedBy=:voidedBy, voidReason=:reason WHERE uuid = :uuid");
-		query.setParameter("uuid", uuid);
-		query.setDate("dateVoided", new Date());
-		query.setInteger("voidedBy", voidedBy);
-		query.setString("reason", reason);
-		query.executeUpdate();
-	}
-	
-	public void voidStockItemReference(String uuid, String reason, int voidedBy) {
-		DbSession session = getSession();
-		Query query = session
-		        .createQuery("UPDATE stockmanagement.StockItemReference SET voided=1, dateVoided=:dateVoided, voidedBy=:voidedBy, voidReason=:reason WHERE uuid = :uuid");
-		query.setParameter("uuid", uuid);
-		query.setDate("dateVoided", new Date());
-		query.setInteger("voidedBy", voidedBy);
-		query.setString("reason", reason);
-		query.executeUpdate();
-	}
-	
-	public void voidStockSources(List<String> stockSourceIds, String reason, int voidedBy) {
-		DbSession session = getSession();
-		Query query = session
-		        .createQuery("UPDATE stockmanagement.StockSource SET voided=1, dateVoided=:dateVoided, voidedBy=:voidedBy, voidReason=:reason WHERE uuid in (:uuidList)");
-		query.setParameterList("uuidList", stockSourceIds);
-		query.setDate("dateVoided", new Date());
-		query.setInteger("voidedBy", voidedBy);
-		query.setString("reason", reason);
-		query.executeUpdate();
-	}
-	
-	public Party getPartyByUuid(String uuid) {
-		return (Party) getSession().createCriteria(Party.class).add(Restrictions.eq("uuid", uuid)).uniqueResult();
-	}
-	
-	public Party getPartyById(Integer id) {
-		return (Party) getSession().createCriteria(Party.class).add(Restrictions.eq("id", id)).uniqueResult();
-	}
-	
-	public Party getPartyByStockSource(StockSource stockSource) {
-		if (stockSource == null)
-			return null;
-		Criteria criteria = getSession().createCriteria(Party.class);
-		criteria.add(Restrictions.eq("stockSource", stockSource));
-		return (Party) criteria.uniqueResult();
-	}
-	
-	public void deleteParty(Party party) {
-		DbSession session = getSession();
-		Query query = session.createQuery("DELETE stockmanagement.Party WHERE id = :id");
-		query.setParameter("id", party.getId());
-		query.executeUpdate();
-	}
-	
-	public Party getPartyByLocation(Location location) {
-		if (location == null)
-			return null;
-		Criteria criteria = getSession().createCriteria(Party.class);
-		criteria.add(Restrictions.eq("location", location));
-		return (Party) criteria.uniqueResult();
-	}
-	
-	public List<Party> getPartyListByLocations(Collection<Location> locations) {
+
+    public void voidStockItemPackagingUOM(String uuid, String reason, int voidedBy) {
+        DbSession session = getSession();
+        Query query = session
+                .createQuery(
+                        "UPDATE stockmanagement.StockItemPackagingUOM SET voided=1, dateVoided=:dateVoided, voidedBy=:voidedBy, voidReason=:reason WHERE uuid = :uuid");
+        query.setParameter("uuid", uuid);
+        query.setDate("dateVoided", new Date());
+        query.setInteger("voidedBy", voidedBy);
+        query.setString("reason", reason);
+        query.executeUpdate();
+    }
+
+    public void voidStockItemReference(String uuid, String reason, int voidedBy) {
+        DbSession session = getSession();
+        Query query = session
+                .createQuery(
+                        "UPDATE stockmanagement.StockItemReference SET voided=1, dateVoided=:dateVoided, voidedBy=:voidedBy, voidReason=:reason WHERE uuid = :uuid");
+        query.setParameter("uuid", uuid);
+        query.setDate("dateVoided", new Date());
+        query.setInteger("voidedBy", voidedBy);
+        query.setString("reason", reason);
+        query.executeUpdate();
+    }
+
+    public void voidStockSources(List<String> stockSourceIds, String reason, int voidedBy) {
+        DbSession session = getSession();
+        Query query = session
+                .createQuery(
+                        "UPDATE stockmanagement.StockSource SET voided=1, dateVoided=:dateVoided, voidedBy=:voidedBy, voidReason=:reason WHERE uuid in (:uuidList)");
+        query.setParameterList("uuidList", stockSourceIds);
+        query.setDate("dateVoided", new Date());
+        query.setInteger("voidedBy", voidedBy);
+        query.setString("reason", reason);
+        query.executeUpdate();
+    }
+
+    public Party getPartyByUuid(String uuid) {
+        return (Party) getSession().createCriteria(Party.class).add(Restrictions.eq("uuid", uuid)).uniqueResult();
+    }
+
+    public Party getPartyById(Integer id) {
+        return (Party) getSession().createCriteria(Party.class).add(Restrictions.eq("id", id)).uniqueResult();
+    }
+
+    public Party getPartyByStockSource(StockSource stockSource) {
+        if (stockSource == null)
+            return null;
+        Criteria criteria = getSession().createCriteria(Party.class);
+        criteria.add(Restrictions.eq("stockSource", stockSource));
+        return (Party) criteria.uniqueResult();
+    }
+
+    public void deleteParty(Party party) {
+        DbSession session = getSession();
+        Query query = session.createQuery("DELETE stockmanagement.Party WHERE id = :id");
+        query.setParameter("id", party.getId());
+        query.executeUpdate();
+    }
+
+    public Party getPartyByLocation(Location location) {
+        if (location == null)
+            return null;
+        Criteria criteria = getSession().createCriteria(Party.class);
+        criteria.add(Restrictions.eq("location", location));
+        return (Party) criteria.uniqueResult();
+    }
+
+    public List<Party> getPartyListByLocations(Collection<Location> locations) {
         if (locations == null || locations.isEmpty())
             return new ArrayList<>();
         Criteria criteria = getSession().createCriteria(Party.class);
         criteria.add(Restrictions.in("location", locations));
         return criteria.list();
     }
-	
-	public Party saveParty(Party party) {
-		getSession().saveOrUpdate(party);
-		return party;
-	}
-	
-	public List<Party> findParty(Boolean hasLocation, Boolean hasStockSource) {
-		Criteria criteria = getSession().createCriteria(Party.class);
-		if (hasLocation != null) {
-			if (hasLocation.booleanValue()) {
-				criteria.add(Restrictions.isNotNull("location"));
-			} else {
-				criteria.add(Restrictions.isNull("location"));
-			}
-		}
-		
-		if (hasStockSource != null) {
-			if (hasStockSource.booleanValue()) {
-				criteria.add(Restrictions.isNotNull("stockSource"));
-			} else {
-				criteria.add(Restrictions.isNull("stockSource"));
-			}
-		}
-		
-		return criteria.list();
-	}
-	
-	public List<Integer> getActiveUsersAssignedForScope(Integer locationId, List<String> roles) {
-        if (locationId == null || roles == null || roles.size() == 0) return new ArrayList<>();
+
+    public Party saveParty(Party party) {
+        getSession().saveOrUpdate(party);
+        return party;
+    }
+
+    public List<Party> findParty(Boolean hasLocation, Boolean hasStockSource) {
+        Criteria criteria = getSession().createCriteria(Party.class);
+        if (hasLocation != null) {
+            if (hasLocation.booleanValue()) {
+                criteria.add(Restrictions.isNotNull("location"));
+            } else {
+                criteria.add(Restrictions.isNull("location"));
+            }
+        }
+
+        if (hasStockSource != null) {
+            if (hasStockSource.booleanValue()) {
+                criteria.add(Restrictions.isNotNull("stockSource"));
+            } else {
+                criteria.add(Restrictions.isNull("stockSource"));
+            }
+        }
+
+        return criteria.list();
+    }
+
+    public List<Integer> getActiveUsersAssignedForScope(Integer locationId, List<String> roles) {
+        if (locationId == null || roles == null || roles.size() == 0)
+            return new ArrayList<>();
 
         StringBuilder hqlQuery = new StringBuilder("SELECT DISTINCT urs.user.userId as userId " +
                 "FROM stockmanagement.UserRoleScope urs join \n" +
                 " urs.userRoleScopeLocations ursl join urs.user u, \n" +
                 " stockmanagement.LocationTree lt, \n" +
                 " Location l \n" +
-                "WHERE urs.role.role in (:roles) AND ursl.enableDescendants = 1 AND ursl.location.id = lt.parentLocationId AND lt.childLocationId = l.id AND " +
+                "WHERE urs.role.role in (:roles) AND ursl.enableDescendants = 1 AND ursl.location.id = lt.parentLocationId AND lt.childLocationId = l.id AND "
+                +
                 "lt.childLocationId=:locid AND urs.enabled = 1 AND urs.voided = 0 AND " +
                 "(urs.permanent = 1 OR (urs.activeFrom <= :from AND urs.activeTo >= :to )) AND " +
                 "ursl.voided=0 AND u.retired=0 AND l.retired=0 ");
@@ -1222,7 +1307,7 @@ public class StockManagementDao extends DaoBase {
 
         List<Integer> result = new ArrayList<>();
         List partialResult = query.list();
-        for (Iterator it = partialResult.iterator(); it.hasNext(); ) {
+        for (Iterator it = partialResult.iterator(); it.hasNext();) {
             Object row = it.next();
             Integer integer = ((Number) row).intValue();
             result.add(integer);
@@ -1232,7 +1317,8 @@ public class StockManagementDao extends DaoBase {
                 "FROM stockmanagement.UserRoleScope urs join \n" +
                 "     urs.userRoleScopeLocations ursl join urs.user u join \n" +
                 "     ursl.location l \n" +
-                "WHERE urs.role.role in (:roles) AND l.locationId = :locid AND ursl.enableDescendants = 0 AND urs.enabled = 1 AND urs.voided = 0 AND " +
+                "WHERE urs.role.role in (:roles) AND l.locationId = :locid AND ursl.enableDescendants = 0 AND urs.enabled = 1 AND urs.voided = 0 AND "
+                +
                 "(urs.permanent = 1 OR (urs.activeFrom <= :from AND urs.activeTo >= :to )) and ursl.voided=0 " +
                 " AND u.retired=0 AND l.retired=0");
 
@@ -1242,7 +1328,7 @@ public class StockManagementDao extends DaoBase {
         query.setParameter("from", DateUtil.today());
         query.setParameter("to", DateUtil.today());
         partialResult = query.list();
-        for (Iterator it = partialResult.iterator(); it.hasNext(); ) {
+        for (Iterator it = partialResult.iterator(); it.hasNext();) {
             Object row = it.next();
             Integer integer = ((Number) row).intValue();
             result.add(integer);
@@ -1250,9 +1336,11 @@ public class StockManagementDao extends DaoBase {
         return result;
 
     }
-	
-	public List<PrivilegeScope> getFlattenedUserRoleScopesByUser(User user, Set<Role> roles, Location location, StockOperationType stockOperationType) {
-        if (user == null || roles.size() == 0) return new ArrayList<>();
+
+    public List<PrivilegeScope> getFlattenedUserRoleScopesByUser(User user, Set<Role> roles, Location location,
+            StockOperationType stockOperationType) {
+        if (user == null || roles.size() == 0)
+            return new ArrayList<>();
         StringBuilder hqlQuery = new StringBuilder("SELECT DISTINCT urs.role.role as role, l.uuid as locationUuid," +
                 " p.uuid as partyUuid, sot.uuid as operationTypeUuid, urs.permanent as isPermanent, " +
                 "urs.activeFrom as activeFrom, urs.activeTo as activeTo\n" +
@@ -1263,7 +1351,8 @@ public class StockManagementDao extends DaoBase {
                 "     stockmanagement.LocationTree lt, \n" +
                 "     Location l, \n" +
                 "     stockmanagement.Party p \n" +
-                "WHERE ursl.enableDescendants = 1 AND ursl.location.id = lt.parentLocationId AND lt.childLocationId = l.id AND lt.childLocationId = p.location.id AND urs.user = :user AND urs.role in (:roles) AND urs.enabled = 1 AND urs.voided = 0 AND " +
+                "WHERE ursl.enableDescendants = 1 AND ursl.location.id = lt.parentLocationId AND lt.childLocationId = l.id AND lt.childLocationId = p.location.id AND urs.user = :user AND urs.role in (:roles) AND urs.enabled = 1 AND urs.voided = 0 AND "
+                +
                 "(urs.permanent = 1 OR (urs.activeFrom <= :from AND urs.activeTo >= :to )) and ursl.voided=0 and ursot.voided=0");
 
         HashMap<String, Object> parameterList = new HashMap<>();
@@ -1297,7 +1386,8 @@ public class StockManagementDao extends DaoBase {
                 "     ursot.stockOperationType sot, \n" +
                 "     Location l, \n" +
                 "     stockmanagement.Party p \n" +
-                "WHERE ursl.enableDescendants = 0 AND ursl.location.id = l.id AND ursl.location.id = p.location.id AND urs.user = :user AND urs.role in (:roles) AND urs.enabled = 1 AND urs.voided = 0 AND " +
+                "WHERE ursl.enableDescendants = 0 AND ursl.location.id = l.id AND ursl.location.id = p.location.id AND urs.user = :user AND urs.role in (:roles) AND urs.enabled = 1 AND urs.voided = 0 AND "
+                +
                 "(urs.permanent = 1 OR (urs.activeFrom <= :from AND urs.activeTo >= :to )) and ursl.voided=0 and ursot.voided=0");
 
         parameterList = new HashMap<>();
@@ -1323,8 +1413,8 @@ public class StockManagementDao extends DaoBase {
         result.addAll(query.list());
         return result;
     }
-	
-	public List<PartyDTO> getAllParties() {
+
+    public List<PartyDTO> getAllParties() {
         StringBuilder hqlQuery = new StringBuilder(
                 "SELECT p.uuid as uuid, l.uuid as locationUuid, ss.uuid as stockSourceUuid,"
                         + " coalesce(l.name, ss.name) as name, ss.acronym as acronym "
@@ -1339,9 +1429,10 @@ public class StockManagementDao extends DaoBase {
         query.setResultTransformer(new AliasToBeanResultTransformer(PartyDTO.class));
         return query.list();
     }
-	
-	public Map<Integer, String> getPartyNames(List<Integer> partyIds) {
-        if (partyIds == null || partyIds.isEmpty()) return new HashMap<>();
+
+    public Map<Integer, String> getPartyNames(List<Integer> partyIds) {
+        if (partyIds == null || partyIds.isEmpty())
+            return new HashMap<>();
         StringBuilder hqlQuery = new StringBuilder(
                 "SELECT distinct p.id as id,"
                         + " coalesce(l.name, ss.name) as name\n"
@@ -1352,10 +1443,11 @@ public class StockManagementDao extends DaoBase {
         Query query = getSession().createQuery(hqlQuery.toString());
         query.setParameterList("pids", partyIds);
         query = query.setResultTransformer(new AliasToBeanResultTransformer(PartyDTO.class));
-        return (Map<Integer, String>) query.list().stream().collect(Collectors.toMap(PartyDTO::getId, PartyDTO::getName));
+        return (Map<Integer, String>) query.list().stream()
+                .collect(Collectors.toMap(PartyDTO::getId, PartyDTO::getName));
     }
-	
-	public Result<StockItemPackagingUOMDTO> findStockItemPackagingUOMs(StockItemPackagingUOMSearchFilter filter) {
+
+    public Result<StockItemPackagingUOMDTO> findStockItemPackagingUOMs(StockItemPackagingUOMSearchFilter filter) {
         HashMap<String, Object> parameterList = new HashMap<>();
         HashMap<String, Collection> parameterWithList = new HashMap<>();
         StringBuilder hqlQuery = new StringBuilder("select sipu.id as id,\n" +
@@ -1367,7 +1459,8 @@ public class StockManagementDao extends DaoBase {
                 "\tsipu.stockItem.id as stockItemId,\n" +
                 "\tsi.uuid as stockItemUuid,\n" +
                 (filter.includingDispensingUnit() ? "\tdu.conceptId as stockItemDispensingUnitId,\n" : "") +
-                "CASE sipu.id WHEN si.defaultStockOperationsUoM.id THEN true ELSE false END as isDefaultStockOperationsUoM,\n" +
+                "CASE sipu.id WHEN si.defaultStockOperationsUoM.id THEN true ELSE false END as isDefaultStockOperationsUoM,\n"
+                +
                 "CASE sipu.id WHEN si.dispensingUnitPackagingUoM.id THEN true ELSE false END as isDispensingUnit\n" +
                 "from stockmanagement.StockItemPackagingUOM sipu join\n" +
                 "  sipu.stockItem si join \n" +
@@ -1406,21 +1499,28 @@ public class StockManagementDao extends DaoBase {
             result.setPageIndex(filter.getStartIndex());
             result.setPageSize(filter.getLimit());
         }
-        result.setData(executeQuery(StockItemPackagingUOMDTO.class, hqlQuery, result, " order by sipu.id", parameterList, parameterWithList));
+        result.setData(executeQuery(StockItemPackagingUOMDTO.class, hqlQuery, result, " order by sipu.id",
+                parameterList, parameterWithList));
 
         if (!result.getData().isEmpty()) {
-            List<Integer> conceptIdsToFetch = result.getData().stream().map(p -> p.getPackagingUomId()).collect(Collectors.toList());
+            List<Integer> conceptIdsToFetch = result.getData().stream().map(p -> p.getPackagingUomId())
+                    .collect(Collectors.toList());
             if (filter.includingDispensingUnit()) {
-                conceptIdsToFetch.addAll(result.getData().stream().map(p -> p.getStockItemDispensingUnitId()).filter(p -> p != null).collect(Collectors.toList()));
+                conceptIdsToFetch.addAll(result.getData().stream().map(p -> p.getStockItemDispensingUnitId())
+                        .filter(p -> p != null).collect(Collectors.toList()));
             }
             List<ConceptNameDTO> conceptNameDTOs = getConceptNamesByConceptIds(conceptIdsToFetch);
             for (StockItemPackagingUOMDTO stockItemPackagingUOMDTO : result.getData()) {
-                Optional<ConceptNameDTO> conceptNameDTO = conceptNameDTOs.stream().filter(p -> p.getConceptId().equals(stockItemPackagingUOMDTO.getPackagingUomId())).findFirst();
+                Optional<ConceptNameDTO> conceptNameDTO = conceptNameDTOs.stream()
+                        .filter(p -> p.getConceptId().equals(stockItemPackagingUOMDTO.getPackagingUomId())).findFirst();
                 if (conceptNameDTO.isPresent()) {
                     stockItemPackagingUOMDTO.setPackagingUomName(conceptNameDTO.get().getName());
                 }
-                if (filter.includingDispensingUnit() && stockItemPackagingUOMDTO.getStockItemDispensingUnitId() != null) {
-                    conceptNameDTO = conceptNameDTOs.stream().filter(p -> p.getConceptId().equals(stockItemPackagingUOMDTO.getStockItemDispensingUnitId())).findFirst();
+                if (filter.includingDispensingUnit()
+                        && stockItemPackagingUOMDTO.getStockItemDispensingUnitId() != null) {
+                    conceptNameDTO = conceptNameDTOs.stream().filter(
+                            p -> p.getConceptId().equals(stockItemPackagingUOMDTO.getStockItemDispensingUnitId()))
+                            .findFirst();
                     if (conceptNameDTO.isPresent()) {
                         stockItemPackagingUOMDTO.setStockItemDispensingUnitName(conceptNameDTO.get().getName());
                     }
@@ -1430,8 +1530,8 @@ public class StockManagementDao extends DaoBase {
 
         return result;
     }
-	
-	public Result<StockOperationItemDTO> findStockOperationItems(StockOperationItemSearchFilter filter) {
+
+    public Result<StockOperationItemDTO> findStockOperationItems(StockOperationItemSearchFilter filter) {
         HashMap<String, Object> parameterList = new HashMap<>();
         HashMap<String, Collection> parameterWithList = new HashMap<>();
         StringBuilder hqlQuery = new StringBuilder("SELECT soi.id as id,\n" +
@@ -1510,55 +1610,80 @@ public class StockManagementDao extends DaoBase {
             result.setPageIndex(filter.getStartIndex());
             result.setPageSize(filter.getLimit());
         }
-        result.setData(executeQuery(StockOperationItemDTO.class, hqlQuery, result, " order by soi.id", parameterList, parameterWithList));
+        result.setData(executeQuery(StockOperationItemDTO.class, hqlQuery, result, " order by soi.id", parameterList,
+                parameterWithList));
 
         if (!result.getData().isEmpty()) {
             List<Integer> conceptIds = new ArrayList<>();
             List<Integer> drugIds = new ArrayList<>();
             if (filter.getIncludePackagingUnitName()) {
-                conceptIds.addAll(result.getData().stream().filter(p -> p.getPackagingUoMId() != null).map(p -> p.getPackagingUoMId()).collect(Collectors.toList()));
-                conceptIds.addAll(result.getData().stream().filter(p -> p.getQuantityReceivedPackagingUOMUoMId() != null).map(p -> p.getQuantityReceivedPackagingUOMUoMId()).collect(Collectors.toList()));
-                conceptIds.addAll(result.getData().stream().filter(p -> p.getQuantityRequestedPackagingUOMUoMId() != null).map(p -> p.getQuantityRequestedPackagingUOMUoMId()).collect(Collectors.toList()));
+                conceptIds.addAll(result.getData().stream().filter(p -> p.getPackagingUoMId() != null)
+                        .map(p -> p.getPackagingUoMId()).collect(Collectors.toList()));
+                conceptIds
+                        .addAll(result.getData().stream().filter(p -> p.getQuantityReceivedPackagingUOMUoMId() != null)
+                                .map(p -> p.getQuantityReceivedPackagingUOMUoMId()).collect(Collectors.toList()));
+                conceptIds
+                        .addAll(result.getData().stream().filter(p -> p.getQuantityRequestedPackagingUOMUoMId() != null)
+                                .map(p -> p.getQuantityRequestedPackagingUOMUoMId()).collect(Collectors.toList()));
             }
             if (filter.getIncludeStockUnitName()) {
-                conceptIds.addAll(result.getData().stream().filter(p -> p.getStockItemConceptId() != null).map(p -> p.getStockItemConceptId()).collect(Collectors.toList()));
-                drugIds.addAll(result.getData().stream().filter(p -> p.getStockItemDrugId() != null).map(p -> p.getStockItemDrugId()).collect(Collectors.toList()));
+                conceptIds.addAll(result.getData().stream().filter(p -> p.getStockItemConceptId() != null)
+                        .map(p -> p.getStockItemConceptId()).collect(Collectors.toList()));
+                drugIds.addAll(result.getData().stream().filter(p -> p.getStockItemDrugId() != null)
+                        .map(p -> p.getStockItemDrugId()).collect(Collectors.toList()));
             }
 
             if (!conceptIds.isEmpty() || !drugIds.isEmpty()) {
-                List<ConceptNameDTO> conceptNameDTOs = conceptIds.isEmpty() ? new ArrayList<>() : getConceptNamesByConceptIds(conceptIds);
+                List<ConceptNameDTO> conceptNameDTOs = conceptIds.isEmpty() ? new ArrayList<>()
+                        : getConceptNamesByConceptIds(conceptIds);
                 List<ConceptNameDTO> drugNames = drugIds.isEmpty() ? new ArrayList<>() : getDrugNamesByDrugIds(drugIds);
                 for (StockOperationItemDTO stockOperationItemDTO : result.getData()) {
 
                     if (filter.getIncludePackagingUnitName()) {
                         Optional<ConceptNameDTO> conceptNameDTO = null;
-                        if (stockOperationItemDTO.getPackagingUoMId() != null && stockOperationItemDTO.getStockItemPackagingUOMUuid()!=null) {
-                            conceptNameDTO = conceptNameDTOs.stream().filter(p -> p.getConceptId().equals(stockOperationItemDTO.getPackagingUoMId())).findFirst();
+                        if (stockOperationItemDTO.getPackagingUoMId() != null
+                                && stockOperationItemDTO.getStockItemPackagingUOMUuid() != null) {
+                            conceptNameDTO = conceptNameDTOs.stream()
+                                    .filter(p -> p.getConceptId().equals(stockOperationItemDTO.getPackagingUoMId()))
+                                    .findFirst();
                             if (conceptNameDTO.isPresent()) {
                                 stockOperationItemDTO.setStockItemPackagingUOMName(conceptNameDTO.get().getName());
                             }
 
-							BigDecimal factor = getStockItemPackagingUOMByUuid(stockOperationItemDTO.getStockItemPackagingUOMUuid()).getFactor();
+                            BigDecimal factor = getStockItemPackagingUOMByUuid(
+                                    stockOperationItemDTO.getStockItemPackagingUOMUuid()).getFactor();
 
-							stockOperationItemDTO.setStockItemPackagingUOMFactor(factor);
+                            stockOperationItemDTO.setStockItemPackagingUOMFactor(factor);
                         }
 
-                        if (stockOperationItemDTO.getQuantityReceivedPackagingUOMUoMId() != null && stockOperationItemDTO.getQuantityReceivedPackagingUOMUuid()!=null) {
-                            conceptNameDTO = conceptNameDTOs.stream().filter(p -> p.getConceptId().equals(stockOperationItemDTO.getQuantityReceivedPackagingUOMUoMId())).findFirst();
+                        if (stockOperationItemDTO.getQuantityReceivedPackagingUOMUoMId() != null
+                                && stockOperationItemDTO.getQuantityReceivedPackagingUOMUuid() != null) {
+                            conceptNameDTO = conceptNameDTOs.stream()
+                                    .filter(p -> p.getConceptId()
+                                            .equals(stockOperationItemDTO.getQuantityReceivedPackagingUOMUoMId()))
+                                    .findFirst();
                             if (conceptNameDTO.isPresent()) {
-                                stockOperationItemDTO.setQuantityReceivedPackagingUOMName(conceptNameDTO.get().getName());
+                                stockOperationItemDTO
+                                        .setQuantityReceivedPackagingUOMName(conceptNameDTO.get().getName());
                             }
-							BigDecimal factor = getStockItemPackagingUOMByUuid(stockOperationItemDTO.getQuantityReceivedPackagingUOMUuid()).getFactor();
-							stockOperationItemDTO.setQuantityReceivedPackagingUOMFactor(factor);
+                            BigDecimal factor = getStockItemPackagingUOMByUuid(
+                                    stockOperationItemDTO.getQuantityReceivedPackagingUOMUuid()).getFactor();
+                            stockOperationItemDTO.setQuantityReceivedPackagingUOMFactor(factor);
                         }
 
-                        if (stockOperationItemDTO.getQuantityRequestedPackagingUOMUoMId() != null && stockOperationItemDTO.getQuantityRequestedPackagingUOMUuid()!=null) {
-                            conceptNameDTO = conceptNameDTOs.stream().filter(p -> p.getConceptId().equals(stockOperationItemDTO.getQuantityRequestedPackagingUOMUoMId())).findFirst();
+                        if (stockOperationItemDTO.getQuantityRequestedPackagingUOMUoMId() != null
+                                && stockOperationItemDTO.getQuantityRequestedPackagingUOMUuid() != null) {
+                            conceptNameDTO = conceptNameDTOs.stream()
+                                    .filter(p -> p.getConceptId()
+                                            .equals(stockOperationItemDTO.getQuantityRequestedPackagingUOMUoMId()))
+                                    .findFirst();
                             if (conceptNameDTO.isPresent()) {
-                                stockOperationItemDTO.setQuantityRequestedPackagingUOMName(conceptNameDTO.get().getName());
+                                stockOperationItemDTO
+                                        .setQuantityRequestedPackagingUOMName(conceptNameDTO.get().getName());
                             }
-							BigDecimal factor = getStockItemPackagingUOMByUuid(stockOperationItemDTO.getQuantityRequestedPackagingUOMUuid()).getFactor();
-							stockOperationItemDTO.setQuantityRequestedPackagingUOMFactor(factor);
+                            BigDecimal factor = getStockItemPackagingUOMByUuid(
+                                    stockOperationItemDTO.getQuantityRequestedPackagingUOMUuid()).getFactor();
+                            stockOperationItemDTO.setQuantityRequestedPackagingUOMFactor(factor);
                         }
                     }
                     if (filter.getIncludeStockUnitName()) {
@@ -1566,21 +1691,26 @@ public class StockManagementDao extends DaoBase {
                         String drugName = null;
 
                         if (stockOperationItemDTO.getStockItemConceptId() != null) {
-                            Optional<ConceptNameDTO> conceptNameDTO = conceptNameDTOs.stream().filter(p -> p.getConceptId().equals(stockOperationItemDTO.getStockItemConceptId())).findFirst();
+                            Optional<ConceptNameDTO> conceptNameDTO = conceptNameDTOs.stream()
+                                    .filter(p -> p.getConceptId().equals(stockOperationItemDTO.getStockItemConceptId()))
+                                    .findFirst();
                             if (conceptNameDTO.isPresent()) {
                                 conceptName = conceptNameDTO.get().getName();
                             }
                         }
 
                         if (stockOperationItemDTO.getStockItemDrugId() != null) {
-                            Optional<ConceptNameDTO> conceptNameDTO = drugNames.stream().filter(p -> p.getConceptId().equals(stockOperationItemDTO.getStockItemDrugId())).findFirst();
+                            Optional<ConceptNameDTO> conceptNameDTO = drugNames.stream()
+                                    .filter(p -> p.getConceptId().equals(stockOperationItemDTO.getStockItemDrugId()))
+                                    .findFirst();
                             if (conceptNameDTO.isPresent()) {
                                 drugName = conceptNameDTO.get().getName();
                             }
                         }
 
                         if (drugName != null && StringUtils.isNotBlank(stockOperationItemDTO.getCommonName())) {
-                            stockOperationItemDTO.setStockItemName(String.format("%1s (%2s)", drugName, stockOperationItemDTO.getCommonName()));
+                            stockOperationItemDTO.setStockItemName(
+                                    String.format("%1s (%2s)", drugName, stockOperationItemDTO.getCommonName()));
                         } else if (drugName != null && conceptName != null) {
                             stockOperationItemDTO.setStockItemName(String.format("%1s (%2s)", drugName, conceptName));
                         } else if (drugName != null)
@@ -1595,28 +1725,30 @@ public class StockManagementDao extends DaoBase {
 
         return result;
     }
-	
-	public StockBatch findStockBatch(StockItem stockItem, String batchNo, Date expiration) {
-		Criteria criteria = getSession().createCriteria(StockBatch.class);
-		criteria.add(Restrictions.eq("stockItem", stockItem));
-		criteria.add(Restrictions.eq("batchNo", batchNo).ignoreCase());
-		if (expiration == null) {
-			criteria.add(Restrictions.isNull("expiration"));
-		} else {
-			criteria.add(Restrictions.eq("expiration", expiration));
-		}
-		criteria.add(Restrictions.eq("voided", false));
-		return (StockBatch) criteria.uniqueResult();
-	}
-	
-	public List<StockBatchDTO> getExpiringStockBatchesDueForNotification(Integer defaultExpiryNotificationNoticePeriod) {
-		List<StockBatchDTO> result = getExpiringStockBatchesDueForNotificationWithoutStockItemNoticePeriod(defaultExpiryNotificationNoticePeriod);
-		result.addAll(getExpiringStockBatchesDueForNotificationWithStockItemNoticePeriod());
-		return result;
-		
-	}
-	
-	private List<Integer> getUniqueExpiryNoticePeriods() {
+
+    public StockBatch findStockBatch(StockItem stockItem, String batchNo, Date expiration) {
+        Criteria criteria = getSession().createCriteria(StockBatch.class);
+        criteria.add(Restrictions.eq("stockItem", stockItem));
+        criteria.add(Restrictions.eq("batchNo", batchNo).ignoreCase());
+        if (expiration == null) {
+            criteria.add(Restrictions.isNull("expiration"));
+        } else {
+            criteria.add(Restrictions.eq("expiration", expiration));
+        }
+        criteria.add(Restrictions.eq("voided", false));
+        return (StockBatch) criteria.uniqueResult();
+    }
+
+    public List<StockBatchDTO> getExpiringStockBatchesDueForNotification(
+            Integer defaultExpiryNotificationNoticePeriod) {
+        List<StockBatchDTO> result = getExpiringStockBatchesDueForNotificationWithoutStockItemNoticePeriod(
+                defaultExpiryNotificationNoticePeriod);
+        result.addAll(getExpiringStockBatchesDueForNotificationWithStockItemNoticePeriod());
+        return result;
+
+    }
+
+    private List<Integer> getUniqueExpiryNoticePeriods() {
         StringBuilder hqlQuery = new StringBuilder("SELECT DISTINCT si.expiryNotice as expiryNotice\n" +
                 "from stockmanagement.StockItem si where si.expiryNotice is not null and si.voided  = :vdd");
 
@@ -1630,10 +1762,11 @@ public class StockManagementDao extends DaoBase {
         }
         return result;
     }
-	
-	private List<StockBatchDTO> getExpiringStockBatchesDueForNotificationWithStockItemNoticePeriod() {
+
+    private List<StockBatchDTO> getExpiringStockBatchesDueForNotificationWithStockItemNoticePeriod() {
         List<Integer> noticePeriods = getUniqueExpiryNoticePeriods();
-        if (noticePeriods.isEmpty()) return new ArrayList<>();
+        if (noticePeriods.isEmpty())
+            return new ArrayList<>();
         List<StockBatchDTO> result = new ArrayList<>();
         int startIndex = 0;
         int batchSize = 100;
@@ -1655,10 +1788,12 @@ public class StockManagementDao extends DaoBase {
             StringBuilder itemGroupClause = new StringBuilder();
             int paramIndex = 0;
             HashMap<String, Object> parameterList = new HashMap<>();
-            List<Integer> batch = noticePeriods.stream().skip(startIndex * batchSize).limit(batchSize).collect(Collectors.toList());
+            List<Integer> batch = noticePeriods.stream().skip(startIndex * batchSize).limit(batchSize)
+                    .collect(Collectors.toList());
             for (Integer noticePeriod : batch) {
                 appendORFilter(itemGroupClause,
-                        String.format("sb.expiration <= :exp%1$s and si.expiryNotice = :pli%1$s", Integer.toString(paramIndex)));
+                        String.format("sb.expiration <= :exp%1$s and si.expiryNotice = :pli%1$s",
+                                Integer.toString(paramIndex)));
                 parameterList.putIfAbsent("pli" + Integer.toString(paramIndex), noticePeriod);
                 parameterList.putIfAbsent("exp" + Integer.toString(paramIndex), DateUtils.addDays(today, noticePeriod));
                 paramIndex++;
@@ -1688,8 +1823,8 @@ public class StockManagementDao extends DaoBase {
 
         return result;
     }
-	
-	public Result<StockBatchLineItem> getExpiringStockBatchList(StockExpiryFilter filter) {
+
+    public Result<StockBatchLineItem> getExpiringStockBatchList(StockExpiryFilter filter) {
         HashMap<String, Object> parameterList = new HashMap<>();
         HashMap<String, Collection> parameterWithList = new HashMap<>();
         StringBuilder hqlQuery = new StringBuilder("select sb.id as stockBatchId, sb.stockItem.id as stockItemId,\n" +
@@ -1703,8 +1838,7 @@ public class StockManagementDao extends DaoBase {
                 "sb.batchNo as batchNo,\n" +
                 "sb.expiration as expiration\n" +
                 "from stockmanagement.StockBatch sb inner join\n" +
-                " sb.stockItem si\n"
-        );
+                " sb.stockItem si\n");
         StringBuilder hqlFilter = new StringBuilder();
 
         if (filter.getStartDate() != null) {
@@ -1761,22 +1895,28 @@ public class StockManagementDao extends DaoBase {
             List<Integer> conceptIds = new ArrayList<>();
             List<Integer> drugIds = new ArrayList<>();
 
-            conceptIds.addAll(result.getData().stream().filter(p -> p.getStockItemCategoryConceptId() != null).map(p -> p.getStockItemCategoryConceptId()).collect(Collectors.toList()));
-            conceptIds.addAll(result.getData().stream().filter(p -> p.getStockItemConceptId() != null).map(p -> p.getStockItemConceptId()).collect(Collectors.toList()));
-            drugIds.addAll(result.getData().stream().filter(p -> p.getStockItemDrugId() != null).map(p -> p.getStockItemDrugId()).collect(Collectors.toList()));
+            conceptIds.addAll(result.getData().stream().filter(p -> p.getStockItemCategoryConceptId() != null)
+                    .map(p -> p.getStockItemCategoryConceptId()).collect(Collectors.toList()));
+            conceptIds.addAll(result.getData().stream().filter(p -> p.getStockItemConceptId() != null)
+                    .map(p -> p.getStockItemConceptId()).collect(Collectors.toList()));
+            drugIds.addAll(result.getData().stream().filter(p -> p.getStockItemDrugId() != null)
+                    .map(p -> p.getStockItemDrugId()).collect(Collectors.toList()));
 
             Map<Integer, List<ConceptNameDTO>> conceptNameDTOs = null;
             if (conceptIds.isEmpty()) {
                 conceptNameDTOs = new HashMap<>();
             } else {
-                conceptNameDTOs = getConceptNamesByConceptIds(conceptIds.stream().distinct().collect(Collectors.toList())).stream().collect(Collectors.groupingBy(p -> p.getConceptId()));
+                conceptNameDTOs = getConceptNamesByConceptIds(
+                        conceptIds.stream().distinct().collect(Collectors.toList())).stream()
+                        .collect(Collectors.groupingBy(p -> p.getConceptId()));
             }
 
             Map<Integer, List<ConceptNameDTO>> drugNames = null;
             if (drugIds.isEmpty()) {
                 drugNames = new HashMap<>();
             } else {
-                drugNames = getDrugNamesByDrugIds(drugIds).stream().collect(Collectors.groupingBy(p -> p.getConceptId()));
+                drugNames = getDrugNamesByDrugIds(drugIds).stream()
+                        .collect(Collectors.groupingBy(p -> p.getConceptId()));
             }
 
             for (StockBatchLineItem stockBatchLineItem : result.getData()) {
@@ -1807,32 +1947,32 @@ public class StockManagementDao extends DaoBase {
         }
         return result;
     }
-	
-	private List<StockBatchDTO> getExpiringStockBatchesDueForNotificationWithoutStockItemNoticePeriod(
-	        Integer defaultExpiryNotificationNoticePeriod) {
-		StringBuilder hqlQuery = new StringBuilder(
-		        "SELECT sb.id as id,\n"
-		                + "sb.uuid as uuid,\n"
-		                + "si.uuid as stockItemUuid,\n"
-		                + "sb.batchNo as batchNo,\n"
-		                + "sb.expiration as expiration,\n"
-		                + "sb.expiryNotificationDate as expiryNotificationDate,\n"
-		                + "sb.voided as voided\n"
-		                + "from stockmanagement.StockBatch sb join\n"
-		                + "\t sb.stockItem si  where sb.expiration >= :today and "
-		                + "sb.expiration <= :dfexp and sb.expiryNotificationDate is null and si.expiryNotice is null and sb.voided = :vdd and si.voided  = :vdd");
-		
-		DbSession session = getSession();
-		Query query = session.createQuery(hqlQuery.toString());
-		query.setParameter("today", DateUtil.today());
-		query.setParameter("dfexp", DateUtils.addDays(DateUtil.today(), defaultExpiryNotificationNoticePeriod));
-		query.setParameter("vdd", false);
-		query = query.setResultTransformer(new AliasToBeanResultTransformer(StockBatchDTO.class));
-		List<StockBatchDTO> result = query.list();
-		return result;
-	}
-	
-	public Result<StockBatchDTO> findStockBatches(StockBatchSearchFilter filter) {
+
+    private List<StockBatchDTO> getExpiringStockBatchesDueForNotificationWithoutStockItemNoticePeriod(
+            Integer defaultExpiryNotificationNoticePeriod) {
+        StringBuilder hqlQuery = new StringBuilder(
+                "SELECT sb.id as id,\n"
+                        + "sb.uuid as uuid,\n"
+                        + "si.uuid as stockItemUuid,\n"
+                        + "sb.batchNo as batchNo,\n"
+                        + "sb.expiration as expiration,\n"
+                        + "sb.expiryNotificationDate as expiryNotificationDate,\n"
+                        + "sb.voided as voided\n"
+                        + "from stockmanagement.StockBatch sb join\n"
+                        + "\t sb.stockItem si  where sb.expiration >= :today and "
+                        + "sb.expiration <= :dfexp and sb.expiryNotificationDate is null and si.expiryNotice is null and sb.voided = :vdd and si.voided  = :vdd");
+
+        DbSession session = getSession();
+        Query query = session.createQuery(hqlQuery.toString());
+        query.setParameter("today", DateUtil.today());
+        query.setParameter("dfexp", DateUtils.addDays(DateUtil.today(), defaultExpiryNotificationNoticePeriod));
+        query.setParameter("vdd", false);
+        query = query.setResultTransformer(new AliasToBeanResultTransformer(StockBatchDTO.class));
+        List<StockBatchDTO> result = query.list();
+        return result;
+    }
+
+    public Result<StockBatchDTO> findStockBatches(StockBatchSearchFilter filter) {
         HashMap<String, Object> parameterList = new HashMap<>();
         HashMap<String, Collection> parameterWithList = new HashMap<>();
         StringBuilder hqlQuery = new StringBuilder("SELECT sb.id as id,\n" +
@@ -1888,50 +2028,56 @@ public class StockManagementDao extends DaoBase {
             result.setPageSize(filter.getLimit());
         }
 
-        result.setData(executeQuery(StockBatchDTO.class, hqlQuery, result, " order by sb.id", parameterList, parameterWithList));
+        result.setData(executeQuery(StockBatchDTO.class, hqlQuery, result, " order by sb.id", parameterList,
+                parameterWithList));
         return result;
     }
-	
-	public List<StockItemPackagingUOM> getStockItemPackagingUOMsByUuids(List<String> uuids) {
-        if (uuids.isEmpty()) return new ArrayList<>();
+
+    public List<StockItemPackagingUOM> getStockItemPackagingUOMsByUuids(List<String> uuids) {
+        if (uuids.isEmpty())
+            return new ArrayList<>();
         Criteria criteria = getSession().createCriteria(StockItemPackagingUOM.class);
         criteria.add(Restrictions.in("uuid", uuids));
         criteria.add(Restrictions.eq("voided", false));
         return criteria.list();
     }
-	
-	public StockOperationLink getStockOperationLinkByUuid(String uuid) {
-		return (StockOperationLink) getSession().createCriteria(StockOperationLink.class).add(Restrictions.eq("uuid", uuid))
-		        .uniqueResult();
-	}
-	
-	public StockOperationLink saveStockOperationLink(StockOperationLink stockOperationLink) {
-		getSession().saveOrUpdate(stockOperationLink);
-		return stockOperationLink;
-	}
-	
-	public void voidStockOperationItem(String stockOperationItemId, String reason, int voidedBy) {
-		DbSession session = getSession();
-		Query query = session
-		        .createQuery("UPDATE stockmanagement.StockOperationItem SET voided=1, dateVoided=:dateVoided, voidedBy=:voidedBy, voidReason=:reason WHERE uuid in (:uuid)");
-		query.setParameter("uuid", stockOperationItemId);
-		query.setDate("dateVoided", new Date());
-		query.setInteger("voidedBy", voidedBy);
-		query.setString("reason", reason);
-		query.executeUpdate();
-	}
-	
-	public long getStockOperationItemCount(Integer stockOperationId) {
-		Criteria criteria = getSession().createCriteria(StockOperationItem.class)
-		        .add(Restrictions.eq("stockOperation.id", stockOperationId)).add(Restrictions.eq("voided", false));
-		
-		criteria.setProjection(Projections.rowCount());
-		return ((Number) criteria.uniqueResult()).longValue();
-	}
-	
-	public Map<Integer, Integer> getLocationPartyIds(Collection<Integer> locationIds) {
-        if (locationIds == null || locationIds.isEmpty()) return new HashMap<>();
-        Criteria criteria = getSession().createCriteria(Party.class).add(Restrictions.in("location.locationId", locationIds));
+
+    public StockOperationLink getStockOperationLinkByUuid(String uuid) {
+        return (StockOperationLink) getSession().createCriteria(StockOperationLink.class)
+                .add(Restrictions.eq("uuid", uuid))
+                .uniqueResult();
+    }
+
+    public StockOperationLink saveStockOperationLink(StockOperationLink stockOperationLink) {
+        getSession().saveOrUpdate(stockOperationLink);
+        return stockOperationLink;
+    }
+
+    public void voidStockOperationItem(String stockOperationItemId, String reason, int voidedBy) {
+        DbSession session = getSession();
+        Query query = session
+                .createQuery(
+                        "UPDATE stockmanagement.StockOperationItem SET voided=1, dateVoided=:dateVoided, voidedBy=:voidedBy, voidReason=:reason WHERE uuid in (:uuid)");
+        query.setParameter("uuid", stockOperationItemId);
+        query.setDate("dateVoided", new Date());
+        query.setInteger("voidedBy", voidedBy);
+        query.setString("reason", reason);
+        query.executeUpdate();
+    }
+
+    public long getStockOperationItemCount(Integer stockOperationId) {
+        Criteria criteria = getSession().createCriteria(StockOperationItem.class)
+                .add(Restrictions.eq("stockOperation.id", stockOperationId)).add(Restrictions.eq("voided", false));
+
+        criteria.setProjection(Projections.rowCount());
+        return ((Number) criteria.uniqueResult()).longValue();
+    }
+
+    public Map<Integer, Integer> getLocationPartyIds(Collection<Integer> locationIds) {
+        if (locationIds == null || locationIds.isEmpty())
+            return new HashMap<>();
+        Criteria criteria = getSession().createCriteria(Party.class)
+                .add(Restrictions.in("location.locationId", locationIds));
         Projection projection1 = Projections.property("location.locationId");
         Projection projection2 = Projections.property("id");
         ProjectionList pList = Projections.projectionList();
@@ -1946,9 +2092,10 @@ public class StockManagementDao extends DaoBase {
         }
         return ids;
     }
-	
-	public Map<String, Integer> getPartyIds(Collection<String> uuids) {
-        if (uuids == null || uuids.isEmpty()) return new HashMap<>();
+
+    public Map<String, Integer> getPartyIds(Collection<String> uuids) {
+        if (uuids == null || uuids.isEmpty())
+            return new HashMap<>();
         Criteria criteria = getSession().createCriteria(Party.class).add(Restrictions.in("uuid", uuids));
         Projection projection1 = Projections.property("id");
         Projection projection2 = Projections.property("uuid");
@@ -1964,9 +2111,10 @@ public class StockManagementDao extends DaoBase {
         }
         return ids;
     }
-	
-	public Map<String, Integer> getStockItemIds(Collection<String> uuids) {
-        if (uuids == null || uuids.isEmpty()) return new HashMap<>();
+
+    public Map<String, Integer> getStockItemIds(Collection<String> uuids) {
+        if (uuids == null || uuids.isEmpty())
+            return new HashMap<>();
         Criteria criteria = getSession().createCriteria(StockItem.class).add(Restrictions.in("uuid", uuids));
         Projection projection1 = Projections.property("id");
         Projection projection2 = Projections.property("uuid");
@@ -1982,9 +2130,10 @@ public class StockManagementDao extends DaoBase {
         }
         return ids;
     }
-	
-	public Map<String, Integer> getLocationIds(Collection<String> uuids) {
-        if (uuids == null || uuids.isEmpty()) return new HashMap<>();
+
+    public Map<String, Integer> getLocationIds(Collection<String> uuids) {
+        if (uuids == null || uuids.isEmpty())
+            return new HashMap<>();
         Criteria criteria = getSession().createCriteria(Location.class).add(Restrictions.in("uuid", uuids));
         Projection projection1 = Projections.property("locationId");
         Projection projection2 = Projections.property("uuid");
@@ -2000,21 +2149,21 @@ public class StockManagementDao extends DaoBase {
         }
         return ids;
     }
-	
-	public void setStockItemCurrentBalanceWithDescendants(List<StockRuleCurrentQuantity> stockRuleCurrentQuantities) {
-        if (stockRuleCurrentQuantities == null || stockRuleCurrentQuantities.isEmpty()) return;
+
+    public void setStockItemCurrentBalanceWithDescendants(List<StockRuleCurrentQuantity> stockRuleCurrentQuantities) {
+        if (stockRuleCurrentQuantities == null || stockRuleCurrentQuantities.isEmpty())
+            return;
         int startIndex = 0;
         int batchSize = 100;
         boolean hasMoreUpdatesToDo = true;
         do {
-            StringBuilder hqlQuery = new StringBuilder("SELECT lt.parentLocationId as partyId, sit.stockItem.id as stockItemId," +
-                    "sum(sit.quantity * sipu.factor) as quantity\n" +
-                    "from stockmanagement.LocationTree lt, stockmanagement.Party p, " +
-                    " stockmanagement.StockItemTransaction sit join\n" +
-                    "\t sit.stockItemPackagingUOM sipu join\n" +
-                    " sit.stockBatch sb where "
-            );
-
+            StringBuilder hqlQuery = new StringBuilder(
+                    "SELECT lt.parentLocationId as partyId, sit.stockItem.id as stockItemId," +
+                            "sum(sit.quantity * sipu.factor) as quantity\n" +
+                            "from stockmanagement.LocationTree lt, stockmanagement.Party p, " +
+                            " stockmanagement.StockItemTransaction sit join\n" +
+                            "\t sit.stockItemPackagingUOM sipu join\n" +
+                            " sit.stockBatch sb where ");
 
             StringBuilder hqlFilter = new StringBuilder();
             appendFilter(hqlFilter, "lt.childLocationId = p.location.locationId");
@@ -2022,12 +2171,16 @@ public class StockManagementDao extends DaoBase {
             StringBuilder itemGroupClause = new StringBuilder();
             int paramIndex = 0;
             HashMap<String, Object> parameterList = new HashMap<>();
-            List<StockRuleCurrentQuantity> batch = stockRuleCurrentQuantities.stream().skip(startIndex * batchSize).limit(batchSize).collect(Collectors.toList());
+            List<StockRuleCurrentQuantity> batch = stockRuleCurrentQuantities.stream().skip(startIndex * batchSize)
+                    .limit(batchSize).collect(Collectors.toList());
             for (StockRuleCurrentQuantity stockRuleCurrentQuantity : batch) {
                 appendORFilter(itemGroupClause,
-                        String.format("lt.parentLocationId = :pli%1$s and sit.stockItem.id = :sid%1$s", Integer.toString(paramIndex)));
-                parameterList.putIfAbsent("pli" + Integer.toString(paramIndex), stockRuleCurrentQuantity.getLocationId());
-                parameterList.putIfAbsent("sid" + Integer.toString(paramIndex), stockRuleCurrentQuantity.getStockItemId());
+                        String.format("lt.parentLocationId = :pli%1$s and sit.stockItem.id = :sid%1$s",
+                                Integer.toString(paramIndex)));
+                parameterList.putIfAbsent("pli" + Integer.toString(paramIndex),
+                        stockRuleCurrentQuantity.getLocationId());
+                parameterList.putIfAbsent("sid" + Integer.toString(paramIndex),
+                        stockRuleCurrentQuantity.getStockItemId());
                 paramIndex++;
             }
             if (paramIndex == 0) {
@@ -2048,8 +2201,10 @@ public class StockManagementDao extends DaoBase {
             query = query.setResultTransformer(new AliasToBeanResultTransformer(StockItemInventory.class));
             List<StockItemInventory> result = query.list();
             for (StockRuleCurrentQuantity stockRuleCurrentQuantity : batch) {
-                Optional<StockItemInventory> inventory = result.stream().filter(p -> p.getPartyId().equals(stockRuleCurrentQuantity.getLocationId()) &&
-                        p.getStockItemId().equals(stockRuleCurrentQuantity.getStockItemId())).findAny();
+                Optional<StockItemInventory> inventory = result.stream()
+                        .filter(p -> p.getPartyId().equals(stockRuleCurrentQuantity.getLocationId()) &&
+                                p.getStockItemId().equals(stockRuleCurrentQuantity.getStockItemId()))
+                        .findAny();
                 if (inventory.isPresent()) {
                     stockRuleCurrentQuantity.setQuantity(inventory.get().getQuantity());
                 }
@@ -2059,34 +2214,40 @@ public class StockManagementDao extends DaoBase {
             startIndex++;
         } while (hasMoreUpdatesToDo);
     }
-	
-	public void setStockItemCurrentBalanceWithoutDescendants(List<StockRuleCurrentQuantity> stockRuleCurrentQuantities) {
-        if (stockRuleCurrentQuantities == null || stockRuleCurrentQuantities.isEmpty()) return;
+
+    public void setStockItemCurrentBalanceWithoutDescendants(
+            List<StockRuleCurrentQuantity> stockRuleCurrentQuantities) {
+        if (stockRuleCurrentQuantities == null || stockRuleCurrentQuantities.isEmpty())
+            return;
         int startIndex = 0;
         boolean hasMoreUpdatesToDo = true;
-        Map<Integer, Integer> locationPartyIds = getLocationPartyIds(stockRuleCurrentQuantities.stream().map(p -> p.getLocationId()).distinct().collect(Collectors.toList()));
+        Map<Integer, Integer> locationPartyIds = getLocationPartyIds(stockRuleCurrentQuantities.stream()
+                .map(p -> p.getLocationId()).distinct().collect(Collectors.toList()));
         do {
-            StringBuilder hqlQuery = new StringBuilder("SELECT sit.party.id as partyId, sit.stockItem.id as stockItemId," +
-                    "sum(sit.quantity * sipu.factor) as quantity\n" +
-                    "from stockmanagement.StockItemTransaction sit join\n" +
-                    "\t sit.stockItemPackagingUOM sipu join\n" +
-                    " sit.stockBatch sb where "
-            );
-
+            StringBuilder hqlQuery = new StringBuilder(
+                    "SELECT sit.party.id as partyId, sit.stockItem.id as stockItemId," +
+                            "sum(sit.quantity * sipu.factor) as quantity\n" +
+                            "from stockmanagement.StockItemTransaction sit join\n" +
+                            "\t sit.stockItemPackagingUOM sipu join\n" +
+                            " sit.stockBatch sb where ");
 
             StringBuilder hqlFilter = new StringBuilder();
             appendFilter(hqlFilter, "p.id = sit.party.id");
             StringBuilder itemGroupClause = new StringBuilder();
             int paramIndex = 0;
             HashMap<String, Object> parameterList = new HashMap<>();
-            List<StockRuleCurrentQuantity> batch = stockRuleCurrentQuantities.stream().skip(startIndex * 100).limit(100).collect(Collectors.toList());
+            List<StockRuleCurrentQuantity> batch = stockRuleCurrentQuantities.stream().skip(startIndex * 100).limit(100)
+                    .collect(Collectors.toList());
             for (StockRuleCurrentQuantity stockRuleCurrentQuantity : batch) {
                 Integer partyId = locationPartyIds.getOrDefault(stockRuleCurrentQuantity.getLocationId(), null);
-                if (partyId == null) continue;
+                if (partyId == null)
+                    continue;
                 appendORFilter(itemGroupClause,
-                        String.format("sit.party.id = :pli%1$s and sit.stockItem.id = :sid%1$s", Integer.toString(paramIndex)));
+                        String.format("sit.party.id = :pli%1$s and sit.stockItem.id = :sid%1$s",
+                                Integer.toString(paramIndex)));
                 parameterList.putIfAbsent("pli" + Integer.toString(paramIndex), partyId);
-                parameterList.putIfAbsent("sid" + Integer.toString(paramIndex), stockRuleCurrentQuantity.getStockItemId());
+                parameterList.putIfAbsent("sid" + Integer.toString(paramIndex),
+                        stockRuleCurrentQuantity.getStockItemId());
                 paramIndex++;
             }
             if (paramIndex == 0) {
@@ -2109,7 +2270,8 @@ public class StockManagementDao extends DaoBase {
             List<StockItemInventory> result = query.list();
             for (StockRuleCurrentQuantity stockRuleCurrentQuantity : batch) {
                 Integer partyId = locationPartyIds.getOrDefault(stockRuleCurrentQuantity.getLocationId(), null);
-                if (partyId == null) continue;
+                if (partyId == null)
+                    continue;
                 Optional<StockItemInventory> inventory = result.stream().filter(p -> p.getPartyId().equals(partyId) &&
                         p.getStockItemId().equals(stockRuleCurrentQuantity.getStockItemId())).findAny();
                 if (inventory.isPresent()) {
@@ -2121,21 +2283,23 @@ public class StockManagementDao extends DaoBase {
             startIndex++;
         } while (hasMoreUpdatesToDo);
     }
-	
-	public Result<StockItemInventory> getLeastMovingStockInventory(StockItemInventorySearchFilter filter) {
-		return getMostLeastMovingStockInventory(filter, false);
-	}
-	
-	public Result<StockItemInventory> getMostMovingStockInventory(StockItemInventorySearchFilter filter) {
-		return getMostLeastMovingStockInventory(filter, true);
-	}
-	
-	private Result<StockItemInventory> getMostLeastMovingStockInventory(StockItemInventorySearchFilter filter, boolean isMostMoving) {
+
+    public Result<StockItemInventory> getLeastMovingStockInventory(StockItemInventorySearchFilter filter) {
+        return getMostLeastMovingStockInventory(filter, false);
+    }
+
+    public Result<StockItemInventory> getMostMovingStockInventory(StockItemInventorySearchFilter filter) {
+        return getMostLeastMovingStockInventory(filter, true);
+    }
+
+    private Result<StockItemInventory> getMostLeastMovingStockInventory(StockItemInventorySearchFilter filter,
+            boolean isMostMoving) {
         HashMap<String, Object> parameterList = new HashMap<>();
         HashMap<String, Collection> parameterWithList = new HashMap<>();
         List<StockItemInventorySearchFilter.ItemGroupFilter> zeroStockQtyToReturn = new ArrayList<>();
 
-        if (filter.isRequireItemGroupFilters() && (filter.getItemGroupFilters() == null || filter.getItemGroupFilters().isEmpty()))
+        if (filter.isRequireItemGroupFilters()
+                && (filter.getItemGroupFilters() == null || filter.getItemGroupFilters().isEmpty()))
             return new Result(new ArrayList<>(), 0);
 
         if (filter.getInventoryGroupBy() == null) {
@@ -2147,14 +2311,20 @@ public class StockManagementDao extends DaoBase {
         boolean groupByStockItem = true;
 
         if (filter.getInventoryGroupBy() != null) {
-            groupByParty = filter.getInventoryGroupBy().equals(StockItemInventorySearchFilter.InventoryGroupBy.LocationStockItem) ||
-                    filter.getInventoryGroupBy().equals(StockItemInventorySearchFilter.InventoryGroupBy.LocationStockItemBatchNo);
+            groupByParty = filter.getInventoryGroupBy()
+                    .equals(StockItemInventorySearchFilter.InventoryGroupBy.LocationStockItem) ||
+                    filter.getInventoryGroupBy()
+                            .equals(StockItemInventorySearchFilter.InventoryGroupBy.LocationStockItemBatchNo);
 
-            groupByStockItem = filter.getInventoryGroupBy().equals(StockItemInventorySearchFilter.InventoryGroupBy.LocationStockItem) ||
-                    filter.getInventoryGroupBy().equals(StockItemInventorySearchFilter.InventoryGroupBy.LocationStockItemBatchNo) ||
+            groupByStockItem = filter.getInventoryGroupBy()
+                    .equals(StockItemInventorySearchFilter.InventoryGroupBy.LocationStockItem) ||
+                    filter.getInventoryGroupBy()
+                            .equals(StockItemInventorySearchFilter.InventoryGroupBy.LocationStockItemBatchNo)
+                    ||
                     filter.getInventoryGroupBy().equals(StockItemInventorySearchFilter.InventoryGroupBy.StockItemOnly);
 
-            groupByStockBatch = filter.getInventoryGroupBy().equals(StockItemInventorySearchFilter.InventoryGroupBy.LocationStockItemBatchNo);
+            groupByStockBatch = filter.getInventoryGroupBy()
+                    .equals(StockItemInventorySearchFilter.InventoryGroupBy.LocationStockItemBatchNo);
         }
         if (groupByParty == false && groupByStockBatch == false && groupByStockItem == false) {
             groupByParty = true;
@@ -2162,7 +2332,8 @@ public class StockManagementDao extends DaoBase {
             groupByStockItem = true;
         }
 
-        StringBuilder hqlQuery = getStockItemInventoryQuery(filter, null, parameterList, parameterWithList, zeroStockQtyToReturn, groupByParty, groupByStockBatch, groupByStockItem);
+        StringBuilder hqlQuery = getStockItemInventoryQuery(filter, null, parameterList, parameterWithList,
+                zeroStockQtyToReturn, groupByParty, groupByStockBatch, groupByStockItem);
         if (hqlQuery == null) {
             return new Result(new ArrayList<>(), 0);
         }
@@ -2198,36 +2369,44 @@ public class StockManagementDao extends DaoBase {
             }
         }
     }
-	
-	public void getStockInventoryExpiryForecastData(StockItemInventorySearchFilter filter, Function<Object[], Boolean> consumer) {
-        if (consumer == null) return;
+
+    public void getStockInventoryExpiryForecastData(StockItemInventorySearchFilter filter,
+            Function<Object[], Boolean> consumer) {
+        if (consumer == null)
+            return;
         HashMap<String, Object> parameterList = new HashMap<>();
         HashMap<String, Collection> parameterWithList = new HashMap<>();
         List<StockItemInventorySearchFilter.ItemGroupFilter> zeroStockQtyToReturn = new ArrayList<>();
 
-        if (filter.isRequireItemGroupFilters() && (filter.getItemGroupFilters() == null || filter.getItemGroupFilters().isEmpty()))
+        if (filter.isRequireItemGroupFilters()
+                && (filter.getItemGroupFilters() == null || filter.getItemGroupFilters().isEmpty()))
             return;
 
         if (filter.getInventoryGroupBy() == null) {
             filter.setInventoryGroupBy(StockItemInventorySearchFilter.InventoryGroupBy.LocationStockItemBatchNo);
         }
 
-        StringBuilder hqlQuery = new StringBuilder("SELECT sit.stockItem.id as stockItemId, sit.stockBatch.id as stockBatchId, sb.expiration as expiration,\n");
+        StringBuilder hqlQuery = new StringBuilder(
+                "SELECT sit.stockItem.id as stockItemId, sit.stockBatch.id as stockBatchId, sb.expiration as expiration,\n");
         LocalDate startDate = filter.getStartDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
         LocalDate endDate = filter.getEndDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
         Integer monthQuantityConsumedIndex = 0;
         startDate = startDate.withDayOfMonth(1);
         endDate = endDate.withDayOfMonth(1);
         do {
-            hqlQuery.append("sum(case when (sit.quantity < 0 and sit.dateCreated >= :startdate and sit.dateCreated <= :enddate and year(sit.dateCreated)=" +
-                    Integer.toString(startDate.getYear()) +
-                    " and month(sit.dateCreated)=" + Integer.toString(startDate.getMonthValue()) +
-                    " ) then (sit.quantity * sipu.factor * -1) else 0 end) as q" + Integer.toString(monthQuantityConsumedIndex) + ",\n");
+            hqlQuery.append(
+                    "sum(case when (sit.quantity < 0 and sit.dateCreated >= :startdate and sit.dateCreated <= :enddate and year(sit.dateCreated)="
+                            +
+                            Integer.toString(startDate.getYear()) +
+                            " and month(sit.dateCreated)=" + Integer.toString(startDate.getMonthValue()) +
+                            " ) then (sit.quantity * sipu.factor * -1) else 0 end) as q"
+                            + Integer.toString(monthQuantityConsumedIndex) + ",\n");
             startDate = startDate.plusMonths(1);
             monthQuantityConsumedIndex++;
         } while (!startDate.isAfter(endDate));
 
-        hqlQuery.append("sum(case when (sb.expiration is null or sb.expiration > :today) then (sit.quantity * sipu.factor) else 0 end) as quantity");
+        hqlQuery.append(
+                "sum(case when (sb.expiration is null or sb.expiration > :today) then (sit.quantity * sipu.factor) else 0 end) as quantity");
         hqlQuery.append(" from stockmanagement.StockItemTransaction sit join\n" +
                 "\t sit.stockItemPackagingUOM sipu join\n" +
                 " sit.stockBatch sb\n" +
@@ -2235,21 +2414,24 @@ public class StockManagementDao extends DaoBase {
 
         StringBuilder hqlFilter = new StringBuilder();
 
-        List<String> partyIdsToFetch = filter.getItemGroupFilters() == null ? new ArrayList<>() : filter.getItemGroupFilters().stream()
-                .filter(p -> p.getPartyUuids() != null && !p.getPartyUuids().isEmpty())
-                .map(p -> p.getPartyUuids())
-                .flatMap(Collection::stream)
-                .distinct()
-                .collect(Collectors.toList());
+        List<String> partyIdsToFetch = filter.getItemGroupFilters() == null ? new ArrayList<>()
+                : filter.getItemGroupFilters().stream()
+                        .filter(p -> p.getPartyUuids() != null && !p.getPartyUuids().isEmpty())
+                        .map(p -> p.getPartyUuids())
+                        .flatMap(Collection::stream)
+                        .distinct()
+                        .collect(Collectors.toList());
 
-        List<String> stockItemIdsToFetch = filter.getItemGroupFilters() == null ? new ArrayList<>() : filter.getItemGroupFilters().stream()
-                .filter(p -> p.getStockItemUuid() != null)
-                .map(p -> p.getStockItemUuid())
-                .distinct()
-                .collect(Collectors.toList());
+        List<String> stockItemIdsToFetch = filter.getItemGroupFilters() == null ? new ArrayList<>()
+                : filter.getItemGroupFilters().stream()
+                        .filter(p -> p.getStockItemUuid() != null)
+                        .map(p -> p.getStockItemUuid())
+                        .distinct()
+                        .collect(Collectors.toList());
 
         Map<String, Integer> partyIds = partyIdsToFetch.isEmpty() ? new HashMap<>() : getPartyIds(partyIdsToFetch);
-        Map<String, Integer> stockItemIds = stockItemIdsToFetch.isEmpty() ? new HashMap<>() : getStockItemIds(stockItemIdsToFetch);
+        Map<String, Integer> stockItemIds = stockItemIdsToFetch.isEmpty() ? new HashMap<>()
+                : getStockItemIds(stockItemIdsToFetch);
         StringBuilder itemGroupFilters = new StringBuilder();
         int paramIndex = 0;
         int appliedItemGroupFilters = 0;
@@ -2265,7 +2447,9 @@ public class StockManagementDao extends DaoBase {
                     partyIdFilter.addAll(itemGroupFilter.getPartyIds());
                 }
                 if (itemGroupFilter.getPartyUuids() != null) {
-                    List<Integer> foundPartyIds = itemGroupFilter.getPartyUuids().stream().map(p -> partyIds.getOrDefault(p, 0)).filter(p -> !p.equals(0)).collect(Collectors.toList());
+                    List<Integer> foundPartyIds = itemGroupFilter.getPartyUuids().stream()
+                            .map(p -> partyIds.getOrDefault(p, 0)).filter(p -> !p.equals(0))
+                            .collect(Collectors.toList());
                     if (foundPartyIds.isEmpty()) {
                         continue;
                     }
@@ -2288,13 +2472,15 @@ public class StockManagementDao extends DaoBase {
                         continue;
                     }
                     appendFilter(itemGroupClause, String.format("sit.stockItem.id = :sid%1s", paramIndexString));
-                    itemGroupParameterList.putIfAbsent("sid" + paramIndexString, stockItemIds.get(itemGroupFilter.getStockItemUuid()));
+                    itemGroupParameterList.putIfAbsent("sid" + paramIndexString,
+                            stockItemIds.get(itemGroupFilter.getStockItemUuid()));
                     zeroQtyItemGroupFilter.setStockItemId(stockItemIds.get(itemGroupFilter.getStockItemUuid()));
                 }
 
                 if (itemGroupFilter.getStockBatchIds() != null && !itemGroupFilter.getStockBatchIds().isEmpty()) {
                     appendFilter(itemGroupClause, String.format("sit.stockBatch.id in (:sbid%1s)", paramIndexString));
-                    itemGroupParameterWithList.putIfAbsent("sbid" + paramIndexString, itemGroupFilter.getStockBatchIds());
+                    itemGroupParameterWithList.putIfAbsent("sbid" + paramIndexString,
+                            itemGroupFilter.getStockBatchIds());
                 }
 
                 paramIndex++;
@@ -2359,7 +2545,6 @@ public class StockManagementDao extends DaoBase {
             for (Map.Entry<String, Object> entry : parameterList.entrySet())
                 query.setParameter(entry.getKey(), entry.getValue());
 
-
             for (Map.Entry<String, Collection> entry : parameterWithList.entrySet())
                 query.setParameterList(entry.getKey(), entry.getValue());
 
@@ -2388,14 +2573,17 @@ public class StockManagementDao extends DaoBase {
             }
         }
     }
-	
-	public void getStockInventoryForecastData(StockItemInventorySearchFilter filter, Function<Object[], Boolean> consumer) {
-        if (consumer == null) return;
+
+    public void getStockInventoryForecastData(StockItemInventorySearchFilter filter,
+            Function<Object[], Boolean> consumer) {
+        if (consumer == null)
+            return;
         HashMap<String, Object> parameterList = new HashMap<>();
         HashMap<String, Collection> parameterWithList = new HashMap<>();
         List<StockItemInventorySearchFilter.ItemGroupFilter> zeroStockQtyToReturn = new ArrayList<>();
 
-        if (filter.isRequireItemGroupFilters() && (filter.getItemGroupFilters() == null || filter.getItemGroupFilters().isEmpty()))
+        if (filter.isRequireItemGroupFilters()
+                && (filter.getItemGroupFilters() == null || filter.getItemGroupFilters().isEmpty()))
             return;
 
         if (filter.getInventoryGroupBy() == null) {
@@ -2407,14 +2595,20 @@ public class StockManagementDao extends DaoBase {
         boolean groupByStockItem = true;
 
         if (filter.getInventoryGroupBy() != null) {
-            groupByParty = filter.getInventoryGroupBy().equals(StockItemInventorySearchFilter.InventoryGroupBy.LocationStockItem) ||
-                    filter.getInventoryGroupBy().equals(StockItemInventorySearchFilter.InventoryGroupBy.LocationStockItemBatchNo);
+            groupByParty = filter.getInventoryGroupBy()
+                    .equals(StockItemInventorySearchFilter.InventoryGroupBy.LocationStockItem) ||
+                    filter.getInventoryGroupBy()
+                            .equals(StockItemInventorySearchFilter.InventoryGroupBy.LocationStockItemBatchNo);
 
-            groupByStockItem = filter.getInventoryGroupBy().equals(StockItemInventorySearchFilter.InventoryGroupBy.LocationStockItem) ||
-                    filter.getInventoryGroupBy().equals(StockItemInventorySearchFilter.InventoryGroupBy.LocationStockItemBatchNo) ||
+            groupByStockItem = filter.getInventoryGroupBy()
+                    .equals(StockItemInventorySearchFilter.InventoryGroupBy.LocationStockItem) ||
+                    filter.getInventoryGroupBy()
+                            .equals(StockItemInventorySearchFilter.InventoryGroupBy.LocationStockItemBatchNo)
+                    ||
                     filter.getInventoryGroupBy().equals(StockItemInventorySearchFilter.InventoryGroupBy.StockItemOnly);
 
-            groupByStockBatch = filter.getInventoryGroupBy().equals(StockItemInventorySearchFilter.InventoryGroupBy.LocationStockItemBatchNo);
+            groupByStockBatch = filter.getInventoryGroupBy()
+                    .equals(StockItemInventorySearchFilter.InventoryGroupBy.LocationStockItemBatchNo);
         }
         if (groupByParty == false && groupByStockBatch == false && groupByStockItem == false) {
             groupByParty = true;
@@ -2424,10 +2618,11 @@ public class StockManagementDao extends DaoBase {
 
         StringBuilder hqlQuery = new StringBuilder("SELECT " +
                 (groupByParty ? "sit.party.id as partyId,\n" : "cast(:nullValue as java.lang.Integer) as partyId,") +
-                (groupByStockItem ? "sit.stockItem.id as stockItemId,\n" : "cast(:nullValue as java.lang.Integer) as stockItemId,") +
-                (groupByStockBatch ? "sit.stockBatch.id as stockBatchId,\n" : "cast(:nullValue as java.lang.Integer) as stockBatchId,")
-        );
-
+                (groupByStockItem ? "sit.stockItem.id as stockItemId,\n"
+                        : "cast(:nullValue as java.lang.Integer) as stockItemId,")
+                +
+                (groupByStockBatch ? "sit.stockBatch.id as stockBatchId,\n"
+                        : "cast(:nullValue as java.lang.Integer) as stockBatchId,"));
 
         LocalDate startDate = filter.getStartDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
         LocalDate endDate = filter.getEndDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
@@ -2435,15 +2630,19 @@ public class StockManagementDao extends DaoBase {
         startDate = startDate.withDayOfMonth(1);
         endDate = endDate.withDayOfMonth(1);
         do {
-            hqlQuery.append("sum(case when (sit.quantity < 0 and sit.dateCreated >= :startdate and sit.dateCreated <= :enddate and year(sit.dateCreated)=" +
-                    Integer.toString(startDate.getYear()) +
-                    " and month(sit.dateCreated)=" + Integer.toString(startDate.getMonthValue()) +
-                    " ) then (sit.quantity * sipu.factor * -1) else 0 end) as q" + Integer.toString(monthQuantityConsumedIndex) + ",");
+            hqlQuery.append(
+                    "sum(case when (sit.quantity < 0 and sit.dateCreated >= :startdate and sit.dateCreated <= :enddate and year(sit.dateCreated)="
+                            +
+                            Integer.toString(startDate.getYear()) +
+                            " and month(sit.dateCreated)=" + Integer.toString(startDate.getMonthValue()) +
+                            " ) then (sit.quantity * sipu.factor * -1) else 0 end) as q"
+                            + Integer.toString(monthQuantityConsumedIndex) + ",");
             startDate = startDate.plusMonths(1);
             monthQuantityConsumedIndex++;
         } while (!startDate.isAfter(endDate));
 
-        hqlQuery.append("sum(case when (sb.expiration is null or sb.expiration > :today) then (sit.quantity * sipu.factor) else 0 end) as quantity");
+        hqlQuery.append(
+                "sum(case when (sb.expiration is null or sb.expiration > :today) then (sit.quantity * sipu.factor) else 0 end) as quantity");
         hqlQuery.append(" from stockmanagement.StockItemTransaction sit join\n" +
                 "\t sit.stockItemPackagingUOM sipu join\n" +
                 " sit.stockBatch sb\n" +
@@ -2451,21 +2650,24 @@ public class StockManagementDao extends DaoBase {
 
         StringBuilder hqlFilter = new StringBuilder();
 
-        List<String> partyIdsToFetch = filter.getItemGroupFilters() == null ? new ArrayList<>() : filter.getItemGroupFilters().stream()
-                .filter(p -> p.getPartyUuids() != null && !p.getPartyUuids().isEmpty())
-                .map(p -> p.getPartyUuids())
-                .flatMap(Collection::stream)
-                .distinct()
-                .collect(Collectors.toList());
+        List<String> partyIdsToFetch = filter.getItemGroupFilters() == null ? new ArrayList<>()
+                : filter.getItemGroupFilters().stream()
+                        .filter(p -> p.getPartyUuids() != null && !p.getPartyUuids().isEmpty())
+                        .map(p -> p.getPartyUuids())
+                        .flatMap(Collection::stream)
+                        .distinct()
+                        .collect(Collectors.toList());
 
-        List<String> stockItemIdsToFetch = filter.getItemGroupFilters() == null ? new ArrayList<>() : filter.getItemGroupFilters().stream()
-                .filter(p -> p.getStockItemUuid() != null)
-                .map(p -> p.getStockItemUuid())
-                .distinct()
-                .collect(Collectors.toList());
+        List<String> stockItemIdsToFetch = filter.getItemGroupFilters() == null ? new ArrayList<>()
+                : filter.getItemGroupFilters().stream()
+                        .filter(p -> p.getStockItemUuid() != null)
+                        .map(p -> p.getStockItemUuid())
+                        .distinct()
+                        .collect(Collectors.toList());
 
         Map<String, Integer> partyIds = partyIdsToFetch.isEmpty() ? new HashMap<>() : getPartyIds(partyIdsToFetch);
-        Map<String, Integer> stockItemIds = stockItemIdsToFetch.isEmpty() ? new HashMap<>() : getStockItemIds(stockItemIdsToFetch);
+        Map<String, Integer> stockItemIds = stockItemIdsToFetch.isEmpty() ? new HashMap<>()
+                : getStockItemIds(stockItemIdsToFetch);
         StringBuilder itemGroupFilters = new StringBuilder();
         int paramIndex = 0;
         int appliedItemGroupFilters = 0;
@@ -2481,7 +2683,9 @@ public class StockManagementDao extends DaoBase {
                     partyIdFilter.addAll(itemGroupFilter.getPartyIds());
                 }
                 if (itemGroupFilter.getPartyUuids() != null) {
-                    List<Integer> foundPartyIds = itemGroupFilter.getPartyUuids().stream().map(p -> partyIds.getOrDefault(p, 0)).filter(p -> !p.equals(0)).collect(Collectors.toList());
+                    List<Integer> foundPartyIds = itemGroupFilter.getPartyUuids().stream()
+                            .map(p -> partyIds.getOrDefault(p, 0)).filter(p -> !p.equals(0))
+                            .collect(Collectors.toList());
                     if (foundPartyIds.isEmpty()) {
                         continue;
                     }
@@ -2504,13 +2708,15 @@ public class StockManagementDao extends DaoBase {
                         continue;
                     }
                     appendFilter(itemGroupClause, String.format("sit.stockItem.id = :sid%1s", paramIndexString));
-                    itemGroupParameterList.putIfAbsent("sid" + paramIndexString, stockItemIds.get(itemGroupFilter.getStockItemUuid()));
+                    itemGroupParameterList.putIfAbsent("sid" + paramIndexString,
+                            stockItemIds.get(itemGroupFilter.getStockItemUuid()));
                     zeroQtyItemGroupFilter.setStockItemId(stockItemIds.get(itemGroupFilter.getStockItemUuid()));
                 }
 
                 if (itemGroupFilter.getStockBatchIds() != null && !itemGroupFilter.getStockBatchIds().isEmpty()) {
                     appendFilter(itemGroupClause, String.format("sit.stockBatch.id in (:sbid%1s)", paramIndexString));
-                    itemGroupParameterWithList.putIfAbsent("sbid" + paramIndexString, itemGroupFilter.getStockBatchIds());
+                    itemGroupParameterWithList.putIfAbsent("sbid" + paramIndexString,
+                            itemGroupFilter.getStockBatchIds());
                 }
 
                 paramIndex++;
@@ -2579,7 +2785,8 @@ public class StockManagementDao extends DaoBase {
         if (hqlQuery == null) {
             return;
         }
-        hqlQuery.append(" order by " + (groupByParty ? "sit.party.id" : (groupByStockItem ? "sit.stockItem.id" : (groupByStockBatch ? "sit.stockBatch.id" : ""))));
+        hqlQuery.append(" order by " + (groupByParty ? "sit.party.id"
+                : (groupByStockItem ? "sit.stockItem.id" : (groupByStockBatch ? "sit.stockBatch.id" : ""))));
 
         ScrollableResults results = null;
         org.hibernate.StatelessSession session = null;
@@ -2592,7 +2799,6 @@ public class StockManagementDao extends DaoBase {
 
             for (Map.Entry<String, Object> entry : parameterList.entrySet())
                 query.setParameter(entry.getKey(), entry.getValue());
-
 
             for (Map.Entry<String, Collection> entry : parameterWithList.entrySet())
                 query.setParameterList(entry.getKey(), entry.getValue());
@@ -2622,14 +2828,18 @@ public class StockManagementDao extends DaoBase {
             }
         }
     }
-	
-	public <T extends StockItemInventory> void getStockInventory(StockItemInventorySearchFilter filter, HashSet<RecordPrivilegeFilter> recordPrivilegeFilters, Function<T, Boolean> consumer, Class<T> resultClass) {
-        if (consumer == null) return;
+
+    public <T extends StockItemInventory> void getStockInventory(StockItemInventorySearchFilter filter,
+            HashSet<RecordPrivilegeFilter> recordPrivilegeFilters, Function<T, Boolean> consumer,
+            Class<T> resultClass) {
+        if (consumer == null)
+            return;
         HashMap<String, Object> parameterList = new HashMap<>();
         HashMap<String, Collection> parameterWithList = new HashMap<>();
         List<StockItemInventorySearchFilter.ItemGroupFilter> zeroStockQtyToReturn = new ArrayList<>();
 
-        if (filter.isRequireItemGroupFilters() && (filter.getItemGroupFilters() == null || filter.getItemGroupFilters().isEmpty()))
+        if (filter.isRequireItemGroupFilters()
+                && (filter.getItemGroupFilters() == null || filter.getItemGroupFilters().isEmpty()))
             return;
 
         if (filter.getInventoryGroupBy() == null) {
@@ -2641,14 +2851,20 @@ public class StockManagementDao extends DaoBase {
         boolean groupByStockItem = true;
 
         if (filter.getInventoryGroupBy() != null) {
-            groupByParty = filter.getInventoryGroupBy().equals(StockItemInventorySearchFilter.InventoryGroupBy.LocationStockItem) ||
-                    filter.getInventoryGroupBy().equals(StockItemInventorySearchFilter.InventoryGroupBy.LocationStockItemBatchNo);
+            groupByParty = filter.getInventoryGroupBy()
+                    .equals(StockItemInventorySearchFilter.InventoryGroupBy.LocationStockItem) ||
+                    filter.getInventoryGroupBy()
+                            .equals(StockItemInventorySearchFilter.InventoryGroupBy.LocationStockItemBatchNo);
 
-            groupByStockItem = filter.getInventoryGroupBy().equals(StockItemInventorySearchFilter.InventoryGroupBy.LocationStockItem) ||
-                    filter.getInventoryGroupBy().equals(StockItemInventorySearchFilter.InventoryGroupBy.LocationStockItemBatchNo) ||
+            groupByStockItem = filter.getInventoryGroupBy()
+                    .equals(StockItemInventorySearchFilter.InventoryGroupBy.LocationStockItem) ||
+                    filter.getInventoryGroupBy()
+                            .equals(StockItemInventorySearchFilter.InventoryGroupBy.LocationStockItemBatchNo)
+                    ||
                     filter.getInventoryGroupBy().equals(StockItemInventorySearchFilter.InventoryGroupBy.StockItemOnly);
 
-            groupByStockBatch = filter.getInventoryGroupBy().equals(StockItemInventorySearchFilter.InventoryGroupBy.LocationStockItemBatchNo);
+            groupByStockBatch = filter.getInventoryGroupBy()
+                    .equals(StockItemInventorySearchFilter.InventoryGroupBy.LocationStockItemBatchNo);
         }
         if (groupByParty == false && groupByStockBatch == false && groupByStockItem == false) {
             groupByParty = true;
@@ -2656,11 +2872,13 @@ public class StockManagementDao extends DaoBase {
             groupByStockItem = true;
         }
 
-        StringBuilder hqlQuery = getStockItemInventoryQuery(filter, recordPrivilegeFilters, parameterList, parameterWithList, zeroStockQtyToReturn, groupByParty, groupByStockBatch, groupByStockItem);
+        StringBuilder hqlQuery = getStockItemInventoryQuery(filter, recordPrivilegeFilters, parameterList,
+                parameterWithList, zeroStockQtyToReturn, groupByParty, groupByStockBatch, groupByStockItem);
         if (hqlQuery == null) {
             return;
         }
-        hqlQuery.append(" order by " + (groupByParty ? "sit.party.id" : (groupByStockItem ? "sit.stockItem.id" : (groupByStockBatch ? "sit.stockBatch.id" : ""))));
+        hqlQuery.append(" order by " + (groupByParty ? "sit.party.id"
+                : (groupByStockItem ? "sit.stockItem.id" : (groupByStockBatch ? "sit.stockBatch.id" : ""))));
 
         ScrollableResults results = null;
         org.hibernate.StatelessSession session = null;
@@ -2701,13 +2919,15 @@ public class StockManagementDao extends DaoBase {
             }
         }
     }
-	
-	public StockInventoryResult getStockItemInventory(StockItemInventorySearchFilter filter, HashSet<RecordPrivilegeFilter> recordPrivilegeFilters) {
+
+    public StockInventoryResult getStockItemInventory(StockItemInventorySearchFilter filter,
+            HashSet<RecordPrivilegeFilter> recordPrivilegeFilters) {
         HashMap<String, Object> parameterList = new HashMap<>();
         HashMap<String, Collection> parameterWithList = new HashMap<>();
         List<StockItemInventorySearchFilter.ItemGroupFilter> zeroStockQtyToReturn = new ArrayList<>();
 
-        if (filter.isRequireItemGroupFilters() && (filter.getItemGroupFilters() == null || filter.getItemGroupFilters().isEmpty()))
+        if (filter.isRequireItemGroupFilters()
+                && (filter.getItemGroupFilters() == null || filter.getItemGroupFilters().isEmpty()))
             return new StockInventoryResult(new ArrayList<>(), 0);
 
         if (filter.getInventoryGroupBy() == null) {
@@ -2719,14 +2939,20 @@ public class StockManagementDao extends DaoBase {
         boolean groupByStockItem = true;
 
         if (filter.getInventoryGroupBy() != null) {
-            groupByParty = filter.getInventoryGroupBy().equals(StockItemInventorySearchFilter.InventoryGroupBy.LocationStockItem) ||
-                    filter.getInventoryGroupBy().equals(StockItemInventorySearchFilter.InventoryGroupBy.LocationStockItemBatchNo);
+            groupByParty = filter.getInventoryGroupBy()
+                    .equals(StockItemInventorySearchFilter.InventoryGroupBy.LocationStockItem) ||
+                    filter.getInventoryGroupBy()
+                            .equals(StockItemInventorySearchFilter.InventoryGroupBy.LocationStockItemBatchNo);
 
-            groupByStockItem = filter.getInventoryGroupBy().equals(StockItemInventorySearchFilter.InventoryGroupBy.LocationStockItem) ||
-                    filter.getInventoryGroupBy().equals(StockItemInventorySearchFilter.InventoryGroupBy.LocationStockItemBatchNo) ||
+            groupByStockItem = filter.getInventoryGroupBy()
+                    .equals(StockItemInventorySearchFilter.InventoryGroupBy.LocationStockItem) ||
+                    filter.getInventoryGroupBy()
+                            .equals(StockItemInventorySearchFilter.InventoryGroupBy.LocationStockItemBatchNo)
+                    ||
                     filter.getInventoryGroupBy().equals(StockItemInventorySearchFilter.InventoryGroupBy.StockItemOnly);
 
-            groupByStockBatch = filter.getInventoryGroupBy().equals(StockItemInventorySearchFilter.InventoryGroupBy.LocationStockItemBatchNo);
+            groupByStockBatch = filter.getInventoryGroupBy()
+                    .equals(StockItemInventorySearchFilter.InventoryGroupBy.LocationStockItemBatchNo);
         }
         if (groupByParty == false && groupByStockBatch == false && groupByStockItem == false) {
             groupByParty = true;
@@ -2734,7 +2960,8 @@ public class StockManagementDao extends DaoBase {
             groupByStockItem = true;
         }
 
-        StringBuilder hqlQuery = getStockItemInventoryQuery(filter, recordPrivilegeFilters, parameterList, parameterWithList, zeroStockQtyToReturn, groupByParty, groupByStockBatch, groupByStockItem);
+        StringBuilder hqlQuery = getStockItemInventoryQuery(filter, recordPrivilegeFilters, parameterList,
+                parameterWithList, zeroStockQtyToReturn, groupByParty, groupByStockBatch, groupByStockItem);
         if (hqlQuery == null) {
             return new StockInventoryResult(new ArrayList<>(), 0);
         }
@@ -2744,18 +2971,22 @@ public class StockManagementDao extends DaoBase {
             result.setPageIndex(filter.getStartIndex());
             result.setPageSize(filter.getLimit());
         }
-        String orderByField =
-                (groupByParty ? "sit.party.id" : (groupByStockItem ? "sit.stockItem.id" : (groupByStockBatch ? "sit.stockBatch.id" : "")));
-        result.setData(executeQuery(StockItemInventory.class, hqlQuery, result, filter.getLimit() != null ? " order by " + orderByField : null, parameterList, parameterWithList));
+        String orderByField = (groupByParty ? "sit.party.id"
+                : (groupByStockItem ? "sit.stockItem.id" : (groupByStockBatch ? "sit.stockBatch.id" : "")));
+        result.setData(executeQuery(StockItemInventory.class, hqlQuery, result,
+                filter.getLimit() != null ? " order by " + orderByField : null, parameterList, parameterWithList));
 
         if ((!groupByStockBatch || filter.getAllowEmptyBatchInfo()) && filter.dispensing()) {
             for (StockItemInventorySearchFilter.ItemGroupFilter itemGroupFilter : zeroStockQtyToReturn) {
                 if (groupByStockItem) {
                     if (groupByParty) {
                         for (Integer partyId : itemGroupFilter.getPartyIds()) {
-                            if (!result.getData().stream().anyMatch(p -> p.getStockItemId().equals(itemGroupFilter.getStockItemId()) &&
-                                    p.getPartyId().equals(partyId))) {
-                                if (groupByStockBatch && filter.getAllowEmptyBatchInfo() && filter.getEmptyBatchPartyId() != null && !filter.getEmptyBatchPartyId().equals(partyId)) {
+                            if (!result.getData().stream()
+                                    .anyMatch(p -> p.getStockItemId().equals(itemGroupFilter.getStockItemId()) &&
+                                            p.getPartyId().equals(partyId))) {
+                                if (groupByStockBatch && filter.getAllowEmptyBatchInfo()
+                                        && filter.getEmptyBatchPartyId() != null
+                                        && !filter.getEmptyBatchPartyId().equals(partyId)) {
                                     continue;
                                 }
                                 StockItemInventory stockItemInventory = new StockItemInventory();
@@ -2766,7 +2997,8 @@ public class StockManagementDao extends DaoBase {
                             }
                         }
                     } else {
-                        if (!result.getData().stream().anyMatch(p -> p.getStockItemId().equals(itemGroupFilter.getStockItemId()))) {
+                        if (!result.getData().stream()
+                                .anyMatch(p -> p.getStockItemId().equals(itemGroupFilter.getStockItemId()))) {
                             StockItemInventory stockItemInventory = new StockItemInventory();
                             stockItemInventory.setStockItemId(itemGroupFilter.getStockItemId());
                             stockItemInventory.setQuantity(BigDecimal.ZERO);
@@ -2780,21 +3012,26 @@ public class StockManagementDao extends DaoBase {
         if (!result.getData().isEmpty()) {
             PartySearchFilter partySearchFilter = new PartySearchFilter();
             partySearchFilter.setIncludeVoided(true);
-            partySearchFilter.setPartyIds(result.getData().stream().map(p -> p.getPartyId()).distinct().collect(Collectors.toList()));
-            Map<Integer, List<PartyDTO>> partyDTOs = findParty(partySearchFilter).getData().stream().collect(Collectors.groupingBy(PartyDTO::getId));
+            partySearchFilter.setPartyIds(
+                    result.getData().stream().map(p -> p.getPartyId()).distinct().collect(Collectors.toList()));
+            Map<Integer, List<PartyDTO>> partyDTOs = findParty(partySearchFilter).getData().stream()
+                    .collect(Collectors.groupingBy(PartyDTO::getId));
             for (StockItemInventory stockItemInventory : result.getData()) {
                 if (partyDTOs.containsKey(stockItemInventory.getPartyId())) {
-                    stockItemInventory.setLocationUuid(partyDTOs.get(stockItemInventory.getPartyId()).get(0).getLocationUuid());
+                    stockItemInventory
+                            .setLocationUuid(partyDTOs.get(stockItemInventory.getPartyId()).get(0).getLocationUuid());
                     stockItemInventory.setPartyUuid(partyDTOs.get(stockItemInventory.getPartyId()).get(0).getUuid());
                 }
             }
 
             if (filter.includingStrength() || filter.includingConceptRefIds()) {
-                Map<Integer, List<StockItemDTO>> stockItemConceptRefIds = getStockItemConceptRefs(result.getData().stream().map(p -> p.getStockItemId()).collect(Collectors.toList()))
+                Map<Integer, List<StockItemDTO>> stockItemConceptRefIds = getStockItemConceptRefs(
+                        result.getData().stream().map(p -> p.getStockItemId()).collect(Collectors.toList()))
                         .getData().stream().collect(Collectors.groupingBy(StockItemDTO::getId));
                 if (!stockItemConceptRefIds.isEmpty()) {
                     for (StockItemInventory stockItemInventory : result.getData()) {
-                        List<StockItemDTO> refs = stockItemConceptRefIds.getOrDefault(stockItemInventory.getStockItemId(), null);
+                        List<StockItemDTO> refs = stockItemConceptRefIds
+                                .getOrDefault(stockItemInventory.getStockItemId(), null);
                         if (refs != null) {
                             if (filter.includingStrength()) {
                                 stockItemInventory.setDrugStrength(refs.get(0).getDrugStrength());
@@ -2812,11 +3049,13 @@ public class StockManagementDao extends DaoBase {
 
             if (filter.isIncludeStockItemName()) {
                 StockItemSearchFilter itemFilter = new StockItemSearchFilter();
-                itemFilter.setStockItemIds(result.getData().stream().map(p -> p.getStockItemId()).collect(Collectors.toList()));
+                itemFilter.setStockItemIds(
+                        result.getData().stream().map(p -> p.getStockItemId()).collect(Collectors.toList()));
                 Result<StockItemDTO> stockItemDTOResult = findStockItems(itemFilter);
                 if (!stockItemDTOResult.getData().isEmpty()) {
                     for (StockItemInventory stockItemInventory : result.getData()) {
-                        Optional<StockItemDTO> stockItemDTO = stockItemDTOResult.getData().stream().filter(p -> p.getId().equals(stockItemInventory.getStockItemId())).findFirst();
+                        Optional<StockItemDTO> stockItemDTO = stockItemDTOResult.getData().stream()
+                                .filter(p -> p.getId().equals(stockItemInventory.getStockItemId())).findFirst();
                         if (stockItemDTO.isPresent()) {
                             stockItemInventory.setDrugName(stockItemDTO.get().getDrugName());
                             stockItemInventory.setConceptName(stockItemDTO.get().getConceptName());
@@ -2831,20 +3070,34 @@ public class StockManagementDao extends DaoBase {
 
         return result;
     }
-	
-	private StringBuilder getStockItemInventoryQuery(StockItemInventorySearchFilter filter, HashSet<RecordPrivilegeFilter> recordPrivilegeFilters, HashMap<String, Object> parameterList, HashMap<String, Collection> parameterWithList, List<StockItemInventorySearchFilter.ItemGroupFilter> zeroStockQtyToReturn, boolean groupByParty, boolean groupByStockBatch, boolean groupByStockItem) {
+
+    private StringBuilder getStockItemInventoryQuery(StockItemInventorySearchFilter filter,
+            HashSet<RecordPrivilegeFilter> recordPrivilegeFilters, HashMap<String, Object> parameterList,
+            HashMap<String, Collection> parameterWithList,
+            List<StockItemInventorySearchFilter.ItemGroupFilter> zeroStockQtyToReturn, boolean groupByParty,
+            boolean groupByStockBatch, boolean groupByStockItem) {
         StringBuilder hqlQuery = new StringBuilder("SELECT " +
                 (groupByParty ? "sit.party.id as partyId,\n" : "") +
                 (groupByStockItem ? "sit.stockItem.id as stockItemId,\n" : "") +
                 (groupByStockBatch ? "sit.stockBatch.id as stockBatchId,\n" : "") +
-                (filter.getInventoryMode() == null || (filter.getInventoryMode().equals(StockItemInventorySearchFilter.InventoryMode.Total) ||
+                (filter.getInventoryMode() == null || (filter.getInventoryMode()
+                        .equals(StockItemInventorySearchFilter.InventoryMode.Total) ||
                         filter.getInventoryMode().equals(StockItemInventorySearchFilter.InventoryMode.MostMoving) ||
-                        filter.getInventoryMode().equals(StockItemInventorySearchFilter.InventoryMode.LeastMoving)) ? "sum(sit.quantity * sipu.factor) as quantity\n" : "") +
-                (filter.getInventoryMode() != null && filter.getInventoryMode().equals(StockItemInventorySearchFilter.InventoryMode.Consumption) ?
-                        ("sum(case when sit.dateCreated < :startdate then (sit.quantity * sipu.factor) else 0 end) as quantity, " +
-                                "sum(case when sit.dateCreated <= :enddate then (sit.quantity * sipu.factor) else 0 end) as closingQuantity, " +
-                                "sum(case when sit.quantity < 0 and  sit.dateCreated >= :startdate and sit.dateCreated <= :enddate  then (sit.quantity * sipu.factor * -1) else 0 end) as quantityConsumed," +
-                                "sum(case when sit.quantity > 0 and  sit.dateCreated >= :startdate and sit.dateCreated <= :enddate  then (sit.quantity * sipu.factor) else 0 end) as quantityReceived") : "") +
+                        filter.getInventoryMode().equals(StockItemInventorySearchFilter.InventoryMode.LeastMoving))
+                                ? "sum(sit.quantity * sipu.factor) as quantity\n"
+                                : "")
+                +
+                (filter.getInventoryMode() != null
+                        && filter.getInventoryMode().equals(StockItemInventorySearchFilter.InventoryMode.Consumption)
+                                ? ("sum(case when sit.dateCreated < :startdate then (sit.quantity * sipu.factor) else 0 end) as quantity, "
+                                        +
+                                        "sum(case when sit.dateCreated <= :enddate then (sit.quantity * sipu.factor) else 0 end) as closingQuantity, "
+                                        +
+                                        "sum(case when sit.quantity < 0 and  sit.dateCreated >= :startdate and sit.dateCreated <= :enddate  then (sit.quantity * sipu.factor * -1) else 0 end) as quantityConsumed,"
+                                        +
+                                        "sum(case when sit.quantity > 0 and  sit.dateCreated >= :startdate and sit.dateCreated <= :enddate  then (sit.quantity * sipu.factor) else 0 end) as quantityReceived")
+                                : "")
+                +
                 " from stockmanagement.StockItemTransaction sit join\n" +
                 "\t sit.stockItemPackagingUOM sipu join\n" +
                 " sit.stockBatch sb\n" +
@@ -2853,31 +3106,35 @@ public class StockManagementDao extends DaoBase {
 
         StringBuilder hqlFilter = new StringBuilder();
 
-
-        List<String> partyIdsToFetch = filter.getItemGroupFilters() == null ? new ArrayList<>() : filter.getItemGroupFilters().stream()
-                .filter(p -> p.getPartyUuids() != null && !p.getPartyUuids().isEmpty())
-                .map(p -> p.getPartyUuids())
-                .flatMap(Collection::stream)
-                .distinct()
-                .collect(Collectors.toList());
+        List<String> partyIdsToFetch = filter.getItemGroupFilters() == null ? new ArrayList<>()
+                : filter.getItemGroupFilters().stream()
+                        .filter(p -> p.getPartyUuids() != null && !p.getPartyUuids().isEmpty())
+                        .map(p -> p.getPartyUuids())
+                        .flatMap(Collection::stream)
+                        .distinct()
+                        .collect(Collectors.toList());
 
         List<Integer> toRestrictedPartyIds = null;
         if (recordPrivilegeFilters != null) {
             PartySearchFilter partySearchFilter = new PartySearchFilter();
             partySearchFilter.setIncludeVoided(true);
-            partySearchFilter.setLocationIds(recordPrivilegeFilters.stream().map(p -> p.getLocationId()).distinct().collect(Collectors.toList()));
-            toRestrictedPartyIds = findParty(partySearchFilter).getData().stream().map(p -> p.getId()).collect(Collectors.toList());
+            partySearchFilter.setLocationIds(recordPrivilegeFilters.stream().map(p -> p.getLocationId()).distinct()
+                    .collect(Collectors.toList()));
+            toRestrictedPartyIds = findParty(partySearchFilter).getData().stream().map(p -> p.getId())
+                    .collect(Collectors.toList());
         }
         final List<Integer> restrictedPartyIds = toRestrictedPartyIds;
 
-        List<String> stockItemIdsToFetch = filter.getItemGroupFilters() == null ? new ArrayList<>() : filter.getItemGroupFilters().stream()
-                .filter(p -> p.getStockItemUuid() != null)
-                .map(p -> p.getStockItemUuid())
-                .distinct()
-                .collect(Collectors.toList());
+        List<String> stockItemIdsToFetch = filter.getItemGroupFilters() == null ? new ArrayList<>()
+                : filter.getItemGroupFilters().stream()
+                        .filter(p -> p.getStockItemUuid() != null)
+                        .map(p -> p.getStockItemUuid())
+                        .distinct()
+                        .collect(Collectors.toList());
 
         Map<String, Integer> partyIds = partyIdsToFetch.isEmpty() ? new HashMap<>() : getPartyIds(partyIdsToFetch);
-        Map<String, Integer> stockItemIds = stockItemIdsToFetch.isEmpty() ? new HashMap<>() : getStockItemIds(stockItemIdsToFetch);
+        Map<String, Integer> stockItemIds = stockItemIdsToFetch.isEmpty() ? new HashMap<>()
+                : getStockItemIds(stockItemIdsToFetch);
         StringBuilder itemGroupFilters = new StringBuilder();
         int paramIndex = 0;
         int appliedItemGroupFilters = 0;
@@ -2893,7 +3150,9 @@ public class StockManagementDao extends DaoBase {
                     partyIdFilter.addAll(itemGroupFilter.getPartyIds());
                 }
                 if (itemGroupFilter.getPartyUuids() != null) {
-                    List<Integer> foundPartyIds = itemGroupFilter.getPartyUuids().stream().map(p -> partyIds.getOrDefault(p, 0)).filter(p -> !p.equals(0)).collect(Collectors.toList());
+                    List<Integer> foundPartyIds = itemGroupFilter.getPartyUuids().stream()
+                            .map(p -> partyIds.getOrDefault(p, 0)).filter(p -> !p.equals(0))
+                            .collect(Collectors.toList());
                     if (foundPartyIds.isEmpty()) {
                         // return new StockInventoryResult(new ArrayList<>(), 0);
                         continue;
@@ -2903,9 +3162,10 @@ public class StockManagementDao extends DaoBase {
                 String paramIndexString = Integer.toString(paramIndex);
                 if (!partyIdFilter.isEmpty()) {
                     if (restrictedPartyIds != null) {
-                        partyIdFilter = partyIdFilter.stream().filter(p -> restrictedPartyIds.contains(p)).collect(Collectors.toList());
+                        partyIdFilter = partyIdFilter.stream().filter(p -> restrictedPartyIds.contains(p))
+                                .collect(Collectors.toList());
                         if (partyIdFilter.isEmpty()) {
-                            //partyIdFilter = restrictedPartyIds;
+                            // partyIdFilter = restrictedPartyIds;
                             continue;
                         }
                     }
@@ -2930,13 +3190,15 @@ public class StockManagementDao extends DaoBase {
                         continue;
                     }
                     appendFilter(itemGroupClause, String.format("sit.stockItem.id = :sid%1s", paramIndexString));
-                    itemGroupParameterList.putIfAbsent("sid" + paramIndexString, stockItemIds.get(itemGroupFilter.getStockItemUuid()));
+                    itemGroupParameterList.putIfAbsent("sid" + paramIndexString,
+                            stockItemIds.get(itemGroupFilter.getStockItemUuid()));
                     zeroQtyItemGroupFilter.setStockItemId(stockItemIds.get(itemGroupFilter.getStockItemUuid()));
                 }
 
                 if (itemGroupFilter.getStockBatchIds() != null && !itemGroupFilter.getStockBatchIds().isEmpty()) {
                     appendFilter(itemGroupClause, String.format("sit.stockBatch.id in (:sbid%1s)", paramIndexString));
-                    itemGroupParameterWithList.putIfAbsent("sbid" + paramIndexString, itemGroupFilter.getStockBatchIds());
+                    itemGroupParameterWithList.putIfAbsent("sbid" + paramIndexString,
+                            itemGroupFilter.getStockBatchIds());
                 }
 
                 paramIndex++;
@@ -2978,16 +3240,20 @@ public class StockManagementDao extends DaoBase {
             parameterList.put("today", filter.getDate() != null ? filter.getDate() : DateUtil.today());
         }
 
-        if (filter.getDate() != null && (filter.getInventoryMode() == null || filter.getInventoryMode().equals(StockItemInventorySearchFilter.InventoryMode.Total))) {
+        if (filter.getDate() != null && (filter.getInventoryMode() == null
+                || filter.getInventoryMode().equals(StockItemInventorySearchFilter.InventoryMode.Total))) {
             appendFilter(hqlFilter, "sit.dateCreated <= :tdate");
             parameterList.put("tdate", filter.getDate());
         }
 
-        if (filter.getInventoryMode() != null && filter.getInventoryMode().equals(StockItemInventorySearchFilter.InventoryMode.Consumption)) {
+        if (filter.getInventoryMode() != null
+                && filter.getInventoryMode().equals(StockItemInventorySearchFilter.InventoryMode.Consumption)) {
             parameterList.put("startdate", filter.getStartDate());
             parameterList.put("enddate", filter.getEndDate());
             appendFilter(hqlFilter, "sit.dateCreated <= :enddate");
-        } else if (filter.getInventoryMode() != null && (filter.getInventoryMode().equals(StockItemInventorySearchFilter.InventoryMode.MostMoving) || filter.getInventoryMode().equals(StockItemInventorySearchFilter.InventoryMode.LeastMoving))) {
+        } else if (filter.getInventoryMode() != null
+                && (filter.getInventoryMode().equals(StockItemInventorySearchFilter.InventoryMode.MostMoving) || filter
+                        .getInventoryMode().equals(StockItemInventorySearchFilter.InventoryMode.LeastMoving))) {
             parameterList.put("startdate", filter.getStartDate());
             parameterList.put("enddate", filter.getEndDate());
             appendFilter(hqlFilter, "sit.dateCreated >= :startdate");
@@ -2999,7 +3265,9 @@ public class StockManagementDao extends DaoBase {
             parameterList.putIfAbsent("stockItemCategoryId", filter.getStockItemCategoryConceptId());
         }
 
-        if (filter.getInventoryMode() != null && (filter.getInventoryMode().equals(StockItemInventorySearchFilter.InventoryMode.MostMoving) || filter.getInventoryMode().equals(StockItemInventorySearchFilter.InventoryMode.LeastMoving))) {
+        if (filter.getInventoryMode() != null
+                && (filter.getInventoryMode().equals(StockItemInventorySearchFilter.InventoryMode.MostMoving) || filter
+                        .getInventoryMode().equals(StockItemInventorySearchFilter.InventoryMode.LeastMoving))) {
             appendFilter(hqlFilter, "sit.patient.id is not null");
         }
 
@@ -3022,16 +3290,18 @@ public class StockManagementDao extends DaoBase {
         hqlQuery.append(String.join(", ", groupColumns));
         return hqlQuery;
     }
-	
-	public List<StockItemInventory> getStockBatchLocationInventory(List<Integer> stockBatchIds) {
-        if (stockBatchIds == null || stockBatchIds.isEmpty()) return new ArrayList<>();
-        StringBuilder hqlQuery = new StringBuilder("SELECT  sit.party.id as partyId, sit.stockItem.id as stockItemId, sit.stockBatch.id as stockBatchId, sum(sit.quantity * sipu.factor) as quantity\n" +
-                "from stockmanagement.StockItemTransaction sit join\n" +
-                "\t sit.stockItemPackagingUOM sipu join\n" +
-                " sit.stockBatch sb where sit.stockBatch.id in (:bids) and " +
-                "(sb.expiration is null or sb.expiration > :today)\n" +
-                " group by sit.party.id, sit.stockItem.id, sit.stockBatch.id");
 
+    public List<StockItemInventory> getStockBatchLocationInventory(List<Integer> stockBatchIds) {
+        if (stockBatchIds == null || stockBatchIds.isEmpty())
+            return new ArrayList<>();
+        StringBuilder hqlQuery = new StringBuilder(
+                "SELECT  sit.party.id as partyId, sit.stockItem.id as stockItemId, sit.stockBatch.id as stockBatchId, sum(sit.quantity * sipu.factor) as quantity\n"
+                        +
+                        "from stockmanagement.StockItemTransaction sit join\n" +
+                        "\t sit.stockItemPackagingUOM sipu join\n" +
+                        " sit.stockBatch sb where sit.stockBatch.id in (:bids) and " +
+                        "(sb.expiration is null or sb.expiration > :today)\n" +
+                        " group by sit.party.id, sit.stockItem.id, sit.stockBatch.id");
 
         DbSession dbSession = getSession();
         Query query = dbSession.createQuery(hqlQuery.toString());
@@ -3040,9 +3310,10 @@ public class StockManagementDao extends DaoBase {
         query = query.setResultTransformer(new AliasToBeanResultTransformer(StockItemInventory.class));
         return query.list();
     }
-	
-	public Result<StockItemDTO> getStockItemConceptRefs(List<Integer> stockItemIds) {
-        if (stockItemIds == null || stockItemIds.isEmpty()) return new Result<>(new ArrayList<>(), 0);
+
+    public Result<StockItemDTO> getStockItemConceptRefs(List<Integer> stockItemIds) {
+        if (stockItemIds == null || stockItemIds.isEmpty())
+            return new Result<>(new ArrayList<>(), 0);
         HashMap<String, Collection> parameterWithList = new HashMap<>();
         StringBuilder hqlQuery = new StringBuilder("select si.id as id,\n" +
                 "si.drug.drugId as drugId,\n" +
@@ -3064,23 +3335,25 @@ public class StockManagementDao extends DaoBase {
         }
 
         Result<StockItemDTO> result = new Result<>();
-        result.setData(executeQuery(StockItemDTO.class, hqlQuery, result, " order by si.id asc", new HashMap<>(), parameterWithList));
+        result.setData(executeQuery(StockItemDTO.class, hqlQuery, result, " order by si.id asc", new HashMap<>(),
+                parameterWithList));
 
         return result;
     }
-	
-	public void deleteReservedTransations(Integer stockOperationId) {
-		DbSession session = getSession();
-		Query query = session.createQuery("DELETE stockmanagement.ReservedTransaction WHERE stockOperation.id = :id");
-		query.setParameter("id", stockOperationId);
-		query.executeUpdate();
-	}
-	
-	public Result<StockOperationLinkDTO> findStockOperationLinks(String stockOperationUuid) {
-		return findStockOperationLinks(stockOperationUuid, null);
-	}
-	
-	public Result<StockOperationLinkDTO> findStockOperationLinks(String parentOrChildStockOperationUuid, String childStockOperationUuid) {
+
+    public void deleteReservedTransations(Integer stockOperationId) {
+        DbSession session = getSession();
+        Query query = session.createQuery("DELETE stockmanagement.ReservedTransaction WHERE stockOperation.id = :id");
+        query.setParameter("id", stockOperationId);
+        query.executeUpdate();
+    }
+
+    public Result<StockOperationLinkDTO> findStockOperationLinks(String stockOperationUuid) {
+        return findStockOperationLinks(stockOperationUuid, null);
+    }
+
+    public Result<StockOperationLinkDTO> findStockOperationLinks(String parentOrChildStockOperationUuid,
+            String childStockOperationUuid) {
         if (StringUtils.isBlank(parentOrChildStockOperationUuid) && StringUtils.isBlank(childStockOperationUuid))
             return new Result<>(new ArrayList<>(), 0);
 
@@ -3102,7 +3375,6 @@ public class StockManagementDao extends DaoBase {
                 "\t sol.parent p join p.stockOperationType psot join\n" +
                 " sol.child c join c.stockOperationType csot\n");
 
-
         StringBuilder hqlFilter = new StringBuilder();
         if (!StringUtils.isBlank(parentOrChildStockOperationUuid)) {
             appendFilter(hqlFilter, "p.uuid = :suuid or c.uuid = :suuid");
@@ -3121,11 +3393,13 @@ public class StockManagementDao extends DaoBase {
         Result<StockOperationLinkDTO> result = new Result<>();
         result.setPageIndex(0);
         result.setPageSize(10);
-        result.setData(executeQuery(StockOperationLinkDTO.class, hqlQuery, result, " order by sol.id", parameterList, parameterWithList));
+        result.setData(executeQuery(StockOperationLinkDTO.class, hqlQuery, result, " order by sol.id", parameterList,
+                parameterWithList));
         return result;
     }
-	
-	public Result<StockItemTransactionDTO> findStockItemTransactions(StockItemTransactionSearchFilter filter, HashSet<RecordPrivilegeFilter> recordPrivilegeFilters) {
+
+    public Result<StockItemTransactionDTO> findStockItemTransactions(StockItemTransactionSearchFilter filter,
+            HashSet<RecordPrivilegeFilter> recordPrivilegeFilters) {
         HashMap<String, Object> parameterList = new HashMap<>();
         HashMap<String, Collection> parameterWithList = new HashMap<>();
         StringBuilder hqlQuery = new StringBuilder("SELECT sit.dateCreated as dateCreated,\n" +
@@ -3145,7 +3419,8 @@ public class StockManagementDao extends DaoBase {
                 "sot.name as stockOperationTypeName,\n" +
                 "sit.quantity as quantity," +
                 "sit.balance as balance," +
-                "sit.patient.id as patientId, sit.order.orderId as orderId, sit.encounter.encounterId as encounterId,\n" +
+                "sit.patient.id as patientId, sit.order.orderId as orderId, sit.encounter.encounterId as encounterId,\n"
+                +
                 "so.source.id as operationSourcePartyId, so.destination.id as operationDestinationPartyId\n" +
                 "from stockmanagement.StockItemTransaction sit join\n" +
                 "\t sit.stockItem si left join sit.party p left join\n" +
@@ -3169,14 +3444,16 @@ public class StockManagementDao extends DaoBase {
         if (recordPrivilegeFilters != null) {
             PartySearchFilter partySearchFilter = new PartySearchFilter();
             partySearchFilter.setIncludeVoided(true);
-            partySearchFilter.setLocationIds(recordPrivilegeFilters.stream().map(p -> p.getLocationId()).distinct().collect(Collectors.toList()));
+            partySearchFilter.setLocationIds(recordPrivilegeFilters.stream().map(p -> p.getLocationId()).distinct()
+                    .collect(Collectors.toList()));
             partyNames = findParty(partySearchFilter).getData().stream().collect(Collectors.toList());
             List<Integer> partyIds = partyNames.stream().map(p -> p.getId()).collect(Collectors.toList());
             if (filter.getPartyId() != null && !partyIds.contains(filter.getPartyId())) {
                 return new Result<>(new ArrayList<>(), 0);
             }
             appendFilter(hqlFilter, "sit.party.id in (:permpartyIds)");
-            System.err.println("STOCK: Got party ids: " + partyIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
+            System.err.println(
+                    "STOCK: Got party ids: " + partyIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
             parameterWithList.putIfAbsent("permpartyIds", partyIds);
         }
 
@@ -3201,7 +3478,7 @@ public class StockManagementDao extends DaoBase {
         }
 
         if (filter.getIsPatientTransaction() != null) {
-            if( filter.getIsPatientTransaction() == true) {
+            if (filter.getIsPatientTransaction() == true) {
                 appendFilter(hqlFilter, "sit.patient.id is not null");
             } else {
                 appendFilter(hqlFilter, "sit.patient.id is null");
@@ -3219,34 +3496,44 @@ public class StockManagementDao extends DaoBase {
             result.setPageSize(filter.getLimit());
         }
         System.out.println("STOCK: executing query: " + hqlQuery);
-        result.setData(executeQuery(StockItemTransactionDTO.class, hqlQuery, result, " order by sit.id desc", parameterList, parameterWithList));
+        result.setData(executeQuery(StockItemTransactionDTO.class, hqlQuery, result, " order by sit.id desc",
+                parameterList, parameterWithList));
 
         if (!result.getData().isEmpty()) {
             List<Integer> conceptIds = new ArrayList<>();
-            conceptIds.addAll(result.getData().stream().filter(p -> p.getPackagingUoMId() != null).map(p -> p.getPackagingUoMId()).collect(Collectors.toList()));
-            List<ConceptNameDTO> conceptNameDTOs = conceptIds.isEmpty() ? new ArrayList<>() : getConceptNamesByConceptIds(conceptIds);
+            conceptIds.addAll(result.getData().stream().filter(p -> p.getPackagingUoMId() != null)
+                    .map(p -> p.getPackagingUoMId()).collect(Collectors.toList()));
+            List<ConceptNameDTO> conceptNameDTOs = conceptIds.isEmpty() ? new ArrayList<>()
+                    : getConceptNamesByConceptIds(conceptIds);
 
             PartySearchFilter partySearchFilter = new PartySearchFilter();
             partySearchFilter.setIncludeVoided(true);
-            List<Integer> namePartyIds = result.getData().stream().map(p -> Arrays.asList(p.getPartyId(), p.getOperationSourcePartyId(), p.getOperationDestinationPartyId()))
+            List<Integer> namePartyIds = result.getData().stream()
+                    .map(p -> Arrays.asList(p.getPartyId(), p.getOperationSourcePartyId(),
+                            p.getOperationDestinationPartyId()))
                     .flatMap(Collection::stream)
                     .filter(p -> p != null)
                     .distinct().collect(Collectors.toList());
             namePartyIds.addAll(namePartyIds);
             partySearchFilter.setPartyIds(namePartyIds);
-            Map<Integer, List<PartyDTO>> partyNameMap = findParty(partySearchFilter).getData().stream().collect(Collectors.groupingBy(PartyDTO::getId));
+            Map<Integer, List<PartyDTO>> partyNameMap = findParty(partySearchFilter).getData().stream()
+                    .collect(Collectors.groupingBy(PartyDTO::getId));
 
             for (StockItemTransactionDTO stockItemTransactionDTO : result.getData()) {
 
-                if (stockItemTransactionDTO.getPackagingUoMId() != null && stockItemTransactionDTO.getStockItemPackagingUOMUuid() != null) {
-                    Optional<ConceptNameDTO> conceptNameDTO = conceptNameDTOs.stream().filter(p -> p.getConceptId().equals(stockItemTransactionDTO.getPackagingUoMId())).findFirst();
+                if (stockItemTransactionDTO.getPackagingUoMId() != null
+                        && stockItemTransactionDTO.getStockItemPackagingUOMUuid() != null) {
+                    Optional<ConceptNameDTO> conceptNameDTO = conceptNameDTOs.stream()
+                            .filter(p -> p.getConceptId().equals(stockItemTransactionDTO.getPackagingUoMId()))
+                            .findFirst();
                     if (conceptNameDTO.isPresent()) {
                         stockItemTransactionDTO.setPackagingUomName(conceptNameDTO.get().getName());
                     }
 
-					BigDecimal factor = getStockItemPackagingUOMByUuid(stockItemTransactionDTO.getStockItemPackagingUOMUuid()).getFactor();
+                    BigDecimal factor = getStockItemPackagingUOMByUuid(
+                            stockItemTransactionDTO.getStockItemPackagingUOMUuid()).getFactor();
 
-					stockItemTransactionDTO.setPackagingUomFactor(factor);
+                    stockItemTransactionDTO.setPackagingUomFactor(factor);
                 }
 
                 if (stockItemTransactionDTO.getPartyId() != null) {
@@ -3257,14 +3544,16 @@ public class StockManagementDao extends DaoBase {
                 }
 
                 if (stockItemTransactionDTO.getOperationSourcePartyId() != null) {
-                    List<PartyDTO> party = partyNameMap.getOrDefault(stockItemTransactionDTO.getOperationSourcePartyId(), null);
+                    List<PartyDTO> party = partyNameMap
+                            .getOrDefault(stockItemTransactionDTO.getOperationSourcePartyId(), null);
                     if (party != null) {
                         stockItemTransactionDTO.setOperationSourcePartyName(party.get(0).getName());
                     }
                 }
 
                 if (stockItemTransactionDTO.getOperationDestinationPartyId() != null) {
-                    List<PartyDTO> party = partyNameMap.getOrDefault(stockItemTransactionDTO.getOperationDestinationPartyId(), null);
+                    List<PartyDTO> party = partyNameMap
+                            .getOrDefault(stockItemTransactionDTO.getOperationDestinationPartyId(), null);
                     if (party != null) {
                         stockItemTransactionDTO.setOperationDestinationPartyName(party.get(0).getName());
                     }
@@ -3272,7 +3561,7 @@ public class StockManagementDao extends DaoBase {
                 // stockItemTransactionDTO.setPatientId(1000);
                 Integer patientId = stockItemTransactionDTO.getPatientId();
                 System.out.println("Got patient id as: " + patientId);
-                if(patientId != null) {
+                if (patientId != null) {
                     Patient patient = Context.getPatientService().getPatient(patientId);
                     String patientUuid = patient.getUuid();
                     System.out.println("Got patient uuid as: " + patientUuid);
@@ -3283,33 +3572,38 @@ public class StockManagementDao extends DaoBase {
         }
         return result;
     }
-	
-	public List<Drug> getDrugs(Collection<Integer> drugIds) {
-        if (drugIds == null || drugIds.isEmpty()) return new ArrayList<>();
+
+    public List<Drug> getDrugs(Collection<Integer> drugIds) {
+        if (drugIds == null || drugIds.isEmpty())
+            return new ArrayList<>();
         DbSession dbSession = getSession();
         Criteria criteria = dbSession.createCriteria(Drug.class, "d");
         criteria.add(Restrictions.in("d.drugId", drugIds));
         return criteria.list();
     }
-	
-	public List<Concept> getConcepts(Collection<Integer> conceptIds) {
-        if (conceptIds == null || conceptIds.isEmpty()) return new ArrayList<>();
+
+    public List<Concept> getConcepts(Collection<Integer> conceptIds) {
+        if (conceptIds == null || conceptIds.isEmpty())
+            return new ArrayList<>();
         DbSession dbSession = getSession();
         Criteria criteria = dbSession.createCriteria(Concept.class, "c");
         criteria.add(Restrictions.in("c.conceptId", conceptIds));
         return criteria.list();
     }
-	
-	public List<StockItem> getStockItems(Collection<Integer> stockItemIds) {
-        if (stockItemIds == null || stockItemIds.isEmpty()) return new ArrayList<>();
+
+    public List<StockItem> getStockItems(Collection<Integer> stockItemIds) {
+        if (stockItemIds == null || stockItemIds.isEmpty())
+            return new ArrayList<>();
         DbSession dbSession = getSession();
         Criteria criteria = dbSession.createCriteria(StockItem.class, "s");
         criteria.add(Restrictions.in("s.id", stockItemIds));
         return criteria.list();
     }
-	
-	public List<StockItemPackagingUOM> getStockItemPackagingUOMs(List<StockItemPackagingUOMSearchFilter.ItemGroupFilter> filters) {
-        if (filters == null || filters.isEmpty()) return new ArrayList<>();
+
+    public List<StockItemPackagingUOM> getStockItemPackagingUOMs(
+            List<StockItemPackagingUOMSearchFilter.ItemGroupFilter> filters) {
+        if (filters == null || filters.isEmpty())
+            return new ArrayList<>();
         DbSession dbSession = getSession();
         Criteria criteria = dbSession.createCriteria(StockItemPackagingUOM.class, "s");
         if (filters.size() == 1) {
@@ -3319,52 +3613,56 @@ public class StockManagementDao extends DaoBase {
         } else {
             StockItemPackagingUOMSearchFilter.ItemGroupFilter filter0 = filters.get(0);
             StockItemPackagingUOMSearchFilter.ItemGroupFilter filter1 = filters.get(1);
-            LogicalExpression orFilter = Restrictions.or(Restrictions.and(Restrictions.eq("s.stockItem.id", filter0.getStockItemId()),
+            LogicalExpression orFilter = Restrictions.or(
+                    Restrictions.and(Restrictions.eq("s.stockItem.id", filter0.getStockItemId()),
                             Restrictions.in("s.packagingUom.conceptId", filter0.getPackagingUomIds())),
                     Restrictions.and(Restrictions.eq("s.stockItem.id", filter1.getStockItemId()),
                             Restrictions.in("s.packagingUom.conceptId", filter1.getPackagingUomIds())));
             if (filters.size() > 2) {
                 for (int i = 2; i < filters.size(); i++) {
                     StockItemPackagingUOMSearchFilter.ItemGroupFilter filter = filters.get(i);
-                    orFilter = Restrictions.or(orFilter, Restrictions.and(Restrictions.eq("s.stockItem.id", filter.getStockItemId()),
-                            Restrictions.in("s.packagingUom.conceptId", filter.getPackagingUomIds())));
+                    orFilter = Restrictions.or(orFilter,
+                            Restrictions.and(Restrictions.eq("s.stockItem.id", filter.getStockItemId()),
+                                    Restrictions.in("s.packagingUom.conceptId", filter.getPackagingUomIds())));
                 }
             }
             criteria.add(orFilter);
         }
         return criteria.list();
     }
-	
-	public List<StockItem> getStockItemByDrug(Integer drugId) {
-		return getSession().createCriteria(StockItem.class).add(Restrictions.eq("drug.drugId", drugId)).list();
-	}
-	
-	public List<StockItem> getStockItemByConcept(Integer conceptId) {
-		return getSession().createCriteria(StockItem.class).add(Restrictions.isNull("drug.drugId"))
-		        .add(Restrictions.eq("concept.conceptId", conceptId)).list();
-	}
-	
-	public StockItemPackagingUOM getStockItemPackagingUOMByConcept(Integer stockItemId, Integer conceptId) {
-		return (StockItemPackagingUOM) getSession().createCriteria(StockItemPackagingUOM.class)
-		        .add(Restrictions.eq("stockItem.id", stockItemId)).add(Restrictions.eq("packagingUom.conceptId", conceptId))
-		        .addOrder(Order.desc("voided")).setMaxResults(1).uniqueResult();
-	}
-	
-	public List<OrderItem> getOrderItemsByOrder(Integer... orderIds) {
-		List<Integer> params = Arrays.asList(orderIds);
-		return getSession().createCriteria(OrderItem.class).add(Restrictions.in("order.orderId", params)).list();
-	}
-	
-	public List<OrderItem> getOrderItemsByEncounter(Integer... encounterIds) {
-		List<Integer> params = Arrays.asList(encounterIds);
-		Criteria criteria = getSession().createCriteria(OrderItem.class);
-		criteria.createAlias("order", "o");
-		criteria.createAlias("o.encounter", "e");
-		
-		return criteria.add(Restrictions.in("e.encounterId", params)).list();
-	}
-	
-	public Result<OrderItemDTO> findOrderItems(OrderItemSearchFilter filter, HashSet<RecordPrivilegeFilter> recordPrivilegeFilters) {
+
+    public List<StockItem> getStockItemByDrug(Integer drugId) {
+        return getSession().createCriteria(StockItem.class).add(Restrictions.eq("drug.drugId", drugId)).list();
+    }
+
+    public List<StockItem> getStockItemByConcept(Integer conceptId) {
+        return getSession().createCriteria(StockItem.class).add(Restrictions.isNull("drug.drugId"))
+                .add(Restrictions.eq("concept.conceptId", conceptId)).list();
+    }
+
+    public StockItemPackagingUOM getStockItemPackagingUOMByConcept(Integer stockItemId, Integer conceptId) {
+        return (StockItemPackagingUOM) getSession().createCriteria(StockItemPackagingUOM.class)
+                .add(Restrictions.eq("stockItem.id", stockItemId))
+                .add(Restrictions.eq("packagingUom.conceptId", conceptId))
+                .addOrder(Order.desc("voided")).setMaxResults(1).uniqueResult();
+    }
+
+    public List<OrderItem> getOrderItemsByOrder(Integer... orderIds) {
+        List<Integer> params = Arrays.asList(orderIds);
+        return getSession().createCriteria(OrderItem.class).add(Restrictions.in("order.orderId", params)).list();
+    }
+
+    public List<OrderItem> getOrderItemsByEncounter(Integer... encounterIds) {
+        List<Integer> params = Arrays.asList(encounterIds);
+        Criteria criteria = getSession().createCriteria(OrderItem.class);
+        criteria.createAlias("order", "o");
+        criteria.createAlias("o.encounter", "e");
+
+        return criteria.add(Restrictions.in("e.encounterId", params)).list();
+    }
+
+    public Result<OrderItemDTO> findOrderItems(OrderItemSearchFilter filter,
+            HashSet<RecordPrivilegeFilter> recordPrivilegeFilters) {
         HashMap<String, Object> parameterList = new HashMap<>();
         HashMap<String, Collection> parameterWithList = new HashMap<>();
         StringBuilder hqlQuery = new StringBuilder("select oi.uuid as uuid, oi.id as id,\n" +
@@ -3398,7 +3696,8 @@ public class StockManagementDao extends DaoBase {
                 "from stockmanagement.OrderItem oi left join oi.stockItem si left join\n" +
                 " si.drug d left join si.concept c left join\n" +
                 "\t oi.order o left join o.encounter e left join\n" +
-                "\t oi.stockItemPackagingUOM sipu left join sipu.packagingUom pu left join oi.createdFrom cf left join \n" +
+                "\t oi.stockItemPackagingUOM sipu left join sipu.packagingUom pu left join oi.createdFrom cf left join \n"
+                +
                 "\t oi.fulfilmentLocation fl left join o.patient p");
 
         StringBuilder hqlFilter = new StringBuilder();
@@ -3427,22 +3726,27 @@ public class StockManagementDao extends DaoBase {
             PartySearchFilter partySearchFilter = new PartySearchFilter();
             partySearchFilter.setLocationUuids(filter.getCreatedFromLocationUuids());
             createdFromLocationIds = createdFromLocationIds == null ? new ArrayList<>() : createdFromLocationIds;
-            List<Integer> data = findParty(partySearchFilter).getData().stream().map(p -> p.getLocationId()).collect(Collectors.toList());
-            if (data.isEmpty()) return new Result<>(new ArrayList<>(), 0);
+            List<Integer> data = findParty(partySearchFilter).getData().stream().map(p -> p.getLocationId())
+                    .collect(Collectors.toList());
+            if (data.isEmpty())
+                return new Result<>(new ArrayList<>(), 0);
             createdFromLocationIds.addAll(data);
         }
         if (filter.getCreatedFromPartyUuids() != null && !filter.getCreatedFromPartyUuids().isEmpty()) {
             PartySearchFilter partySearchFilter = new PartySearchFilter();
             partySearchFilter.setPartyUuids(filter.getCreatedFromPartyUuids());
             createdFromLocationIds = createdFromLocationIds == null ? new ArrayList<>() : createdFromLocationIds;
-            List<Integer> data = findParty(partySearchFilter).getData().stream().map(p -> p.getLocationId()).collect(Collectors.toList());
-            if (data.isEmpty()) return new Result<>(new ArrayList<>(), 0);
+            List<Integer> data = findParty(partySearchFilter).getData().stream().map(p -> p.getLocationId())
+                    .collect(Collectors.toList());
+            if (data.isEmpty())
+                return new Result<>(new ArrayList<>(), 0);
             createdFromLocationIds.addAll(data);
         }
 
         boolean hasAppliedPriviledgeFilter = false;
         if (createdFromLocationIds != null) {
-            if (createdFromLocationIds.isEmpty()) return new Result<>(new ArrayList<>(), 0);
+            if (createdFromLocationIds.isEmpty())
+                return new Result<>(new ArrayList<>(), 0);
             if (recordPrivilegeFilters != null) {
                 hasAppliedPriviledgeFilter = true;
                 final List<Integer> createdFromLocationIdsStream = createdFromLocationIds;
@@ -3451,9 +3755,11 @@ public class StockManagementDao extends DaoBase {
                         .map(p -> p.getLocationId())
                         .distinct().collect(Collectors.toList());
             }
-            if (createdFromLocationIds.isEmpty()) return new Result<>(new ArrayList<>(), 0);
+            if (createdFromLocationIds.isEmpty())
+                return new Result<>(new ArrayList<>(), 0);
             appendFilter(hqlFilter, "oi.createdFrom.locationId in (:createdFroms)");
-            parameterWithList.put("createdFroms", createdFromLocationIds.stream().distinct().collect(Collectors.toList()));
+            parameterWithList.put("createdFroms",
+                    createdFromLocationIds.stream().distinct().collect(Collectors.toList()));
         }
 
         List<Integer> fulfillmentLocationIds = null;
@@ -3465,21 +3771,26 @@ public class StockManagementDao extends DaoBase {
             PartySearchFilter partySearchFilter = new PartySearchFilter();
             partySearchFilter.setLocationUuids(filter.getFulfilmentLocationUuids());
             fulfillmentLocationIds = fulfillmentLocationIds == null ? new ArrayList<>() : fulfillmentLocationIds;
-            List<Integer> data = findParty(partySearchFilter).getData().stream().map(p -> p.getLocationId()).collect(Collectors.toList());
-            if (data.isEmpty()) return new Result<>(new ArrayList<>(), 0);
+            List<Integer> data = findParty(partySearchFilter).getData().stream().map(p -> p.getLocationId())
+                    .collect(Collectors.toList());
+            if (data.isEmpty())
+                return new Result<>(new ArrayList<>(), 0);
             fulfillmentLocationIds.addAll(data);
         }
         if (filter.getFulfilmentPartyUuids() != null && !filter.getFulfilmentPartyUuids().isEmpty()) {
             PartySearchFilter partySearchFilter = new PartySearchFilter();
             partySearchFilter.setPartyUuids(filter.getFulfilmentPartyUuids());
             fulfillmentLocationIds = fulfillmentLocationIds == null ? new ArrayList<>() : fulfillmentLocationIds;
-            List<Integer> data = findParty(partySearchFilter).getData().stream().map(p -> p.getLocationId()).collect(Collectors.toList());
-            if (data.isEmpty()) return new Result<>(new ArrayList<>(), 0);
+            List<Integer> data = findParty(partySearchFilter).getData().stream().map(p -> p.getLocationId())
+                    .collect(Collectors.toList());
+            if (data.isEmpty())
+                return new Result<>(new ArrayList<>(), 0);
             fulfillmentLocationIds.addAll(data);
         }
 
         if (fulfillmentLocationIds != null) {
-            if (fulfillmentLocationIds.isEmpty()) return new Result<>(new ArrayList<>(), 0);
+            if (fulfillmentLocationIds.isEmpty())
+                return new Result<>(new ArrayList<>(), 0);
             if (recordPrivilegeFilters != null) {
                 hasAppliedPriviledgeFilter = true;
                 final List<Integer> fulfillmentLocationIdsStream = fulfillmentLocationIds;
@@ -3488,14 +3799,18 @@ public class StockManagementDao extends DaoBase {
                         .map(p -> p.getLocationId())
                         .distinct().collect(Collectors.toList());
             }
-            if (fulfillmentLocationIds.isEmpty()) return new Result<>(new ArrayList<>(), 0);
+            if (fulfillmentLocationIds.isEmpty())
+                return new Result<>(new ArrayList<>(), 0);
             appendFilter(hqlFilter, "oi.fulfilmentLocation.locationId in (:fulfilmentLocations)");
-            parameterWithList.put("fulfilmentLocations", fulfillmentLocationIds.stream().distinct().collect(Collectors.toList()));
+            parameterWithList.put("fulfilmentLocations",
+                    fulfillmentLocationIds.stream().distinct().collect(Collectors.toList()));
         }
 
         if (!hasAppliedPriviledgeFilter && recordPrivilegeFilters != null) {
-            appendFilter(hqlFilter, "oi.fulfilmentLocation.locationId in (:rpfs) or oi.createdFrom.locationId in (:rpfs)");
-            parameterWithList.put("rpfs", recordPrivilegeFilters.stream().map(p -> p.getLocationId()).distinct().collect(Collectors.toList()));
+            appendFilter(hqlFilter,
+                    "oi.fulfilmentLocation.locationId in (:rpfs) or oi.createdFrom.locationId in (:rpfs)");
+            parameterWithList.put("rpfs", recordPrivilegeFilters.stream().map(p -> p.getLocationId()).distinct()
+                    .collect(Collectors.toList()));
         }
 
         if (filter.getOrderUuids() != null) {
@@ -3522,7 +3837,8 @@ public class StockManagementDao extends DaoBase {
             if (filter.getStockItemUuids() != null) {
                 stockItemIds.addAll(getStockItemIds(filter.getStockItemUuids()).values());
             }
-            if (stockItemIds.isEmpty()) return new Result<>(new ArrayList<>(), 0);
+            if (stockItemIds.isEmpty())
+                return new Result<>(new ArrayList<>(), 0);
             appendFilter(hqlFilter, "oi.stockItem.id in (:stockItemIds)");
             parameterWithList.put("stockItemIds", stockItemIds);
         }
@@ -3606,7 +3922,6 @@ public class StockManagementDao extends DaoBase {
             }
         }
 
-
         if (!filter.getIncludeVoided()) {
             appendFilter(hqlFilter, "oi.voided = :vdd");
             parameterList.putIfAbsent("vdd", false);
@@ -3623,39 +3938,47 @@ public class StockManagementDao extends DaoBase {
             result.setPageSize(filter.getLimit());
         }
 
-        result.setData(executeQuery(OrderItemDTO.class, hqlQuery, result, " order by oi.id desc", parameterList, parameterWithList));
+        result.setData(executeQuery(OrderItemDTO.class, hqlQuery, result, " order by oi.id desc", parameterList,
+                parameterWithList));
 
         if (!result.getData().isEmpty()) {
             List<Integer> conceptNamesToFetch = result.getData()
                     .stream()
                     .map(p -> Arrays.asList(
                             p.getConceptId(),
-                            p.getStockItemPackagingUOMConceptId()
-                    )).flatMap(Collection::stream)
+                            p.getStockItemPackagingUOMConceptId()))
+                    .flatMap(Collection::stream)
                     .filter(p -> p != null).distinct().collect(Collectors.toList());
-            Map<Integer, List<ConceptNameDTO>> conceptNameDTOs = conceptNamesToFetch.isEmpty() ?
-                    null :
-                    getConceptNamesByConceptIds(conceptNamesToFetch).stream().collect(Collectors.groupingBy(ConceptNameDTO::getConceptId));
+            Map<Integer, List<ConceptNameDTO>> conceptNameDTOs = conceptNamesToFetch.isEmpty() ? null
+                    : getConceptNamesByConceptIds(conceptNamesToFetch).stream()
+                            .collect(Collectors.groupingBy(ConceptNameDTO::getConceptId));
 
             PartySearchFilter partySearchFilter = new PartySearchFilter();
             partySearchFilter.setIncludeVoided(true);
-            List<Integer> nameLocationIds = result.getData().stream().map(p -> Arrays.asList(p.getCreatedFrom(), p.getFulfilmentLocationId()))
+            List<Integer> nameLocationIds = result.getData().stream()
+                    .map(p -> Arrays.asList(p.getCreatedFrom(), p.getFulfilmentLocationId()))
                     .flatMap(Collection::stream)
                     .filter(p -> p != null)
                     .distinct().collect(Collectors.toList());
             nameLocationIds.addAll(nameLocationIds);
             partySearchFilter.setLocationIds(nameLocationIds);
-            Map<Integer, List<PartyDTO>> partyNameMap = nameLocationIds.isEmpty() ? null : findParty(partySearchFilter).getData().stream().collect(Collectors.groupingBy(PartyDTO::getLocationId));
-            Map<Integer, Object[]> quantities = getOrderQuantities(result.getData().stream().map(p -> p.getOrderId()).collect(Collectors.toList()));
+            Map<Integer, List<PartyDTO>> partyNameMap = nameLocationIds.isEmpty() ? null
+                    : findParty(partySearchFilter).getData().stream()
+                            .collect(Collectors.groupingBy(PartyDTO::getLocationId));
+            Map<Integer, Object[]> quantities = getOrderQuantities(
+                    result.getData().stream().map(p -> p.getOrderId()).collect(Collectors.toList()));
             for (OrderItemDTO orderItemDTO : result.getData()) {
 
                 if (conceptNameDTOs != null) {
-                    if (orderItemDTO.getConceptId() != null && conceptNameDTOs.containsKey(orderItemDTO.getConceptId())) {
+                    if (orderItemDTO.getConceptId() != null
+                            && conceptNameDTOs.containsKey(orderItemDTO.getConceptId())) {
                         orderItemDTO.setConceptName(conceptNameDTOs.get(orderItemDTO.getConceptId()).get(0).getName());
                     }
 
-                    if (orderItemDTO.getStockItemPackagingUOMConceptId() != null && conceptNameDTOs.containsKey(orderItemDTO.getStockItemPackagingUOMConceptId())) {
-                        orderItemDTO.setStockItemPackagingUOMName(conceptNameDTOs.get(orderItemDTO.getStockItemPackagingUOMConceptId()).get(0).getName());
+                    if (orderItemDTO.getStockItemPackagingUOMConceptId() != null
+                            && conceptNameDTOs.containsKey(orderItemDTO.getStockItemPackagingUOMConceptId())) {
+                        orderItemDTO.setStockItemPackagingUOMName(
+                                conceptNameDTOs.get(orderItemDTO.getStockItemPackagingUOMConceptId()).get(0).getName());
                     }
                 }
                 if (partyNameMap != null) {
@@ -3687,11 +4010,10 @@ public class StockManagementDao extends DaoBase {
             }
         }
 
-
         return result;
     }
-	
-	private Map<Integer, Object[]> getOrderQuantities(List<Integer> orderIds) {
+
+    private Map<Integer, Object[]> getOrderQuantities(List<Integer> orderIds) {
         if (orderIds == null || orderIds.isEmpty()) {
             return new HashMap<>();
         }
@@ -3712,42 +4034,45 @@ public class StockManagementDao extends DaoBase {
         }
         return ids;
     }
-	
-	public OrderItem getOrderItemByUuid(String uuid) {
-		return (OrderItem) getSession().createCriteria(OrderItem.class).add(Restrictions.eq("uuid", uuid)).uniqueResult();
-	}
-	
-	public OrderItem saveOrderItem(OrderItem orderItem) {
-		getSession().saveOrUpdate(orderItem);
-		return orderItem;
-	}
-	
-	public Result<StockRuleDTO> findStockRules(StockRuleSearchFilter filter, HashSet<RecordPrivilegeFilter> recordPrivilegeFilters) {
+
+    public OrderItem getOrderItemByUuid(String uuid) {
+        return (OrderItem) getSession().createCriteria(OrderItem.class).add(Restrictions.eq("uuid", uuid))
+                .uniqueResult();
+    }
+
+    public OrderItem saveOrderItem(OrderItem orderItem) {
+        getSession().saveOrUpdate(orderItem);
+        return orderItem;
+    }
+
+    public Result<StockRuleDTO> findStockRules(StockRuleSearchFilter filter,
+            HashSet<RecordPrivilegeFilter> recordPrivilegeFilters) {
         HashMap<String, Object> parameterList = new HashMap<>();
         HashMap<String, Collection> parameterWithList = new HashMap<>();
-        StringBuilder hqlQuery = new StringBuilder("select sr.uuid as uuid, sr.id as id, sr.stockItem.id as stockItemId,\n" +
-                "si.uuid as stockItemUuid," +
-                "sr.name as name,\n" +
-                "sr.description as description,\n" +
-                "sr.location.locationId  as locationId,\n" +
-                "l.uuid  as locationUuid,\n" +
-                "l.name as locationName,\n" +
-                "sr.quantity as quantity,\n" +
-                "sipu.id as stockItemPackagingUOMId,\n" +
-                "sipu.uuid as stockItemPackagingUOMUuid,\n" +
-                "pu.conceptId as packagingUoMId,\n" +
-                "sr.enabled as enabled, sr.evaluationFrequency as evaluationFrequency,\n" +
-                "sr.lastEvaluation as lastEvaluation, sr.nextEvaluation as nextEvaluation,\n" +
-                "sr.actionFrequency as actionFrequency, sr.lastActionDate as lastActionDate,\n" +
-                "sr.nextActionDate as nextActionDate,\n" +
-                "sr.alertRole as alertRole, sr.mailRole as mailRole,\n" +
-                "sr.creator.userId as creator,\n" +
-                "sr.dateCreated as dateCreated,\n" +
-                "sr.enableDescendants as enableDescendants,\n" +
-                "sr.voided as voided\n" +
-                "from stockmanagement.StockRule sr join sr.stockItem si join\n" +
-                " sr.location l join \n" +
-                "\t sr.stockItemPackagingUOM sipu left join sipu.packagingUom pu");
+        StringBuilder hqlQuery = new StringBuilder(
+                "select sr.uuid as uuid, sr.id as id, sr.stockItem.id as stockItemId,\n" +
+                        "si.uuid as stockItemUuid," +
+                        "sr.name as name,\n" +
+                        "sr.description as description,\n" +
+                        "sr.location.locationId  as locationId,\n" +
+                        "l.uuid  as locationUuid,\n" +
+                        "l.name as locationName,\n" +
+                        "sr.quantity as quantity,\n" +
+                        "sipu.id as stockItemPackagingUOMId,\n" +
+                        "sipu.uuid as stockItemPackagingUOMUuid,\n" +
+                        "pu.conceptId as packagingUoMId,\n" +
+                        "sr.enabled as enabled, sr.evaluationFrequency as evaluationFrequency,\n" +
+                        "sr.lastEvaluation as lastEvaluation, sr.nextEvaluation as nextEvaluation,\n" +
+                        "sr.actionFrequency as actionFrequency, sr.lastActionDate as lastActionDate,\n" +
+                        "sr.nextActionDate as nextActionDate,\n" +
+                        "sr.alertRole as alertRole, sr.mailRole as mailRole,\n" +
+                        "sr.creator.userId as creator,\n" +
+                        "sr.dateCreated as dateCreated,\n" +
+                        "sr.enableDescendants as enableDescendants,\n" +
+                        "sr.voided as voided\n" +
+                        "from stockmanagement.StockRule sr join sr.stockItem si join\n" +
+                        " sr.location l join \n" +
+                        "\t sr.stockItemPackagingUOM sipu left join sipu.packagingUom pu");
 
         StringBuilder hqlFilter = new StringBuilder();
 
@@ -3771,12 +4096,14 @@ public class StockManagementDao extends DaoBase {
 
         if (recordPrivilegeFilters != null) {
             if (locationIdsToFilter != null) {
-                locationIdsToFilter.removeIf(p -> !recordPrivilegeFilters.stream().anyMatch(x -> x.getLocationId().equals(p)));
+                locationIdsToFilter
+                        .removeIf(p -> !recordPrivilegeFilters.stream().anyMatch(x -> x.getLocationId().equals(p)));
                 if (locationIdsToFilter.isEmpty()) {
                     return new Result<>(new ArrayList<>(), 0);
                 }
             } else {
-                locationIdsToFilter = recordPrivilegeFilters.stream().map(p -> p.getLocationId()).distinct().collect(Collectors.toList());
+                locationIdsToFilter = recordPrivilegeFilters.stream().map(p -> p.getLocationId()).distinct()
+                        .collect(Collectors.toList());
             }
         }
 
@@ -3853,21 +4180,24 @@ public class StockManagementDao extends DaoBase {
             result.setPageSize(filter.getLimit());
         }
 
-        result.setData(executeQuery(StockRuleDTO.class, hqlQuery, result, " order by sr.id desc", parameterList, parameterWithList));
+        result.setData(executeQuery(StockRuleDTO.class, hqlQuery, result, " order by sr.id desc", parameterList,
+                parameterWithList));
 
         if (!result.getData().isEmpty()) {
             List<Integer> conceptNamesToFetch = result.getData()
                     .stream()
                     .map(p -> p.getPackagingUoMId())
                     .filter(p -> p != null).distinct().collect(Collectors.toList());
-            Map<Integer, List<ConceptNameDTO>> conceptNameDTOs = conceptNamesToFetch.isEmpty() ?
-                    null :
-                    getConceptNamesByConceptIds(conceptNamesToFetch).stream().collect(Collectors.groupingBy(ConceptNameDTO::getConceptId));
+            Map<Integer, List<ConceptNameDTO>> conceptNameDTOs = conceptNamesToFetch.isEmpty() ? null
+                    : getConceptNamesByConceptIds(conceptNamesToFetch).stream()
+                            .collect(Collectors.groupingBy(ConceptNameDTO::getConceptId));
 
             for (StockRuleDTO stockRuleDTO : result.getData()) {
                 if (conceptNameDTOs != null) {
-                    if (stockRuleDTO.getPackagingUoMId() != null && conceptNameDTOs.containsKey(stockRuleDTO.getPackagingUoMId())) {
-                        stockRuleDTO.setPackagingUomName(conceptNameDTOs.get(stockRuleDTO.getPackagingUoMId()).get(0).getName());
+                    if (stockRuleDTO.getPackagingUoMId() != null
+                            && conceptNameDTOs.containsKey(stockRuleDTO.getPackagingUoMId())) {
+                        stockRuleDTO.setPackagingUomName(
+                                conceptNameDTOs.get(stockRuleDTO.getPackagingUoMId()).get(0).getName());
                     }
                 }
             }
@@ -3875,19 +4205,20 @@ public class StockManagementDao extends DaoBase {
 
         return result;
     }
-	
-	public void voidStockRules(List<String> stockRuleUuids, String reason, int voidedBy) {
-		DbSession session = getSession();
-		Query query = session
-		        .createQuery("UPDATE stockmanagement.StockRule SET voided=1, dateVoided=:dateVoided, voidedBy=:voidedBy, voidReason=:reason WHERE uuid in (:uuidList)");
-		query.setParameterList("uuidList", stockRuleUuids);
-		query.setDate("dateVoided", new Date());
-		query.setInteger("voidedBy", voidedBy);
-		query.setString("reason", reason);
-		query.executeUpdate();
-	}
-	
-	public List<StockRuleNotificationUser> getDueStockRules(Integer lastStockRuleId, int limit) {
+
+    public void voidStockRules(List<String> stockRuleUuids, String reason, int voidedBy) {
+        DbSession session = getSession();
+        Query query = session
+                .createQuery(
+                        "UPDATE stockmanagement.StockRule SET voided=1, dateVoided=:dateVoided, voidedBy=:voidedBy, voidReason=:reason WHERE uuid in (:uuidList)");
+        query.setParameterList("uuidList", stockRuleUuids);
+        query.setDate("dateVoided", new Date());
+        query.setInteger("voidedBy", voidedBy);
+        query.setString("reason", reason);
+        query.executeUpdate();
+    }
+
+    public List<StockRuleNotificationUser> getDueStockRules(Integer lastStockRuleId, int limit) {
         HashMap<String, Object> parameterList = new HashMap<>();
         HashMap<String, Collection> parameterWithList = new HashMap<>();
         StringBuilder hqlQuery = new StringBuilder("select sr.id as id, sr.stockItem.id as stockItemId,\n" +
@@ -3925,74 +4256,78 @@ public class StockManagementDao extends DaoBase {
         query.setFetchSize(limit);
         return query.list();
     }
-	
-	public void updateStockBatchExpiryNotificationDate(Collection<Integer> stockBatchIds, Date notificationDate) {
-		if (stockBatchIds == null || stockBatchIds.isEmpty())
-			return;
-		int startIndex = 0;
-		boolean hasMoreUpdatesToDo = true;
-		do {
-			DbSession session = getSession();
-			Query query = session
-			        .createQuery("UPDATE stockmanagement.StockBatch SET expiryNotificationDate = :nfdate WHERE id in (:stockBatchIds)");
-			List<Integer> batch = stockBatchIds.stream().skip(startIndex * 100).limit(100).collect(Collectors.toList());
-			if (batch.isEmpty()) {
-				break;
-			}
-			query.setParameterList("stockBatchIds", batch);
-			query.setParameter("nfdate", notificationDate);
-			query.executeUpdate();
-			hasMoreUpdatesToDo = batch.size() >= 100;
-			startIndex++;
-		} while (hasMoreUpdatesToDo);
-	}
-	
-	public void updateStockRuleJobNextEvaluationDate(List<Integer> stockRuleIds, Date nextEvaluationDate) {
-		if (stockRuleIds == null || stockRuleIds.isEmpty())
-			return;
-		int startIndex = 0;
-		boolean hasMoreUpdatesToDo = true;
-		do {
-			DbSession session = getSession();
-			Query query = session
-			        .createQuery("UPDATE stockmanagement.StockRule SET lastEvaluation = :today, nextEvaluation = :nextdate WHERE id in (:stockRuleIds)");
-			List<Integer> batch = stockRuleIds.stream().skip(startIndex * 100).limit(100).collect(Collectors.toList());
-			if (batch.isEmpty()) {
-				break;
-			}
-			query.setParameterList("stockRuleIds", batch);
-			query.setParameter("nextdate", nextEvaluationDate);
-			query.setParameter("today", new Date());
-			query.executeUpdate();
-			hasMoreUpdatesToDo = batch.size() >= 100;
-			startIndex++;
-		} while (hasMoreUpdatesToDo);
-	}
-	
-	public void updateStockRuleJobNextActionDate(List<Integer> stockRuleIds, Date nextEvaluationDate) {
-		if (stockRuleIds == null || stockRuleIds.isEmpty())
-			return;
-		int startIndex = 0;
-		boolean hasMoreUpdatesToDo = true;
-		do {
-			DbSession session = getSession();
-			Query query = session
-			        .createQuery("UPDATE stockmanagement.StockRule SET lastActionDate = :today, nextActionDate = :nextdate WHERE id in (:stockRuleIds)");
-			List<Integer> batch = stockRuleIds.stream().skip(startIndex * 100).limit(100).collect(Collectors.toList());
-			if (batch.isEmpty()) {
-				break;
-			}
-			query.setParameterList("stockRuleIds", batch);
-			query.setParameter("nextdate", nextEvaluationDate);
-			query.setParameter("today", new Date());
-			query.executeUpdate();
-			hasMoreUpdatesToDo = batch.size() >= 100;
-			startIndex++;
-		} while (hasMoreUpdatesToDo);
-	}
-	
-	public Map<Integer, String> getStockItemNames(List<Integer> stockItemIds) {
-        if (stockItemIds == null || stockItemIds.isEmpty()) return new HashMap<>();
+
+    public void updateStockBatchExpiryNotificationDate(Collection<Integer> stockBatchIds, Date notificationDate) {
+        if (stockBatchIds == null || stockBatchIds.isEmpty())
+            return;
+        int startIndex = 0;
+        boolean hasMoreUpdatesToDo = true;
+        do {
+            DbSession session = getSession();
+            Query query = session
+                    .createQuery(
+                            "UPDATE stockmanagement.StockBatch SET expiryNotificationDate = :nfdate WHERE id in (:stockBatchIds)");
+            List<Integer> batch = stockBatchIds.stream().skip(startIndex * 100).limit(100).collect(Collectors.toList());
+            if (batch.isEmpty()) {
+                break;
+            }
+            query.setParameterList("stockBatchIds", batch);
+            query.setParameter("nfdate", notificationDate);
+            query.executeUpdate();
+            hasMoreUpdatesToDo = batch.size() >= 100;
+            startIndex++;
+        } while (hasMoreUpdatesToDo);
+    }
+
+    public void updateStockRuleJobNextEvaluationDate(List<Integer> stockRuleIds, Date nextEvaluationDate) {
+        if (stockRuleIds == null || stockRuleIds.isEmpty())
+            return;
+        int startIndex = 0;
+        boolean hasMoreUpdatesToDo = true;
+        do {
+            DbSession session = getSession();
+            Query query = session
+                    .createQuery(
+                            "UPDATE stockmanagement.StockRule SET lastEvaluation = :today, nextEvaluation = :nextdate WHERE id in (:stockRuleIds)");
+            List<Integer> batch = stockRuleIds.stream().skip(startIndex * 100).limit(100).collect(Collectors.toList());
+            if (batch.isEmpty()) {
+                break;
+            }
+            query.setParameterList("stockRuleIds", batch);
+            query.setParameter("nextdate", nextEvaluationDate);
+            query.setParameter("today", new Date());
+            query.executeUpdate();
+            hasMoreUpdatesToDo = batch.size() >= 100;
+            startIndex++;
+        } while (hasMoreUpdatesToDo);
+    }
+
+    public void updateStockRuleJobNextActionDate(List<Integer> stockRuleIds, Date nextEvaluationDate) {
+        if (stockRuleIds == null || stockRuleIds.isEmpty())
+            return;
+        int startIndex = 0;
+        boolean hasMoreUpdatesToDo = true;
+        do {
+            DbSession session = getSession();
+            Query query = session
+                    .createQuery(
+                            "UPDATE stockmanagement.StockRule SET lastActionDate = :today, nextActionDate = :nextdate WHERE id in (:stockRuleIds)");
+            List<Integer> batch = stockRuleIds.stream().skip(startIndex * 100).limit(100).collect(Collectors.toList());
+            if (batch.isEmpty()) {
+                break;
+            }
+            query.setParameterList("stockRuleIds", batch);
+            query.setParameter("nextdate", nextEvaluationDate);
+            query.setParameter("today", new Date());
+            query.executeUpdate();
+            hasMoreUpdatesToDo = batch.size() >= 100;
+            startIndex++;
+        } while (hasMoreUpdatesToDo);
+    }
+
+    public Map<Integer, String> getStockItemNames(List<Integer> stockItemIds) {
+        if (stockItemIds == null || stockItemIds.isEmpty())
+            return new HashMap<>();
         Map<Integer, String> stockItemNames = null;
         int startIndex = 0;
         boolean hasMoreUpdatesToDo = true;
@@ -4012,13 +4347,15 @@ public class StockManagementDao extends DaoBase {
         } while (hasMoreUpdatesToDo);
         return stockItemNames;
     }
-	
-	private Map<Integer, String> getStockItemNamesInternal(List<Integer> stockItemIds) {
-        if (stockItemIds == null || stockItemIds.isEmpty()) return new HashMap<>();
-        StringBuilder hqlQuery = new StringBuilder("select si.id as id, d.name as drugName, c.conceptId as conceptId\n" +
-                "from stockmanagement.StockItem si left join\n" +
-                " si.drug d left join\n" +
-                "\t si.concept c  where si.id in (:ids)");
+
+    private Map<Integer, String> getStockItemNamesInternal(List<Integer> stockItemIds) {
+        if (stockItemIds == null || stockItemIds.isEmpty())
+            return new HashMap<>();
+        StringBuilder hqlQuery = new StringBuilder(
+                "select si.id as id, d.name as drugName, c.conceptId as conceptId\n" +
+                        "from stockmanagement.StockItem si left join\n" +
+                        " si.drug d left join\n" +
+                        "\t si.concept c  where si.id in (:ids)");
 
         Query query = getSession().createQuery(hqlQuery.toString());
         query.setParameterList("ids", stockItemIds);
@@ -4037,7 +4374,9 @@ public class StockManagementDao extends DaoBase {
         }
         Map<Integer, List<ConceptNameDTO>> conceptNameDTOs = null;
         if (!conceptNamesToFetch.isEmpty()) {
-            conceptNameDTOs = getConceptNamesByConceptIds(conceptNamesToFetch.stream().distinct().collect(Collectors.toList())).stream().collect(Collectors.groupingBy(ConceptNameDTO::getConceptId));
+            conceptNameDTOs = getConceptNamesByConceptIds(
+                    conceptNamesToFetch.stream().distinct().collect(Collectors.toList())).stream()
+                    .collect(Collectors.groupingBy(ConceptNameDTO::getConceptId));
         }
         Map<Integer, String> stockItemNames = new HashMap<>();
         for (Object object : partialResult) {
@@ -4048,39 +4387,41 @@ public class StockManagementDao extends DaoBase {
                     stockItemNames.putIfAbsent(Integer.valueOf(((Number) (((Object[]) object)[0])).intValue()),
                             String.format("%1s %2s", ((Object[]) object)[1], conceptNameDTOList.get(0).getName()));
                 } else {
-                    stockItemNames.putIfAbsent(Integer.valueOf(((Number) (((Object[]) object)[0])).intValue()), (String) ((Object[]) object)[1]);
+                    stockItemNames.putIfAbsent(Integer.valueOf(((Number) (((Object[]) object)[0])).intValue()),
+                            (String) ((Object[]) object)[1]);
                 }
             } else {
-                stockItemNames.putIfAbsent(Integer.valueOf(((Number) (((Object[]) object)[0])).intValue()), (String) ((Object[]) object)[1]);
+                stockItemNames.putIfAbsent(Integer.valueOf(((Number) (((Object[]) object)[0])).intValue()),
+                        (String) ((Object[]) object)[1]);
             }
         }
         return stockItemNames;
     }
-	
-	public BatchJobOwner getBatchJobOwnerByUuid(String uuid) {
-		return (BatchJobOwner) getSession().createCriteria(BatchJobOwner.class).add(Restrictions.eq("uuid", uuid))
-		        .uniqueResult();
-	}
-	
-	public BatchJobOwner saveBatchJobOwner(BatchJobOwner batchJobOwner) {
-		getSession().saveOrUpdate(batchJobOwner);
-		return batchJobOwner;
-	}
-	
-	public BatchJob getBatchJobById(Integer id) {
-		return (BatchJob) getSession().createCriteria(BatchJob.class).add(Restrictions.eq("id", id)).uniqueResult();
-	}
-	
-	public BatchJob getBatchJobByUuid(String uuid) {
-		return (BatchJob) getSession().createCriteria(BatchJob.class).add(Restrictions.eq("uuid", uuid)).uniqueResult();
-	}
-	
-	public BatchJob saveBatchJob(BatchJob batchJob) {
-		getSession().saveOrUpdate(batchJob);
-		return batchJob;
-	}
-	
-	public BatchJob getNextActiveBatchJob() {
+
+    public BatchJobOwner getBatchJobOwnerByUuid(String uuid) {
+        return (BatchJobOwner) getSession().createCriteria(BatchJobOwner.class).add(Restrictions.eq("uuid", uuid))
+                .uniqueResult();
+    }
+
+    public BatchJobOwner saveBatchJobOwner(BatchJobOwner batchJobOwner) {
+        getSession().saveOrUpdate(batchJobOwner);
+        return batchJobOwner;
+    }
+
+    public BatchJob getBatchJobById(Integer id) {
+        return (BatchJob) getSession().createCriteria(BatchJob.class).add(Restrictions.eq("id", id)).uniqueResult();
+    }
+
+    public BatchJob getBatchJobByUuid(String uuid) {
+        return (BatchJob) getSession().createCriteria(BatchJob.class).add(Restrictions.eq("uuid", uuid)).uniqueResult();
+    }
+
+    public BatchJob saveBatchJob(BatchJob batchJob) {
+        getSession().saveOrUpdate(batchJob);
+        return batchJob;
+    }
+
+    public BatchJob getNextActiveBatchJob() {
         DbSession dbSession = getSession();
         Criteria criteria = dbSession.createCriteria(BatchJob.class, "bj");
         criteria.add(Restrictions.in("bj.status", Arrays.asList(BatchJobStatus.Pending, BatchJobStatus.Running)));
@@ -4093,34 +4434,36 @@ public class StockManagementDao extends DaoBase {
         result.setData(executeCriteria(criteria, result, Order.asc("bj.id")));
         return result.getData().isEmpty() ? null : result.getData().get(0);
     }
-	
-	public Result<BatchJobDTO> findBatchJobs(BatchJobSearchFilter filter, HashSet<RecordPrivilegeFilter> recordPrivilegeFilters) {
+
+    public Result<BatchJobDTO> findBatchJobs(BatchJobSearchFilter filter,
+            HashSet<RecordPrivilegeFilter> recordPrivilegeFilters) {
         HashMap<String, Object> parameterList = new HashMap<>();
         HashMap<String, Collection> parameterWithList = new HashMap<>();
-        StringBuilder hqlQuery = new StringBuilder("select bj.uuid as uuid, bj.id as id, bj.batchJobType as batchJobType,\n" +
-                "bj.status as status," +
-                "bj.description as description,\n" +
-                "bj.startTime as startTime,\n" +
-                "bj.endTime  as endTime,\n" +
-                "bj.expiration as expiration,\n" +
-                "bj.parameters as parameters,\n" +
-                "bj.privilegeScope as privilegeScope,\n" +
-                "bj.locationScope.locationId as locationScopeId,\n" +
-                "ls.uuid as locationScopeUuid,\n" +
-                "ls.name as locationScope,\n" +
-                "bj.executionState as executionState,\n" +
-                "bj.cancelReason as cancelReason,\n" +
-                "bj.cancelledDate as cancelledDate,\n" +
-                "bj.exitMessage as exitMessage,\n" +
-                "bj.completedDate as completedDate,\n" +
-                "bj.dateCreated as dateCreated,\n" +
-                "bj.creator.userId as creator,\n" +
-                "bj.voided as voided,\n" +
-                "bj.outputArtifactSize as outputArtifactSize,\n" +
-                "bj.outputArtifactFileExt as outputArtifactFileExt,\n" +
-                "bj.outputArtifactViewable as outputArtifactViewable,\n" +
-                "bj.cancelledBy.userId as cancelledBy\n" +
-                " from stockmanagement.BatchJob bj left join bj.locationScope ls\n");
+        StringBuilder hqlQuery = new StringBuilder(
+                "select bj.uuid as uuid, bj.id as id, bj.batchJobType as batchJobType,\n" +
+                        "bj.status as status," +
+                        "bj.description as description,\n" +
+                        "bj.startTime as startTime,\n" +
+                        "bj.endTime  as endTime,\n" +
+                        "bj.expiration as expiration,\n" +
+                        "bj.parameters as parameters,\n" +
+                        "bj.privilegeScope as privilegeScope,\n" +
+                        "bj.locationScope.locationId as locationScopeId,\n" +
+                        "ls.uuid as locationScopeUuid,\n" +
+                        "ls.name as locationScope,\n" +
+                        "bj.executionState as executionState,\n" +
+                        "bj.cancelReason as cancelReason,\n" +
+                        "bj.cancelledDate as cancelledDate,\n" +
+                        "bj.exitMessage as exitMessage,\n" +
+                        "bj.completedDate as completedDate,\n" +
+                        "bj.dateCreated as dateCreated,\n" +
+                        "bj.creator.userId as creator,\n" +
+                        "bj.voided as voided,\n" +
+                        "bj.outputArtifactSize as outputArtifactSize,\n" +
+                        "bj.outputArtifactFileExt as outputArtifactFileExt,\n" +
+                        "bj.outputArtifactViewable as outputArtifactViewable,\n" +
+                        "bj.cancelledBy.userId as cancelledBy\n" +
+                        " from stockmanagement.BatchJob bj left join bj.locationScope ls\n");
 
         StringBuilder hqlFilter = new StringBuilder();
 
@@ -4171,12 +4514,14 @@ public class StockManagementDao extends DaoBase {
 
         if (recordPrivilegeFilters != null) {
             if (locationIdsToFilter != null) {
-                locationIdsToFilter.removeIf(p -> !recordPrivilegeFilters.stream().anyMatch(x -> x.getLocationId().equals(p)));
+                locationIdsToFilter
+                        .removeIf(p -> !recordPrivilegeFilters.stream().anyMatch(x -> x.getLocationId().equals(p)));
                 if (locationIdsToFilter.isEmpty()) {
                     return new Result<>(new ArrayList<>(), 0);
                 }
             } else {
-                locationIdsToFilter = recordPrivilegeFilters.stream().map(p -> p.getLocationId()).distinct().collect(Collectors.toList());
+                locationIdsToFilter = recordPrivilegeFilters.stream().map(p -> p.getLocationId()).distinct()
+                        .collect(Collectors.toList());
             }
         }
 
@@ -4211,14 +4556,20 @@ public class StockManagementDao extends DaoBase {
             result.setPageSize(filter.getLimit());
         }
 
-        result.setData(executeQuery(BatchJobDTO.class, hqlQuery, result, " order by bj.id desc", parameterList, parameterWithList));
+        result.setData(executeQuery(BatchJobDTO.class, hqlQuery, result, " order by bj.id desc", parameterList,
+                parameterWithList));
 
         if (!result.getData().isEmpty()) {
-            Result<BatchJobOwnerDTO> batchJobOwners = findBatchJobOwnersInternal(result.getData().stream().map(p -> p.getId()).collect(Collectors.toList()), false);
-            List<Integer> userIds = result.getData().stream().map(p -> p.getCreator()).filter(p -> p != null).distinct().collect(Collectors.toList());
-            userIds.addAll(result.getData().stream().map(p -> p.getCancelledBy()).filter(p -> p != null).distinct().collect(Collectors.toList()));
-            userIds.addAll(batchJobOwners.getData().stream().map(p -> p.getOwnerUserId()).filter(p -> p != null).distinct().collect(Collectors.toList()));
-            List<UserPersonNameDTO> personNames = getPersonNameByUserIds(userIds.stream().distinct().collect(Collectors.toList()));
+            Result<BatchJobOwnerDTO> batchJobOwners = findBatchJobOwnersInternal(
+                    result.getData().stream().map(p -> p.getId()).collect(Collectors.toList()), false);
+            List<Integer> userIds = result.getData().stream().map(p -> p.getCreator()).filter(p -> p != null).distinct()
+                    .collect(Collectors.toList());
+            userIds.addAll(result.getData().stream().map(p -> p.getCancelledBy()).filter(p -> p != null).distinct()
+                    .collect(Collectors.toList()));
+            userIds.addAll(batchJobOwners.getData().stream().map(p -> p.getOwnerUserId()).filter(p -> p != null)
+                    .distinct().collect(Collectors.toList()));
+            List<UserPersonNameDTO> personNames = getPersonNameByUserIds(
+                    userIds.stream().distinct().collect(Collectors.toList()));
             for (BatchJobOwnerDTO batchJobOwnerDTO : batchJobOwners.getData()) {
                 if (batchJobOwnerDTO.getOwnerUserId() != null) {
                     Optional<UserPersonNameDTO> userPersonNameDTO = personNames.stream()
@@ -4251,7 +4602,8 @@ public class StockManagementDao extends DaoBase {
                     }
                 }
 
-                batchJobDTO.setOwners(batchJobOwners.getData().stream().filter(p -> p.getBatchJobId().equals(batchJobDTO.getId())).collect(Collectors.toList()));
+                batchJobDTO.setOwners(batchJobOwners.getData().stream()
+                        .filter(p -> p.getBatchJobId().equals(batchJobDTO.getId())).collect(Collectors.toList()));
                 for (BatchJobOwnerDTO batchJobOwnerDTO : batchJobDTO.getOwners()) {
                     batchJobOwnerDTO.setBatchJobUuid(batchJobDTO.getUuid());
                 }
@@ -4260,21 +4612,22 @@ public class StockManagementDao extends DaoBase {
 
         return result;
     }
-	
-	public Result<BatchJobOwnerDTO> findBatchJobOwners(List<Integer> batchJobIds) {
-		return findBatchJobOwnersInternal(batchJobIds, true);
-	}
-	
-	private Result<BatchJobOwnerDTO> findBatchJobOwnersInternal(List<Integer> batchJobIds, boolean setNames) {
+
+    public Result<BatchJobOwnerDTO> findBatchJobOwners(List<Integer> batchJobIds) {
+        return findBatchJobOwnersInternal(batchJobIds, true);
+    }
+
+    private Result<BatchJobOwnerDTO> findBatchJobOwnersInternal(List<Integer> batchJobIds, boolean setNames) {
         if (batchJobIds == null || batchJobIds.isEmpty()) {
             return new Result<>(new ArrayList<>(), 0);
         }
         HashMap<String, Object> parameterList = new HashMap<>();
         HashMap<String, Collection> parameterWithList = new HashMap<>();
-        StringBuilder hqlQuery = new StringBuilder("select bjo.uuid as uuid, bjo.id as id, bjo.batchJob.id as batchJobId,\n" +
-                "bjo.owner.userId as ownerUserId,\n" +
-                "bjo.dateCreated as dateCreated\n" +
-                "from stockmanagement.BatchJobOwner bjo\n");
+        StringBuilder hqlQuery = new StringBuilder(
+                "select bjo.uuid as uuid, bjo.id as id, bjo.batchJob.id as batchJobId,\n" +
+                        "bjo.owner.userId as ownerUserId,\n" +
+                        "bjo.dateCreated as dateCreated\n" +
+                        "from stockmanagement.BatchJobOwner bjo\n");
 
         StringBuilder hqlFilter = new StringBuilder();
         appendFilter(hqlFilter, "bjo.batchJob.id in (:batchJobId)");
@@ -4286,11 +4639,14 @@ public class StockManagementDao extends DaoBase {
         }
 
         Result<BatchJobOwnerDTO> result = new Result<>();
-        result.setData(executeQuery(BatchJobOwnerDTO.class, hqlQuery, result, " order by bjo.id asc", parameterList, parameterWithList));
+        result.setData(executeQuery(BatchJobOwnerDTO.class, hqlQuery, result, " order by bjo.id asc", parameterList,
+                parameterWithList));
 
         if (setNames) {
-            List<Integer> userIds = result.getData().stream().map(p -> p.getOwnerUserId()).filter(p -> p != null).distinct().collect(Collectors.toList());
-            List<UserPersonNameDTO> personNames = getPersonNameByUserIds(userIds.stream().distinct().collect(Collectors.toList()));
+            List<Integer> userIds = result.getData().stream().map(p -> p.getOwnerUserId()).filter(p -> p != null)
+                    .distinct().collect(Collectors.toList());
+            List<UserPersonNameDTO> personNames = getPersonNameByUserIds(
+                    userIds.stream().distinct().collect(Collectors.toList()));
             for (BatchJobOwnerDTO batchJobOwnerDTO : result.getData()) {
                 if (batchJobOwnerDTO.getOwnerUserId() != null) {
                     Optional<UserPersonNameDTO> userPersonNameDTO = personNames.stream()
@@ -4306,13 +4662,13 @@ public class StockManagementDao extends DaoBase {
 
         return result;
     }
-	
-	public Result<StockOperationLineItem> findStockOperationLineItems(StockOperationLineItemFilter filter) {
+
+    public Result<StockOperationLineItem> findStockOperationLineItems(StockOperationLineItemFilter filter) {
         HashMap<String, Object> parameterList = new HashMap<>();
         HashMap<String, Collection> parameterWithList = new HashMap<>();
         StringBuilder hqlQuery = new StringBuilder("select so.id as stockOperationId,\n" +
                 "sot.name as operationTypeName,\n" +
-                "so.operationDate as operationDate,\n" + 
+                "so.operationDate as operationDate,\n" +
                 "so.operationNumber as operationNumber,\n" +
                 "so.completedBy.userId as completedBy,\n" +
                 "so.completedDate as completedDate,\n" +
@@ -4354,8 +4710,9 @@ public class StockManagementDao extends DaoBase {
                 " soi.stockItemPackagingUOM sipu left join soi.quantityRequestedPackagingUOM qrqpu left join \n" +
                 " so.destination dest left join dest.location destl left join dest.stockSource dests left join\n" +
                 " so.source sorce left join sorce.location sorcel left join sorce.stockSource sorces\n" +
-                (filter.includeRequisitionInfo() ? " left join so.parentStockOperationLinks sol left join sol.parent sop" : "")
-        );
+                (filter.includeRequisitionInfo()
+                        ? " left join so.parentStockOperationLinks sol left join sol.parent sop"
+                        : ""));
         StringBuilder hqlFilter = new StringBuilder();
 
         if (filter.getStockOperationIdMin() != null) {
@@ -4365,7 +4722,8 @@ public class StockManagementDao extends DaoBase {
 
         if (filter.getAtLocationId() != null) {
             if (filter.getChildLocations() != null && filter.getChildLocations()) {
-                List<Integer> locationIds = getCompleteLocationTree(filter.getAtLocationId()).stream().map(p -> p.getChildLocationId()).collect(Collectors.toList());
+                List<Integer> locationIds = getCompleteLocationTree(filter.getAtLocationId()).stream()
+                        .map(p -> p.getChildLocationId()).collect(Collectors.toList());
                 if (locationIds.isEmpty()) {
                     locationIds.add(filter.getAtLocationId());
                 }
@@ -4390,7 +4748,8 @@ public class StockManagementDao extends DaoBase {
                     return new Result<>(new ArrayList<>(), 0);
                 }
                 if (party.getLocation() != null) {
-                    List<Integer> locationIds = getCompleteLocationTree(party.getLocation().getLocationId()).stream().map(p -> p.getChildLocationId()).collect(Collectors.toList());
+                    List<Integer> locationIds = getCompleteLocationTree(party.getLocation().getLocationId()).stream()
+                            .map(p -> p.getChildLocationId()).collect(Collectors.toList());
                     if (locationIds.isEmpty()) {
                         locationIds.add(party.getLocation().getLocationId());
                     }
@@ -4416,7 +4775,8 @@ public class StockManagementDao extends DaoBase {
                     return new Result<>(new ArrayList<>(), 0);
                 }
                 if (party.getLocation() != null) {
-                    List<Integer> locationIds = getCompleteLocationTree(party.getLocation().getLocationId()).stream().map(p -> p.getChildLocationId()).collect(Collectors.toList());
+                    List<Integer> locationIds = getCompleteLocationTree(party.getLocation().getLocationId()).stream()
+                            .map(p -> p.getChildLocationId()).collect(Collectors.toList());
                     if (locationIds.isEmpty()) {
                         locationIds.add(party.getLocation().getLocationId());
                     }
@@ -4511,31 +4871,45 @@ public class StockManagementDao extends DaoBase {
             List<Integer> conceptIds = new ArrayList<>();
             List<Integer> drugIds = new ArrayList<>();
 
-            conceptIds.addAll(result.getData().stream().filter(p -> p.getPackagingUoMId() != null).map(p -> p.getPackagingUoMId()).collect(Collectors.toList()));
-            conceptIds.addAll(result.getData().stream().filter(p -> p.getQuantityRequestedPackagingUoMId() != null).map(p -> p.getQuantityRequestedPackagingUoMId()).collect(Collectors.toList()));
-            conceptIds.addAll(result.getData().stream().filter(p -> p.getReasonId() != null).map(p -> p.getReasonId()).collect(Collectors.toList()));
-            conceptIds.addAll(result.getData().stream().filter(p -> p.getStockItemCategoryConceptId() != null).map(p -> p.getStockItemCategoryConceptId()).collect(Collectors.toList()));
-            conceptIds.addAll(result.getData().stream().filter(p -> p.getStockItemConceptId() != null).map(p -> p.getStockItemConceptId()).collect(Collectors.toList()));
-            drugIds.addAll(result.getData().stream().filter(p -> p.getStockItemDrugId() != null).map(p -> p.getStockItemDrugId()).collect(Collectors.toList()));
-            List<Integer> userIds = result.getData().stream().map(p -> p.getCreator()).filter(p -> p != null).collect(Collectors.toList());
-            userIds.addAll(result.getData().stream().map(p -> p.getCompletedBy()).filter(p -> p != null).collect(Collectors.toList()));
-            userIds.addAll(result.getData().stream().map(p -> p.getResponsiblePerson()).filter(p -> p != null).collect(Collectors.toList()));
+            conceptIds.addAll(result.getData().stream().filter(p -> p.getPackagingUoMId() != null)
+                    .map(p -> p.getPackagingUoMId()).collect(Collectors.toList()));
+            conceptIds.addAll(result.getData().stream().filter(p -> p.getQuantityRequestedPackagingUoMId() != null)
+                    .map(p -> p.getQuantityRequestedPackagingUoMId()).collect(Collectors.toList()));
+            conceptIds.addAll(result.getData().stream().filter(p -> p.getReasonId() != null).map(p -> p.getReasonId())
+                    .collect(Collectors.toList()));
+            conceptIds.addAll(result.getData().stream().filter(p -> p.getStockItemCategoryConceptId() != null)
+                    .map(p -> p.getStockItemCategoryConceptId()).collect(Collectors.toList()));
+            conceptIds.addAll(result.getData().stream().filter(p -> p.getStockItemConceptId() != null)
+                    .map(p -> p.getStockItemConceptId()).collect(Collectors.toList()));
+            drugIds.addAll(result.getData().stream().filter(p -> p.getStockItemDrugId() != null)
+                    .map(p -> p.getStockItemDrugId()).collect(Collectors.toList()));
+            List<Integer> userIds = result.getData().stream().map(p -> p.getCreator()).filter(p -> p != null)
+                    .collect(Collectors.toList());
+            userIds.addAll(result.getData().stream().map(p -> p.getCompletedBy()).filter(p -> p != null)
+                    .collect(Collectors.toList()));
+            userIds.addAll(result.getData().stream().map(p -> p.getResponsiblePerson()).filter(p -> p != null)
+                    .collect(Collectors.toList()));
 
             Map<Integer, List<ConceptNameDTO>> conceptNameDTOs = null;
             if (conceptIds.isEmpty()) {
                 conceptNameDTOs = new HashMap<>();
             } else {
-                conceptNameDTOs = getConceptNamesByConceptIds(conceptIds.stream().distinct().collect(Collectors.toList())).stream().collect(Collectors.groupingBy(p -> p.getConceptId()));
+                conceptNameDTOs = getConceptNamesByConceptIds(
+                        conceptIds.stream().distinct().collect(Collectors.toList())).stream()
+                        .collect(Collectors.groupingBy(p -> p.getConceptId()));
             }
 
             Map<Integer, List<ConceptNameDTO>> drugNames = null;
             if (drugIds.isEmpty()) {
                 drugNames = new HashMap<>();
             } else {
-                drugNames = getDrugNamesByDrugIds(drugIds).stream().collect(Collectors.groupingBy(p -> p.getConceptId()));
+                drugNames = getDrugNamesByDrugIds(drugIds).stream()
+                        .collect(Collectors.groupingBy(p -> p.getConceptId()));
             }
 
-            Map<Integer, List<UserPersonNameDTO>> personNames = getPersonNameByUserIds(userIds.stream().distinct().collect(Collectors.toList())).stream().collect(Collectors.groupingBy(p -> p.getUserId()));
+            Map<Integer, List<UserPersonNameDTO>> personNames = getPersonNameByUserIds(
+                    userIds.stream().distinct().collect(Collectors.toList())).stream()
+                    .collect(Collectors.groupingBy(p -> p.getUserId()));
 
             for (StockOperationLineItem stockOperationItemDTO : result.getData()) {
 
@@ -4599,7 +4973,8 @@ public class StockManagementDao extends DaoBase {
                 }
 
                 if (stockOperationItemDTO.getResponsiblePerson() != null) {
-                    List<UserPersonNameDTO> userPersonNameDTO = personNames.get(stockOperationItemDTO.getResponsiblePerson());
+                    List<UserPersonNameDTO> userPersonNameDTO = personNames
+                            .get(stockOperationItemDTO.getResponsiblePerson());
                     if (userPersonNameDTO != null) {
                         stockOperationItemDTO.setResponsiblePersonFamilyName(userPersonNameDTO.get(0).getFamilyName());
                         stockOperationItemDTO.setResponsiblePersonGivenName(userPersonNameDTO.get(0).getGivenName());
@@ -4611,26 +4986,27 @@ public class StockManagementDao extends DaoBase {
 
         return result;
     }
-	
-	public String getUserEmail(Integer userId) {
-		try {
-			DbSession session = getSession();
-			Query query = session.createSQLQuery("SELECT email FROM users WHERE user_id = :p");
-			query.setParameter("p", userId);
-			List result = query.list();
-			if (result.isEmpty())
-				return null;
-			String emailAddress = (String) result.get(0);
-			if (emailAddress == null)
-				return null;
-			return emailAddress;
-		}
-		catch (Exception exception) {}
-		return null;
-	}
-	
-	public void setStockItemInformation(List<StockItemInventory> reportStockItemInventories) {
-        if (reportStockItemInventories == null || reportStockItemInventories.isEmpty()) return;
+
+    public String getUserEmail(Integer userId) {
+        try {
+            DbSession session = getSession();
+            Query query = session.createSQLQuery("SELECT email FROM users WHERE user_id = :p");
+            query.setParameter("p", userId);
+            List result = query.list();
+            if (result.isEmpty())
+                return null;
+            String emailAddress = (String) result.get(0);
+            if (emailAddress == null)
+                return null;
+            return emailAddress;
+        } catch (Exception exception) {
+        }
+        return null;
+    }
+
+    public void setStockItemInformation(List<StockItemInventory> reportStockItemInventories) {
+        if (reportStockItemInventories == null || reportStockItemInventories.isEmpty())
+            return;
 
         HashMap<String, Collection> parameterWithList = new HashMap<>();
         StringBuilder hqlQuery = new StringBuilder("select si.id as stockItemId,\n" +
@@ -4642,41 +5018,50 @@ public class StockManagementDao extends DaoBase {
                 "si.reorderLevel as reorderLevel,\n" +
                 "rol.packagingUom.conceptId as reorderLevelUoMId,\n" +
                 "rol.factor as reorderLevelFactor\n" +
-                "from stockmanagement.StockItem si left join si.reorderLevelUOM rol"
-        );
+                "from stockmanagement.StockItem si left join si.reorderLevelUOM rol");
         StringBuilder hqlFilter = new StringBuilder();
         appendFilter(hqlFilter, "si.id in (:ids)");
-        parameterWithList.putIfAbsent("ids", reportStockItemInventories.stream().map(p -> p.getStockItemId()).distinct().collect(Collectors.toList()));
+        parameterWithList.putIfAbsent("ids", reportStockItemInventories.stream().map(p -> p.getStockItemId()).distinct()
+                .collect(Collectors.toList()));
         hqlQuery.append(" where ");
         hqlQuery.append(hqlFilter);
 
         Result<StockBatchLineItem> result = new Result<>();
-        result.setData(executeQuery(StockBatchLineItem.class, hqlQuery, result, null, new HashMap<>(), parameterWithList));
+        result.setData(
+                executeQuery(StockBatchLineItem.class, hqlQuery, result, null, new HashMap<>(), parameterWithList));
 
         if (!result.getData().isEmpty()) {
             List<Integer> conceptIds = new ArrayList<>();
             List<Integer> drugIds = new ArrayList<>();
 
-            conceptIds.addAll(result.getData().stream().filter(p -> p.getStockItemCategoryConceptId() != null).map(p -> p.getStockItemCategoryConceptId()).collect(Collectors.toList()));
-            conceptIds.addAll(result.getData().stream().filter(p -> p.getStockItemConceptId() != null).map(p -> p.getStockItemConceptId()).collect(Collectors.toList()));
-            conceptIds.addAll(result.getData().stream().filter(p -> p.getReorderLevelUoMId() != null).map(p -> p.getReorderLevelUoMId()).collect(Collectors.toList()));
-            drugIds.addAll(result.getData().stream().filter(p -> p.getStockItemDrugId() != null).map(p -> p.getStockItemDrugId()).collect(Collectors.toList()));
+            conceptIds.addAll(result.getData().stream().filter(p -> p.getStockItemCategoryConceptId() != null)
+                    .map(p -> p.getStockItemCategoryConceptId()).collect(Collectors.toList()));
+            conceptIds.addAll(result.getData().stream().filter(p -> p.getStockItemConceptId() != null)
+                    .map(p -> p.getStockItemConceptId()).collect(Collectors.toList()));
+            conceptIds.addAll(result.getData().stream().filter(p -> p.getReorderLevelUoMId() != null)
+                    .map(p -> p.getReorderLevelUoMId()).collect(Collectors.toList()));
+            drugIds.addAll(result.getData().stream().filter(p -> p.getStockItemDrugId() != null)
+                    .map(p -> p.getStockItemDrugId()).collect(Collectors.toList()));
 
             Map<Integer, List<ConceptNameDTO>> conceptNameDTOs = null;
             if (conceptIds.isEmpty()) {
                 conceptNameDTOs = new HashMap<>();
             } else {
-                conceptNameDTOs = getConceptNamesByConceptIds(conceptIds.stream().distinct().collect(Collectors.toList())).stream().collect(Collectors.groupingBy(p -> p.getConceptId()));
+                conceptNameDTOs = getConceptNamesByConceptIds(
+                        conceptIds.stream().distinct().collect(Collectors.toList())).stream()
+                        .collect(Collectors.groupingBy(p -> p.getConceptId()));
             }
 
             Map<Integer, List<ConceptNameDTO>> drugNames = null;
             if (drugIds.isEmpty()) {
                 drugNames = new HashMap<>();
             } else {
-                drugNames = getDrugNamesByDrugIds(drugIds).stream().collect(Collectors.groupingBy(p -> p.getConceptId()));
+                drugNames = getDrugNamesByDrugIds(drugIds).stream()
+                        .collect(Collectors.groupingBy(p -> p.getConceptId()));
             }
 
-            Map<Integer, List<StockBatchLineItem>> dataGroup = result.getData().stream().collect(Collectors.groupingBy(p -> p.getStockItemId()));
+            Map<Integer, List<StockBatchLineItem>> dataGroup = result.getData().stream()
+                    .collect(Collectors.groupingBy(p -> p.getStockItemId()));
             for (StockItemInventory reportStockItemInventory : reportStockItemInventories) {
 
                 List<StockBatchLineItem> infoLineItem = dataGroup.get(reportStockItemInventory.getStockItemId());
@@ -4723,33 +5108,33 @@ public class StockManagementDao extends DaoBase {
             }
         }
     }
-	
-	public Result<DispensingLineItem> findDispensingLineItems(DispensingLineFilter filter) {
+
+    public Result<DispensingLineItem> findDispensingLineItems(DispensingLineFilter filter) {
         HashMap<String, Object> parameterList = new HashMap<>();
         HashMap<String, Collection> parameterWithList = new HashMap<>();
-        StringBuilder hqlQuery = new StringBuilder("SELECT sit.id as stockItemTransactionId, sit.dateCreated as dateCreated,\n" +
-                "sit.creator.userId as creator,\n" +
-                "sit.party.id as partyId,\n" +
-                "pl.name as partyName,\n" +
-                "sit.stockItem.id as stockItemId,\n" +
-                "si.drug.drugId as stockItemDrugId,\n" +
-                "si.concept.conceptId as stockItemConceptId,\n" +
-                "si.commonName as commonName,\n" +
-                "si.acronym as acronym,\n" +
-                "si.category.conceptId as stockItemCategoryConceptId,\n" +
-                "sipu.packagingUom.conceptId as packagingUoMId,\n" +
-                "sipu.factor as stockItemPackagingUOMFactor,\n" +
-                "sb.batchNo as batchNo,\n" +
-                "sb.expiration as expiration,\n" +
-                "sit.quantity as quantity," +
-                "sit.patient.id as patientId, sit.order.orderId as orderId,\n" +
-                "od.orderNumber as orderNumber\n" +
-                "from stockmanagement.StockItemTransaction sit join\n" +
-                "\t sit.stockItem si left join sit.party p left join p.location pl left join\n" +
-                " sit.stockBatch sb left join\n" +
-                " sit.stockItemPackagingUOM sipu left join\n" +
-                " sit.order od"
-        );
+        StringBuilder hqlQuery = new StringBuilder(
+                "SELECT sit.id as stockItemTransactionId, sit.dateCreated as dateCreated,\n" +
+                        "sit.creator.userId as creator,\n" +
+                        "sit.party.id as partyId,\n" +
+                        "pl.name as partyName,\n" +
+                        "sit.stockItem.id as stockItemId,\n" +
+                        "si.drug.drugId as stockItemDrugId,\n" +
+                        "si.concept.conceptId as stockItemConceptId,\n" +
+                        "si.commonName as commonName,\n" +
+                        "si.acronym as acronym,\n" +
+                        "si.category.conceptId as stockItemCategoryConceptId,\n" +
+                        "sipu.packagingUom.conceptId as packagingUoMId,\n" +
+                        "sipu.factor as stockItemPackagingUOMFactor,\n" +
+                        "sb.batchNo as batchNo,\n" +
+                        "sb.expiration as expiration,\n" +
+                        "sit.quantity as quantity," +
+                        "sit.patient.id as patientId, sit.order.orderId as orderId,\n" +
+                        "od.orderNumber as orderNumber\n" +
+                        "from stockmanagement.StockItemTransaction sit join\n" +
+                        "\t sit.stockItem si left join sit.party p left join p.location pl left join\n" +
+                        " sit.stockBatch sb left join\n" +
+                        " sit.stockItemPackagingUOM sipu left join\n" +
+                        " sit.order od");
         StringBuilder hqlFilter = new StringBuilder();
 
         if (filter.getStockItemTransactionMin() != null) {
@@ -4769,7 +5154,8 @@ public class StockManagementDao extends DaoBase {
             }
             if (filter.getChildLocations() != null && filter.getChildLocations()) {
                 if (party.getLocation() != null) {
-                    List<Integer> locationIds = getCompleteLocationTree(party.getLocation().getLocationId()).stream().map(p -> p.getChildLocationId()).collect(Collectors.toList());
+                    List<Integer> locationIds = getCompleteLocationTree(party.getLocation().getLocationId()).stream()
+                            .map(p -> p.getChildLocationId()).collect(Collectors.toList());
                     if (locationIds.isEmpty()) {
                         locationIds.add(filter.getAtLocationId());
                     }
@@ -4857,29 +5243,42 @@ public class StockManagementDao extends DaoBase {
             List<Integer> conceptIds = new ArrayList<>();
             List<Integer> drugIds = new ArrayList<>();
 
-            conceptIds.addAll(result.getData().stream().filter(p -> p.getPackagingUoMId() != null).map(p -> p.getPackagingUoMId()).collect(Collectors.toList()));
-            conceptIds.addAll(result.getData().stream().filter(p -> p.getStockItemCategoryConceptId() != null).map(p -> p.getStockItemCategoryConceptId()).collect(Collectors.toList()));
-            conceptIds.addAll(result.getData().stream().filter(p -> p.getStockItemConceptId() != null).map(p -> p.getStockItemConceptId()).collect(Collectors.toList()));
-            drugIds.addAll(result.getData().stream().filter(p -> p.getStockItemDrugId() != null).map(p -> p.getStockItemDrugId()).collect(Collectors.toList()));
-            List<Integer> userIds = result.getData().stream().map(p -> p.getCreator()).filter(p -> p != null).collect(Collectors.toList());
-            List<Integer> patientIds = result.getData().stream().map(p -> p.getPatientId()).filter(p -> p != null).collect(Collectors.toList());
+            conceptIds.addAll(result.getData().stream().filter(p -> p.getPackagingUoMId() != null)
+                    .map(p -> p.getPackagingUoMId()).collect(Collectors.toList()));
+            conceptIds.addAll(result.getData().stream().filter(p -> p.getStockItemCategoryConceptId() != null)
+                    .map(p -> p.getStockItemCategoryConceptId()).collect(Collectors.toList()));
+            conceptIds.addAll(result.getData().stream().filter(p -> p.getStockItemConceptId() != null)
+                    .map(p -> p.getStockItemConceptId()).collect(Collectors.toList()));
+            drugIds.addAll(result.getData().stream().filter(p -> p.getStockItemDrugId() != null)
+                    .map(p -> p.getStockItemDrugId()).collect(Collectors.toList()));
+            List<Integer> userIds = result.getData().stream().map(p -> p.getCreator()).filter(p -> p != null)
+                    .collect(Collectors.toList());
+            List<Integer> patientIds = result.getData().stream().map(p -> p.getPatientId()).filter(p -> p != null)
+                    .collect(Collectors.toList());
 
             Map<Integer, List<ConceptNameDTO>> conceptNameDTOs = null;
             if (conceptIds.isEmpty()) {
                 conceptNameDTOs = new HashMap<>();
             } else {
-                conceptNameDTOs = getConceptNamesByConceptIds(conceptIds.stream().distinct().collect(Collectors.toList())).stream().collect(Collectors.groupingBy(p -> p.getConceptId()));
+                conceptNameDTOs = getConceptNamesByConceptIds(
+                        conceptIds.stream().distinct().collect(Collectors.toList())).stream()
+                        .collect(Collectors.groupingBy(p -> p.getConceptId()));
             }
 
             Map<Integer, List<ConceptNameDTO>> drugNames = null;
             if (drugIds.isEmpty()) {
                 drugNames = new HashMap<>();
             } else {
-                drugNames = getDrugNamesByDrugIds(drugIds).stream().collect(Collectors.groupingBy(p -> p.getConceptId()));
+                drugNames = getDrugNamesByDrugIds(drugIds).stream()
+                        .collect(Collectors.groupingBy(p -> p.getConceptId()));
             }
 
-            Map<Integer, List<UserPersonNameDTO>> personNames = getPersonNameByUserIds(userIds.stream().distinct().collect(Collectors.toList())).stream().collect(Collectors.groupingBy(p -> p.getUserId()));
-            Map<Integer, List<UserPersonNameDTO>> patientNames = getPatientNameByPatientIds(patientIds.stream().distinct().collect(Collectors.toList()), true).stream().collect(Collectors.groupingBy(p -> p.getPatientId()));
+            Map<Integer, List<UserPersonNameDTO>> personNames = getPersonNameByUserIds(
+                    userIds.stream().distinct().collect(Collectors.toList())).stream()
+                    .collect(Collectors.groupingBy(p -> p.getUserId()));
+            Map<Integer, List<UserPersonNameDTO>> patientNames = getPatientNameByPatientIds(
+                    patientIds.stream().distinct().collect(Collectors.toList()), true).stream()
+                    .collect(Collectors.groupingBy(p -> p.getPatientId()));
 
             for (DispensingLineItem dispensingLineItem : result.getData()) {
 
@@ -4937,8 +5336,8 @@ public class StockManagementDao extends DaoBase {
 
         return result;
     }
-	
-	public Result<PrescriptionLineItem> findPrescriptionLineItems(PrescriptionLineFilter filter) {
+
+    public Result<PrescriptionLineItem> findPrescriptionLineItems(PrescriptionLineFilter filter) {
         HashMap<String, Object> parameterList = new HashMap<>();
         HashMap<String, Collection> parameterWithList = new HashMap<>();
 
@@ -4963,10 +5362,12 @@ public class StockManagementDao extends DaoBase {
                 "COALESCE(sipu.factor, sipu2.factor, 1) as stockItemPackagingUOMFactor,\n" +
                 "do.quantity as quantity," +
                 "cf.name as createdFrom,\n" +
-                "(select value_text from obs obs  where obs.encounter_id = o.encounter_id and obs.concept_id = :dispensingLocationConceptId and obs_group_id = (\n" +
+                "(select value_text from obs obs  where obs.encounter_id = o.encounter_id and obs.concept_id = :dispensingLocationConceptId and obs_group_id = (\n"
+                +
                 "select obsdg.obs_group_id \n" +
                 "from obs obsdg \n" +
-                "where obsdg.encounter_id = o.encounter_id and obsdg.concept_id = :drugConceptId and obsdg.value_text=d.uuid \n" +
+                "where obsdg.encounter_id = o.encounter_id and obsdg.concept_id = :drugConceptId and obsdg.value_text=d.uuid \n"
+                +
                 "order by obsdg.order_id desc limit 1\n" +
                 ") order by obs.order_id desc  limit 1) as fulfilmentLocationUuid,\n" +
                 "do.dose as dose," +
@@ -4982,13 +5383,15 @@ public class StockManagementDao extends DaoBase {
                 "do.duration_units as durationUnitsConceptId," +
                 "do.route as routeConceptId," +
                 "do.dispense_as_written as dispenseAsWritten," +
-                (addFullfillmentInfo ? (
-                        "sit.quantity as quantityDispensed, sitsipu.packaging_uom_id quantityDispensedPackagingUoMId," +
+                (addFullfillmentInfo
+                        ? ("sit.quantity as quantityDispensed, sitsipu.packaging_uom_id quantityDispensedPackagingUoMId,"
+                                +
                                 "sitsipu.factor as quantityDispensedStockItemPackagingUOMFactor," +
                                 "sit.stock_item_transaction_id as stockItemTransactionId," +
                                 "sit.creator as dispenserUserId,spl.name as dispensingLocation," +
-                                "sit.date_created as dateDispensed, sb.batch_no as batchNo, sb.expiration as batchExpiryDate,"
-                ) : "") +
+                                "sit.date_created as dateDispensed, sb.batch_no as batchNo, sb.expiration as batchExpiryDate,")
+                        : "")
+                +
                 "o.order_number as orderNumber" +
                 " from orders o join drug_order do on o.order_id = do.order_id left join" +
                 " drug d on do.drug_inventory_id = d.drug_id left join" +
@@ -4997,12 +5400,13 @@ public class StockManagementDao extends DaoBase {
                 " encounter e on o.encounter_id = e.encounter_id left join" +
                 " location cf on e.location_id = cf.location_id left join" +
                 " stockmgmt_stock_item si on do.drug_inventory_id = si.drug_id left join" +
-                " stockmgmt_stock_item_packaging_uom sipu on si.stock_item_id = sipu.stock_item_id and do.quantity_units=sipu.packaging_uom_id left join" +
-                " stockmgmt_stock_item_packaging_uom sipu2 on si.stock_item_id = sipu.stock_item_id and do.quantity_units=si.dispensing_unit_id and si.dispensing_unit_packaging_uom_id=sipu.stock_item_packaging_uom_id "
-        );
+                " stockmgmt_stock_item_packaging_uom sipu on si.stock_item_id = sipu.stock_item_id and do.quantity_units=sipu.packaging_uom_id left join"
+                +
+                " stockmgmt_stock_item_packaging_uom sipu2 on si.stock_item_id = sipu.stock_item_id and do.quantity_units=si.dispensing_unit_id and si.dispensing_unit_packaging_uom_id=sipu.stock_item_packaging_uom_id ");
         if (addFullfillmentInfo) {
             hqlQuery.append(" left join stockmgmt_stock_item_transaction sit on o.order_id=sit.order_id left join" +
-                    " stockmgmt_party sp on sit.party_id=sp.party_id left join location spl on sp.location_id = spl.location_id left join" +
+                    " stockmgmt_party sp on sit.party_id=sp.party_id left join location spl on sp.location_id = spl.location_id left join"
+                    +
                     " stockmgmt_stock_batch sb on sit.stock_batch_id = sb.stock_batch_id left join" +
                     " stockmgmt_stock_item_packaging_uom sitsipu on sit.stock_item_packaging_uom_id = sitsipu.stock_item_packaging_uom_id");
         }
@@ -5020,7 +5424,8 @@ public class StockManagementDao extends DaoBase {
                 return new Result<>(new ArrayList<>(), 0);
             }
             if (filter.getChildLocations() != null && filter.getChildLocations()) {
-                List<Integer> locationIds = getCompleteLocationTree(filter.getAtLocationId()).stream().map(p -> p.getChildLocationId()).collect(Collectors.toList());
+                List<Integer> locationIds = getCompleteLocationTree(filter.getAtLocationId()).stream()
+                        .map(p -> p.getChildLocationId()).collect(Collectors.toList());
                 if (locationIds.isEmpty()) {
                     locationIds.add(filter.getAtLocationId());
                 }
@@ -5090,9 +5495,11 @@ public class StockManagementDao extends DaoBase {
                 if (hasFull && hasPartial) {
                     appendFilter(fullFillmentFilter, "sit.stock_item_transaction_id is not null");
                 } else if (hasFull) {
-                    appendFilter(fullFillmentFilter, "(sit.quantity * sitsipu.factor * -1) >= (do.quantity * COALESCE(sipu.factor, sipu2.factor, 1))");
+                    appendFilter(fullFillmentFilter,
+                            "(sit.quantity * sitsipu.factor * -1) >= (do.quantity * COALESCE(sipu.factor, sipu2.factor, 1))");
                 } else if (hasPartial) {
-                    appendFilter(fullFillmentFilter, "(sit.quantity * sitsipu.factor * -1) < (do.quantity * COALESCE(sipu.factor, sipu2.factor, 1))");
+                    appendFilter(fullFillmentFilter,
+                            "(sit.quantity * sitsipu.factor * -1) < (do.quantity * COALESCE(sipu.factor, sipu2.factor, 1))");
                 }
                 if (hasNone) {
                     appendORFilter(fullFillmentFilter, "sit.stock_item_transaction_id is null");
@@ -5148,45 +5555,66 @@ public class StockManagementDao extends DaoBase {
             List<Integer> drugIds = new ArrayList<>();
             List<String> fullfillmentLocationUuids = new ArrayList<>();
 
-            conceptIds.addAll(result.getData().stream().filter(p -> p.getPackagingUoMId() != null).map(p -> p.getPackagingUoMId()).collect(Collectors.toList()));
-            conceptIds.addAll(result.getData().stream().filter(p -> p.getStockItemCategoryConceptId() != null).map(p -> p.getStockItemCategoryConceptId()).collect(Collectors.toList()));
-            conceptIds.addAll(result.getData().stream().filter(p -> p.getStockItemConceptId() != null).map(p -> p.getStockItemConceptId()).collect(Collectors.toList()));
+            conceptIds.addAll(result.getData().stream().filter(p -> p.getPackagingUoMId() != null)
+                    .map(p -> p.getPackagingUoMId()).collect(Collectors.toList()));
+            conceptIds.addAll(result.getData().stream().filter(p -> p.getStockItemCategoryConceptId() != null)
+                    .map(p -> p.getStockItemCategoryConceptId()).collect(Collectors.toList()));
+            conceptIds.addAll(result.getData().stream().filter(p -> p.getStockItemConceptId() != null)
+                    .map(p -> p.getStockItemConceptId()).collect(Collectors.toList()));
 
-            conceptIds.addAll(result.getData().stream().filter(p -> p.getDoseUnitsConceptId() != null).map(p -> p.getDoseUnitsConceptId()).collect(Collectors.toList()));
-            conceptIds.addAll(result.getData().stream().filter(p -> p.getFrequencyConceptId() != null).map(p -> p.getFrequencyConceptId()).collect(Collectors.toList()));
-            conceptIds.addAll(result.getData().stream().filter(p -> p.getQuantityUnitsConceptId() != null).map(p -> p.getQuantityUnitsConceptId()).collect(Collectors.toList()));
-            conceptIds.addAll(result.getData().stream().filter(p -> p.getDurationUnitsConceptId() != null).map(p -> p.getDurationUnitsConceptId()).collect(Collectors.toList()));
-            conceptIds.addAll(result.getData().stream().filter(p -> p.getRouteConceptId() != null).map(p -> p.getRouteConceptId()).collect(Collectors.toList()));
+            conceptIds.addAll(result.getData().stream().filter(p -> p.getDoseUnitsConceptId() != null)
+                    .map(p -> p.getDoseUnitsConceptId()).collect(Collectors.toList()));
+            conceptIds.addAll(result.getData().stream().filter(p -> p.getFrequencyConceptId() != null)
+                    .map(p -> p.getFrequencyConceptId()).collect(Collectors.toList()));
+            conceptIds.addAll(result.getData().stream().filter(p -> p.getQuantityUnitsConceptId() != null)
+                    .map(p -> p.getQuantityUnitsConceptId()).collect(Collectors.toList()));
+            conceptIds.addAll(result.getData().stream().filter(p -> p.getDurationUnitsConceptId() != null)
+                    .map(p -> p.getDurationUnitsConceptId()).collect(Collectors.toList()));
+            conceptIds.addAll(result.getData().stream().filter(p -> p.getRouteConceptId() != null)
+                    .map(p -> p.getRouteConceptId()).collect(Collectors.toList()));
 
             if (addFullfillmentInfo) {
-                conceptIds.addAll(result.getData().stream().filter(p -> p.getQuantityDispensedPackagingUoMId() != null).map(p -> p.getQuantityDispensedPackagingUoMId()).collect(Collectors.toList()));
+                conceptIds.addAll(result.getData().stream().filter(p -> p.getQuantityDispensedPackagingUoMId() != null)
+                        .map(p -> p.getQuantityDispensedPackagingUoMId()).collect(Collectors.toList()));
             }
 
-            drugIds.addAll(result.getData().stream().filter(p -> p.getStockItemDrugId() != null).map(p -> p.getStockItemDrugId()).collect(Collectors.toList()));
-            List<Integer> userIds = result.getData().stream().map(p -> p.getOrdererPersonId()).filter(p -> p != null).collect(Collectors.toList());
+            drugIds.addAll(result.getData().stream().filter(p -> p.getStockItemDrugId() != null)
+                    .map(p -> p.getStockItemDrugId()).collect(Collectors.toList()));
+            List<Integer> userIds = result.getData().stream().map(p -> p.getOrdererPersonId()).filter(p -> p != null)
+                    .collect(Collectors.toList());
             if (addFullfillmentInfo) {
-                userIds.addAll(result.getData().stream().map(p -> p.getDispenserUserId()).filter(p -> p != null).collect(Collectors.toList()));
+                userIds.addAll(result.getData().stream().map(p -> p.getDispenserUserId()).filter(p -> p != null)
+                        .collect(Collectors.toList()));
             }
-            List<Integer> patientIds = result.getData().stream().map(p -> p.getPatientId()).filter(p -> p != null).collect(Collectors.toList());
-            fullfillmentLocationUuids = result.getData().stream().map(p -> p.getFulfilmentLocationUuid()).filter(p -> p != null).distinct().collect(Collectors.toList());
+            List<Integer> patientIds = result.getData().stream().map(p -> p.getPatientId()).filter(p -> p != null)
+                    .collect(Collectors.toList());
+            fullfillmentLocationUuids = result.getData().stream().map(p -> p.getFulfilmentLocationUuid())
+                    .filter(p -> p != null).distinct().collect(Collectors.toList());
 
-            //getPatientNameByPatientIds
+            // getPatientNameByPatientIds
             Map<Integer, List<ConceptNameDTO>> conceptNameDTOs = null;
             if (conceptIds.isEmpty()) {
                 conceptNameDTOs = new HashMap<>();
             } else {
-                conceptNameDTOs = getConceptNamesByConceptIds(conceptIds.stream().distinct().collect(Collectors.toList())).stream().collect(Collectors.groupingBy(p -> p.getConceptId()));
+                conceptNameDTOs = getConceptNamesByConceptIds(
+                        conceptIds.stream().distinct().collect(Collectors.toList())).stream()
+                        .collect(Collectors.groupingBy(p -> p.getConceptId()));
             }
 
             Map<Integer, List<ConceptNameDTO>> drugNames = null;
             if (drugIds.isEmpty()) {
                 drugNames = new HashMap<>();
             } else {
-                drugNames = getDrugNamesByDrugIds(drugIds).stream().collect(Collectors.groupingBy(p -> p.getConceptId()));
+                drugNames = getDrugNamesByDrugIds(drugIds).stream()
+                        .collect(Collectors.groupingBy(p -> p.getConceptId()));
             }
 
-            Map<Integer, List<UserPersonNameDTO>> personNames = getPersonNameByUserIds(userIds.stream().distinct().collect(Collectors.toList())).stream().collect(Collectors.groupingBy(p -> p.getUserId()));
-            Map<Integer, List<UserPersonNameDTO>> patientNames = getPatientNameByPatientIds(patientIds.stream().distinct().collect(Collectors.toList()), true).stream().collect(Collectors.groupingBy(p -> p.getPatientId()));
+            Map<Integer, List<UserPersonNameDTO>> personNames = getPersonNameByUserIds(
+                    userIds.stream().distinct().collect(Collectors.toList())).stream()
+                    .collect(Collectors.groupingBy(p -> p.getUserId()));
+            Map<Integer, List<UserPersonNameDTO>> patientNames = getPatientNameByPatientIds(
+                    patientIds.stream().distinct().collect(Collectors.toList()), true).stream()
+                    .collect(Collectors.groupingBy(p -> p.getPatientId()));
             Map<String, String> locationNames = getLocationNamesByUuid(fullfillmentLocationUuids);
 
             for (PrescriptionLineItem prescriptionLineItem : result.getData()) {
@@ -5252,7 +5680,8 @@ public class StockManagementDao extends DaoBase {
                 if (prescriptionLineItem.getQuantityDispensedPackagingUoMId() != null) {
                     conceptNameDTO = conceptNameDTOs.get(prescriptionLineItem.getQuantityDispensedPackagingUoMId());
                     if (conceptNameDTO != null) {
-                        prescriptionLineItem.setQuantityDispensedStockItemPackagingUOMName(conceptNameDTO.get(0).getName());
+                        prescriptionLineItem
+                                .setQuantityDispensedStockItemPackagingUOMName(conceptNameDTO.get(0).getName());
                     }
                 }
 
@@ -5264,7 +5693,8 @@ public class StockManagementDao extends DaoBase {
                 }
 
                 if (prescriptionLineItem.getOrdererPersonId() != null) {
-                    List<UserPersonNameDTO> userPersonNameDTO = personNames.get(prescriptionLineItem.getOrdererPersonId());
+                    List<UserPersonNameDTO> userPersonNameDTO = personNames
+                            .get(prescriptionLineItem.getOrdererPersonId());
                     if (userPersonNameDTO != null) {
                         prescriptionLineItem.setOrdererFamilyName(userPersonNameDTO.get(0).getFamilyName());
                         prescriptionLineItem.setOrdererMiddleName(userPersonNameDTO.get(0).getMiddleName());
@@ -5273,7 +5703,8 @@ public class StockManagementDao extends DaoBase {
                 }
 
                 if (prescriptionLineItem.getDispenserUserId() != null) {
-                    List<UserPersonNameDTO> userPersonNameDTO = personNames.get(prescriptionLineItem.getDispenserUserId());
+                    List<UserPersonNameDTO> userPersonNameDTO = personNames
+                            .get(prescriptionLineItem.getDispenserUserId());
                     if (userPersonNameDTO != null) {
                         prescriptionLineItem.setDispenserFamilyName(userPersonNameDTO.get(0).getFamilyName());
                         prescriptionLineItem.setDispenserMiddleName(userPersonNameDTO.get(0).getMiddleName());
@@ -5291,7 +5722,8 @@ public class StockManagementDao extends DaoBase {
                     }
                 }
 
-                if (!locationNames.isEmpty() && !StringUtils.isBlank(prescriptionLineItem.getFulfilmentLocationUuid())) {
+                if (!locationNames.isEmpty()
+                        && !StringUtils.isBlank(prescriptionLineItem.getFulfilmentLocationUuid())) {
                     String locationName = locationNames.get(prescriptionLineItem.getFulfilmentLocationUuid());
                     if (locationName != null) {
                         prescriptionLineItem.setFulfilmentLocation(locationName);
@@ -5304,36 +5736,39 @@ public class StockManagementDao extends DaoBase {
 
         return result;
     }
-	
-	public List<BatchJob> getExpiredBatchJobs() {
-		return getSession().createCriteria(BatchJob.class).add(Restrictions.le("expiration", new Date())).list();
-	}
-	
-	public void deleteBatchJob(BatchJob batchJob) {
-		DbSession session = getSession();
-		Query query = session.createQuery("DELETE FROM stockmanagement.BatchJobOwner WHERE batchJob = :p");
-		query.setParameter("p", batchJob);
-		query.executeUpdate();
-		
-		query = session.createQuery("DELETE FROM stockmanagement.BatchJob WHERE id = :p");
-		query.setParameter("p", batchJob.getId());
-		query.executeUpdate();
-	}
-	
-	public Map<Integer, Boolean> checkStockBatchHasTransactionsAfterOperation(Integer stockOperationId, List<Integer> stockBatchIds) {
+
+    public List<BatchJob> getExpiredBatchJobs() {
+        return getSession().createCriteria(BatchJob.class).add(Restrictions.le("expiration", new Date())).list();
+    }
+
+    public void deleteBatchJob(BatchJob batchJob) {
+        DbSession session = getSession();
+        Query query = session.createQuery("DELETE FROM stockmanagement.BatchJobOwner WHERE batchJob = :p");
+        query.setParameter("p", batchJob);
+        query.executeUpdate();
+
+        query = session.createQuery("DELETE FROM stockmanagement.BatchJob WHERE id = :p");
+        query.setParameter("p", batchJob.getId());
+        query.executeUpdate();
+    }
+
+    public Map<Integer, Boolean> checkStockBatchHasTransactionsAfterOperation(Integer stockOperationId,
+            List<Integer> stockBatchIds) {
         if (stockOperationId == null || stockBatchIds == null || stockBatchIds.isEmpty()) {
             return new HashMap<>();
         }
 
         DbSession session = getSession();
-        Query query = session.createQuery("SELECT max(sit.id) as id from stockmanagement.StockItemTransaction sit where sit.stockOperation.id = :soid");
+        Query query = session.createQuery(
+                "SELECT max(sit.id) as id from stockmanagement.StockItemTransaction sit where sit.stockOperation.id = :soid");
         query.setParameter("soid", stockOperationId);
         List result = query.list();
         if (result.isEmpty() || (result.get(0) == null)) {
             return new HashMap<>();
         }
         int maxStockOperationItemTransactionId = ((Number) result.get(0)).intValue();
-        query = session.createQuery("SELECT sit.stockBatch.id as id from stockmanagement.StockItemTransaction sit where sit.id > :id and sit.stockBatch.id in (:batchids) group by sit.stockBatch.id");
+        query = session.createQuery(
+                "SELECT sit.stockBatch.id as id from stockmanagement.StockItemTransaction sit where sit.id > :id and sit.stockBatch.id in (:batchids) group by sit.stockBatch.id");
         query.setParameter("id", maxStockOperationItemTransactionId);
         query.setParameterList("batchids", stockBatchIds);
         result = query.list();
@@ -5348,30 +5783,31 @@ public class StockManagementDao extends DaoBase {
 
         return mapResult;
     }
-	
-	public StockItemReference getStockItemByReference(StockSource stockSource, String stockReferenceCode) {
-		Criteria criteria = getSession().createCriteria(StockItemReference.class);
-		criteria.add(Restrictions.eq("referenceSource", stockSource));
-		criteria.add(Restrictions.eq("stockReferenceCode", stockReferenceCode));
-		return (StockItemReference) criteria.setMaxResults(1).uniqueResult();
-	}
-	
-	public StockItemReference saveStockItemReference(StockItemReference stockItemReference) {
-		getSession().saveOrUpdate(stockItemReference);
-		return stockItemReference;
-	}
 
-	public StockItemReference getStockItemReferenceByUuid(String uuid) {
-		return (StockItemReference) getSession().createCriteria(StockItemReference.class).add(Restrictions.eq("uuid", uuid))
-		        .uniqueResult();
-	}
-	
-	public List<StockItemReference> getStockItemReferenceByStockItem(StockItem stockItem) {
-		Criteria criteria = getSession().createCriteria(StockItemReference.class);
-		criteria.add(Restrictions.eq("stockItem", stockItem));
-		criteria.add(Restrictions.eq("voided", false));
-		return criteria.list();
-	}
+    public StockItemReference getStockItemByReference(StockSource stockSource, String stockReferenceCode) {
+        Criteria criteria = getSession().createCriteria(StockItemReference.class);
+        criteria.add(Restrictions.eq("referenceSource", stockSource));
+        criteria.add(Restrictions.eq("stockReferenceCode", stockReferenceCode));
+        return (StockItemReference) criteria.setMaxResults(1).uniqueResult();
+    }
+
+    public StockItemReference saveStockItemReference(StockItemReference stockItemReference) {
+        getSession().saveOrUpdate(stockItemReference);
+        return stockItemReference;
+    }
+
+    public StockItemReference getStockItemReferenceByUuid(String uuid) {
+        return (StockItemReference) getSession().createCriteria(StockItemReference.class)
+                .add(Restrictions.eq("uuid", uuid))
+                .uniqueResult();
+    }
+
+    public List<StockItemReference> getStockItemReferenceByStockItem(StockItem stockItem) {
+        Criteria criteria = getSession().createCriteria(StockItemReference.class);
+        criteria.add(Restrictions.eq("stockItem", stockItem));
+        criteria.add(Restrictions.eq("voided", false));
+        return criteria.list();
+    }
 
     public Map<Integer, StockItemSummaryDTO> getAggregatedStockItemSummaries(
             Collection<Integer> stockItemIds,
@@ -5440,7 +5876,6 @@ public class StockManagementDao extends DaoBase {
                         (existing, replacement) -> existing));
     }
 
-
     public List<DailyStockLineItemDTO> getDailyDispensedStockStatus(Date reportDate) {
         Date effectiveDate = reportDate != null ? reportDate : new Date();
         Date startOfDay = getStartOfDay(effectiveDate);
@@ -5497,7 +5932,6 @@ public class StockManagementDao extends DaoBase {
         return results;
     }
 
-  
     public ExternalRequisitionStatus getExternalRequisitionStatusByUuid(String uuid) {
         Criteria criteria = sessionFactory.getCurrentSession().createCriteria(ExternalRequisitionStatus.class);
         criteria.add(Restrictions.eq("uuid", uuid));
@@ -5556,9 +5990,7 @@ public class StockManagementDao extends DaoBase {
         return externalRequisitionStatus;
     }
 
-
-    
-    public Result<ExternalRequisitionStatusDTO> findExternalRequisitionStatuses(String status, String source,
+    public Result<ExternalRequisitionStatusDTO> findExternalRequisitionStatuses(String status, String source, String receiptNumber,
             boolean includeRetired) {
         Criteria criteria = getSession().createCriteria(ExternalRequisitionStatus.class);
 
@@ -5568,8 +6000,13 @@ public class StockManagementDao extends DaoBase {
         if (StringUtils.isNotBlank(source)) {
             criteria.add(Restrictions.eq("source", source));
         }
+        if (StringUtils.isNotBlank(receiptNumber)) { 
+            criteria.add(Restrictions.eq("receiptNumber", receiptNumber));
+        }
         if (!includeRetired) {
-            criteria.add(Restrictions.eq("retired", 0));
+            criteria.add(Restrictions.or(
+                    Restrictions.eq("retired", 0),
+                    Restrictions.isNull("retired")));
         }
 
         Result<ExternalRequisitionStatus> rawResult = new Result<>();
@@ -5598,7 +6035,6 @@ public class StockManagementDao extends DaoBase {
 
         return result;
     }
-
 
     public Result<StockItemLossesAndAdjustmentsDTO> findStockItemLossesAndAdjustments(
             StockItemPackagingUOMSearchFilter filter) {
@@ -5676,6 +6112,7 @@ public class StockManagementDao extends DaoBase {
 
         return result;
     }
+
     // Helper methods
     private Date getStartOfDay(Date date) {
         Calendar cal = Calendar.getInstance();
@@ -5696,7 +6133,5 @@ public class StockManagementDao extends DaoBase {
         cal.set(Calendar.MILLISECOND, 999);
         return cal.getTime();
     }
-
-    
 
 }
