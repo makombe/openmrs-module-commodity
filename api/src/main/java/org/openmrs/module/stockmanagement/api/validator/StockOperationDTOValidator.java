@@ -43,10 +43,21 @@ public class StockOperationDTOValidator implements Validator {
         StockOperation stockOperation = null;
         if (object.getUuid() != null) {
             stockOperation = service.getStockOperationByUuid(object.getUuid());
-            if (stockOperation == null || !stockOperation.isUpdateable()) {
+            if (stockOperation == null) {
                 errors.rejectValue("uuid",
                         messageSourceService.getMessage("stockmanagement.stockoperation.notupdateable"));
                 return;
+            }
+            if (!stockOperation.isUpdateable()) {
+                boolean isExternalRequisition = StockOperationType.EXTERNAL_REQUISITION
+                        .equals(stockOperation.getStockOperationType().getOperationType());
+                boolean isAllowedStatus = stockOperation.getStatus() == StockOperationStatus.SUBMITTED
+                        || stockOperation.getStatus() == StockOperationStatus.AUTHORIZED;
+                if (!(isExternalRequisition && isAllowedStatus)) {
+                    errors.rejectValue("uuid",
+                            messageSourceService.getMessage("stockmanagement.stockoperation.notupdateable"));
+                    return;
+                }
             }
             object.setOperationTypeUuid(stockOperation.getStockOperationType().getUuid());
         }
