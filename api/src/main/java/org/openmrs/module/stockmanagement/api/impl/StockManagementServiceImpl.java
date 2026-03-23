@@ -1187,9 +1187,17 @@ public class StockManagementServiceImpl extends BaseOpenmrsService implements St
                         messageSourceService.getMessage("stockmanagement.stockoperation.notfound"));
             }
             isNew = false;
+            stockOperationType = dao.getStockOperationTypeByUuid(stockOperation.getStockOperationType().getUuid());
+            if (!stockOperation.isUpdateable()) {
+                if (!StockOperationType.EXTERNAL_REQUISITION.equals(stockOperationType.getOperationType())
+                        || (stockOperation.getStatus() != StockOperationStatus.SUBMITTED
+                                && stockOperation.getStatus() != StockOperationStatus.AUTHORIZED)) {
+                    throw new StockManagementException(
+                            messageSourceService.getMessage("stockmanagement.stockoperation.notupdateable"));
+                }
+            }
             stockOperation.setChangedBy(Context.getAuthenticatedUser());
             stockOperation.setDateChanged(new Date());
-            stockOperationType = stockOperation.getStockOperationType();
         } else {
             stockOperation = new StockOperation();
             stockOperation.setOperationOrder(1);
@@ -1509,8 +1517,13 @@ public class StockManagementServiceImpl extends BaseOpenmrsService implements St
         StockOperationItem stockOperationItem = getStockOperationItemByUuid(stockOperationItemUuid);
         StockOperation stockOperation = stockOperationItem.getStockOperation();
         if (!stockOperation.isUpdateable()) {
-            throw new StockManagementException(
-                    messageSourceService.getMessage("stockmanagement.stockoperation.notupdateable"));
+            StockOperationType operationType = stockOperation.getStockOperationType();
+            if (!StockOperationType.EXTERNAL_REQUISITION.equals(operationType.getOperationType())
+                    || (stockOperation.getStatus() != StockOperationStatus.SUBMITTED
+                            && stockOperation.getStatus() != StockOperationStatus.AUTHORIZED)) {
+                throw new StockManagementException(
+                        messageSourceService.getMessage("stockmanagement.stockoperation.notupdateable"));
+            }
         }
         if (!stockOperation.getStockOperationType().userCanProcess(Context.getAuthenticatedUser(),
                 stockOperation.getAtLocation())) {
@@ -1611,19 +1624,25 @@ public class StockManagementServiceImpl extends BaseOpenmrsService implements St
         processStockOperationAction(stockOperationDTO, StockOperationAction.Action.COMPLETE, null, parameter1 -> {
             String privelege = null;
             StockOperationPrivelegeTarget target = null;
+            boolean isExternalRequisition = StockOperationType.EXTERNAL_REQUISITION
+                    .equals(parameter1.getStockOperationType().getOperationType());
+            boolean isAllowedExternalRequisitionStatus = parameter1.getStatus() == StockOperationStatus.SUBMITTED
+                    || parameter1.getStatus() == StockOperationStatus.AUTHORIZED;
             if (parameter1.isUpdateable()) {
                 privelege = Privileges.TASK_STOCKMANAGEMENT_STOCKOPERATIONS_MUTATE;
                 target = StockOperationPrivelegeTarget.AtLocation;
             } else if (parameter1.getStatus() == StockOperationStatus.DISPATCHED) {
                 privelege = Privileges.TASK_STOCKMANAGEMENT_STOCKOPERATIONS_RECEIVEITEMS;
                 target = StockOperationPrivelegeTarget.Destination;
+            } else if (isExternalRequisition && isAllowedExternalRequisitionStatus) {
+                privelege = Privileges.TASK_STOCKMANAGEMENT_STOCKOPERATIONS_MUTATE;
+                target = StockOperationPrivelegeTarget.AtLocation;
             } else {
                 privelege = UUID.randomUUID().toString();
                 target = StockOperationPrivelegeTarget.AtLocation;
             }
             return new Pair<String, StockOperationPrivelegeTarget>(privelege, target);
         });
-
     }
 
     public void approveStockOperation(StockOperationDTO stockOperationDTO) {
@@ -1923,8 +1942,14 @@ public class StockManagementServiceImpl extends BaseOpenmrsService implements St
             StockOperation stockOperation = getStockOperationByUuid(stockOperationDTO.getUuid());
             if (action.equals(StockOperationAction.Action.SUBMIT)) {
                 if (!stockOperation.isUpdateable()) {
-                    throw new StockManagementException(
-                            messageSourceService.getMessage("stockmanagement.stockoperation.notupdateable"));
+                    boolean isExternalRequisition = StockOperationType.EXTERNAL_REQUISITION
+                            .equals(stockOperation.getStockOperationType().getOperationType());
+                    boolean isAllowedStatus = stockOperation.getStatus() == StockOperationStatus.SUBMITTED
+                            || stockOperation.getStatus() == StockOperationStatus.AUTHORIZED;
+                    if (!(isExternalRequisition && isAllowedStatus)) {
+                        throw new StockManagementException(
+                                messageSourceService.getMessage("stockmanagement.stockoperation.notupdateable"));
+                    }
                 }
             } else if (action.equals(StockOperationAction.Action.COMPLETE)) {
                 boolean canComplete = true;
