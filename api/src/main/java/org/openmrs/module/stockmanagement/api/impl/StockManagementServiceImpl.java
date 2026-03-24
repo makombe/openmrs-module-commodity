@@ -1341,31 +1341,29 @@ public class StockManagementServiceImpl extends BaseOpenmrsService implements St
                 item.setStockItem(stockItem);
             }
 
-            // MODIFIED SECTION: Handle batch requirements with zero quantity support
-            boolean isStockIssue = StockOperationType.STOCK_ISSUE.equals(stockOperationType.getOperationType());
-            boolean isZeroQuantity = itemDto.getQuantity() != null
-                    && itemDto.getQuantity().compareTo(BigDecimal.ZERO) == 0;
-            boolean hasNoBatch = StringUtils.isBlank(itemDto.getStockBatchUuid()) &&
-                    StringUtils.isBlank(itemDto.getBatchNo());
+            // ==================== FULL BATCH HANDLING - POSITIVE ADJUSTMENT + NEW BATCH
+            // SUPPORT ====================
 
-            // Allow zero quantity stock issues without batch
-            if (isStockIssue && isZeroQuantity && hasNoBatch) {
-                // Set unfulfillment tracking if available in DTO
-                // if (itemDto.getUnfulfillmentReason() != null) {
-                // item.setUnfulfillmentReason(itemDto.getUnfulfillmentReason());
-                // }
-                // if (itemDto.getUnfulfillmentRemarks() != null) {
-                // item.setUnfulfillmentRemarks(itemDto.getUnfulfillmentRemarks());
-                // }
-                // Skip batch assignment for zero quantity issues
+            boolean isStockIssue = StockOperationType.STOCK_ISSUE.equals(stockOperationType.getOperationType());
+            boolean isAdjustment = StockOperationType.ADJUSTMENT.equals(stockOperationType.getOperationType());
+            boolean isPositiveAdjustment = isAdjustment &&
+                    itemDto.getQuantity() != null &&
+                    itemDto.getQuantity().compareTo(BigDecimal.ZERO) > 0;
+
+            boolean isZeroQuantity = itemDto.getQuantity() != null &&
+                    itemDto.getQuantity().compareTo(BigDecimal.ZERO) == 0;
+
+            boolean hasStockBatchUuid = !StringUtils.isBlank(itemDto.getStockBatchUuid());
+            boolean hasBatchNo = !StringUtils.isBlank(itemDto.getBatchNo());
+
+            // 1. Zero-quantity stock issue without any batch info (unchanged behaviour)
+            if (isStockIssue && isZeroQuantity && !hasStockBatchUuid && !hasBatchNo) {
                 item.setStockBatch(null);
-            } else if (stockOperationType.requiresBatchUuid()) {
-                // Original logic: Batch UUID is required
-                if (StringUtils.isBlank(itemDto.getStockBatchUuid())) {
-                    throw new StockManagementException(String.format(
-                            messageSourceService.getMessage("stockmanagement.stockoperation.stockbatchrequired"),
-                            itemDto.getStockItemUuid()));
-                }
+            }
+
+            // 2. User provided an existing batch UUID → use it (old workflow, works
+            // everywhere)
+            else if (hasStockBatchUuid) {
                 StockBatch stockBatch = getStockBatchByUuid(itemDto.getStockBatchUuid());
                 if (stockBatch == null) {
                     throw new StockManagementException(String.format(
@@ -1373,41 +1371,68 @@ public class StockManagementServiceImpl extends BaseOpenmrsService implements St
                             itemDto.getStockBatchUuid()));
                 }
                 item.setStockBatch(stockBatch);
-            } else if (stockOperationType.requiresActualBatchInformation()) {
-                // Original logic: Actual batch information required
-                {
-                    StockBatch stockBatch = findStockBatch(stockItem, itemDto.getBatchNo(), itemDto.getExpiration());
-                    if (stockBatch == null) {
-                        Optional<StockBatch> newlyAddedStockBatch = newStockBatches
-                                .stream().filter(p -> p.getStockItem().getId().equals(stockItem.getId()) &&
-                                        itemDto.getBatchNo().equalsIgnoreCase(p.getBatchNo()) &&
-                                        ((stockItem.getHasExpiration() && p.getExpiration().equals(p.getExpiration()))
-                                                ||
-                                                (!stockItem.getHasExpiration() && p.getExpiration() == null)))
-                                .findFirst();
-                        if (newlyAddedStockBatch.isPresent()) {
-                            stockBatchMapping.putIfAbsent(item.getUuid(), newlyAddedStockBatch.get());
-                        } else {
-                            stockBatch = new StockBatch();
-                            newStockBatches.add(stockBatch);
-                            stockBatch.setStockItem(stockItem);
-                            stockBatch.setBatchNo(itemDto.getBatchNo());
-                            stockBatch.setBrandName(itemDto.getBrandName());
-                            stockBatch.setManufacturerName(itemDto.getManufacturerName());
-                            if (stockItem.getHasExpiration()) {
-                                stockBatch.setExpiration(itemDto.getExpiration());
-                            }
-                            stockBatch.setCreator(Context.getAuthenticatedUser());
-                            stockBatch.setDateCreated(new Date());
-                            stockBatchMapping.putIfAbsent(item.getUuid(), stockBatch);
-                        }
+            }
+
+            // 3. Positive Adjustment OR Receipt-like operation → allow creating a NEW batch
+            // from batchNo + expiration
+            else if ((isPositiveAdjustment || stockOperationType.requiresActualBatchInformation()) && hasBatchNo) {
+
+                if (StringUtils.isBlank(itemDto.getBatchNo())) {
+                    throw new StockManagementException(String.format(
+                            messageSourceService.getMessage("stockmanagement.stockoperation.stockbatchrequired"),
+                            itemDto.getStockItemUuid()));
+                }
+
+                // Look for existing batch first
+                StockBatch stockBatch = findStockBatch(stockItem, itemDto.getBatchNo(), itemDto.getExpiration());
+
+                if (stockBatch == null) {
+                    // Create brand new batch (exactly like a Receipt)
+                    Optional<StockBatch> alreadyCreatedInThisOp = newStockBatches.stream()
+                            .filter(p -> p.getStockItem().getId().equals(stockItem.getId()) &&
+                                    itemDto.getBatchNo().equalsIgnoreCase(p.getBatchNo()) &&
+                                    ((stockItem.getHasExpiration() &&
+                                            Objects.equals(p.getExpiration(), itemDto.getExpiration())) ||
+                                            (!stockItem.getHasExpiration() && p.getExpiration() == null)))
+                            .findFirst();
+
+                    if (alreadyCreatedInThisOp.isPresent()) {
+                        stockBatch = alreadyCreatedInThisOp.get();
                     } else {
-                        stockBatchMapping.putIfAbsent(item.getUuid(), stockBatch);
+                        stockBatch = new StockBatch();
+                        newStockBatches.add(stockBatch);
+
+                        stockBatch.setStockItem(stockItem);
+                        stockBatch.setBatchNo(itemDto.getBatchNo());
+                        stockBatch.setBrandName(itemDto.getBrandName());
+                        stockBatch.setManufacturerName(itemDto.getManufacturerName());
+                        if (stockItem.getHasExpiration()) {
+                            stockBatch.setExpiration(itemDto.getExpiration());
+                        }
+                        stockBatch.setCreator(Context.getAuthenticatedUser());
+                        stockBatch.setDateCreated(new Date());
                     }
                 }
+
+                stockBatchMapping.putIfAbsent(item.getUuid(), stockBatch);
+
                 if (stockOperationType.canCapturePurchasePrice()) {
                     item.setPurchasePrice(itemDto.getPurchasePrice());
                 }
+            }
+
+            // 4. Negative adjustment or any other operation that strictly requires an
+            // existing batch
+            else if (stockOperationType.requiresBatchUuid() ||
+                    (isAdjustment && !isPositiveAdjustment)) {
+                throw new StockManagementException(String.format(
+                        messageSourceService.getMessage("stockmanagement.stockoperation.stockbatchrequired"),
+                        itemDto.getStockItemUuid()));
+            }
+
+            // 5. No batch required for this operation type
+            else {
+                item.setStockBatch(null);
             }
 
             if (isStockItemNew && isStockIssue) {
