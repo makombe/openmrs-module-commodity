@@ -283,48 +283,79 @@ public class StockOperationDTOValidator implements Validator {
 
         int index = 1;
         BigDecimal zero = new BigDecimal(0);
+
         for (StockOperationItemDTO stockOperationItemDTO : object.getStockOperationItems()) {
+
             if (stockOperationItemDTO.getStockItemUuid() == null) {
                 errors.rejectValue("stockOperationItems", String.format(
                         messageSourceService.getMessage("stockmanagement.stockoperation.itemuuidrequired"), index));
                 return;
             }
 
-            if (stockOperationType.requiresBatchUuid() && stockOperationItemDTO.getStockBatchUuid() == null
-                    && !stockOperationType.getOperationType().equals(StockOperationType.STOCK_ISSUE)) {
+            boolean isPositiveAdjustment = StockOperationType.ADJUSTMENT.equals(stockOperationType.getOperationType())
+                    && stockOperationItemDTO.getQuantity() != null
+                    && stockOperationItemDTO.getQuantity().compareTo(zero) > 0;
+
+            // ==================== UPDATED BATCH VALIDATION ====================
+
+            // Case 1: Operation requires an EXISTING batch UUID (negative adjustment, stock
+            // issue with qty > 0, etc.)
+            if (stockOperationType.requiresBatchUuid() &&
+                    !isPositiveAdjustment &&
+                    stockOperationItemDTO.getStockBatchUuid() == null &&
+                    !stockOperationType.getOperationType().equals(StockOperationType.STOCK_ISSUE)) {
+
                 errors.rejectValue("stockOperationItems", String.format(
                         messageSourceService.getMessage("stockmanagement.stockoperation.batchuuidrequired"), index));
                 return;
             }
 
-            if (stockOperationType.requiresActualBatchInformation()) {
-                if (StringUtils.isBlank(stockOperationItemDTO.getBatchNo())
-                        && !stockOperationType.getOperationType().equals(StockOperationType.STOCK_ISSUE)) {
+            // Case 2: Operations that allow/require actual batch information (Receipt,
+            // Positive Adjustment, etc.)
+            if (stockOperationType.requiresActualBatchInformation() || isPositiveAdjustment) {
+
+                boolean hasBatchNo = !StringUtils.isBlank(stockOperationItemDTO.getBatchNo());
+                boolean hasStockBatchUuid = !StringUtils.isBlank(stockOperationItemDTO.getStockBatchUuid());
+
+                // Must provide either an existing batch UUID OR a new batchNo
+                if (!hasBatchNo && !hasStockBatchUuid) {
                     errors.rejectValue("stockOperationItems", String.format(
                             messageSourceService.getMessage("stockmanagement.stockoperation.batchnorequired"), index));
                     return;
                 }
 
-                if (stockOperationItemDTO.getExpiration() != null
-                        && !stockOperationItemDTO.getExpiration().after(DateUtil.today())) {
-                    errors.rejectValue("stockOperationItems", String.format(
-                            messageSourceService.getMessage("stockmanagement.stockoperation.expirydateinpast"), index));
-                    return;
-                }
+                // If a new batchNo is provided, validate expiration
+                if (hasBatchNo) {
+                    if (stockOperationItemDTO.getExpiration() != null
+                            && !stockOperationItemDTO.getExpiration().after(DateUtil.today())) {
+                        errors.rejectValue("stockOperationItems", String.format(
+                                messageSourceService.getMessage("stockmanagement.stockoperation.expirydateinpast"),
+                                index));
+                        return;
+                    }
 
-                if (!StringUtils.isBlank(stockOperationItemDTO.getUuid())) {
-                    Optional<StockOperationItemDTO> existingItemDto = stockOperationItems.getData().stream()
-                            .filter(p -> p.getUuid().equals(stockOperationItemDTO.getUuid())).findFirst();
-                    if (existingItemDto.isPresent() && existingItemDto.get().getHasExpiration()) {
-                        if (stockOperationItemDTO.getExpiration() == null) {
-                            errors.rejectValue("stockOperationItems", String.format(messageSourceService
-                                    .getMessage("stockmanagement.stockoperation.expirydaterequired"), index));
-                            return;
+                    // For existing items being updated, check expiration requirement
+                    if (!StringUtils.isBlank(stockOperationItemDTO.getUuid())) {
+                        Optional<StockOperationItemDTO> existingItemDto = (stockOperationItems != null
+                                ? stockOperationItems.getData().stream()
+                                        .filter(p -> p.getUuid().equals(stockOperationItemDTO.getUuid()))
+                                        .findFirst()
+                                : Optional.empty());
+
+                        if (existingItemDto.isPresent() && existingItemDto.get().getHasExpiration()) {
+                            if (stockOperationItemDTO.getExpiration() == null) {
+                                errors.rejectValue("stockOperationItems", String.format(
+                                        messageSourceService.getMessage(
+                                                "stockmanagement.stockoperation.expirydaterequired"),
+                                        index));
+                                return;
+                            }
                         }
                     }
                 }
             }
 
+            // Quantity validation
             if (!stockOperationType.isQuantityOptional() && stockOperationItemDTO.getQuantity() == null) {
                 errors.rejectValue("stockOperationItems", String
                         .format(messageSourceService.getMessage("stockmanagement.stockoperation.qtyrequired"), index));
@@ -347,6 +378,7 @@ public class StockOperationDTOValidator implements Validator {
                 }
             }
 
+            // Purchase price validation
             if (stockOperationItemDTO.getPurchasePrice() != null
                     && stockOperationItemDTO.getPurchasePrice().compareTo(zero) < -1) {
                 errors.rejectValue("stockOperationItems", String
@@ -354,6 +386,7 @@ public class StockOperationDTOValidator implements Validator {
                 return;
             }
 
+            // Stock Issue specific
             if (stockOperationType.getOperationType().equals(StockOperationType.STOCK_ISSUE)) {
                 if (stockOperationItemDTO.getQuantityRequested() != null
                         || stockOperationItemDTO.getStockItemPackagingUOMUuid() != null) {
@@ -372,6 +405,9 @@ public class StockOperationDTOValidator implements Validator {
                     }
                 }
             }
+
+            index++;
         }
+
     }
 }
