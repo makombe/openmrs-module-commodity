@@ -13,6 +13,7 @@ import org.openmrs.module.stockmanagement.api.Privileges;
 import org.openmrs.module.stockmanagement.api.StockManagementException;
 import org.openmrs.module.stockmanagement.api.dto.*;
 import org.openmrs.module.stockmanagement.api.model.*;
+import org.openmrs.module.stockmanagement.api.model.StockItem.ItemType;
 import org.openmrs.module.stockmanagement.api.utils.GlobalProperties;
 import org.openmrs.module.webservices.rest.SimpleObject;
 import org.openmrs.module.webservices.rest.web.RequestContext;
@@ -62,7 +63,53 @@ public class StockItemResource extends ResourceBase<StockItemDTO> {
 			return searchDrugsAndConcepts(context, searchToken);
 		}
 	}
-	
+
+	/**
+	 * Resolves the effective {@link ItemType} from the incoming request.
+	 * <p>
+	 * Resolution priority (first non-null wins):
+	 * <ol>
+	 *   <li>{@code itemType} request parameter – new canonical filter.
+	 *       Accepted values: {@code PHARMACEUTICAL}, {@code NON_PHARMACEUTICAL},
+	 *       {@code LAB_COMMODITY} (case-insensitive).</li>
+	 *   <li>{@code isDrug} request parameter – legacy boolean filter kept for
+	 *       backward compatibility. {@code true} → {@link ItemType#PHARMACEUTICAL},
+	 *       {@code false} → {@link ItemType#NON_PHARMACEUTICAL}.</li>
+	 *   <li>{@code null} – no type filter; all types are returned.</li>
+	 * </ol>
+	 * Callers that still pass {@code isDrug=true/false} continue to work without
+	 * any changes on the client side.
+	 */
+	private ItemType resolveItemTypeFilter(RequestContext context) {
+		// 1. Try the new itemType parameter first
+		String itemTypeParam = context.getParameter("itemType");
+		if (!StringUtils.isBlank(itemTypeParam)) {
+			try {
+				return ItemType.valueOf(itemTypeParam.trim().toUpperCase());
+			} catch (IllegalArgumentException e) {
+				// Fall through to legacy parameter rather than hard-failing,
+				// so existing integrations are not broken by an unexpected value.
+			}
+		}
+
+		// 2. Fall back to legacy isDrug boolean
+		String isDrugParam = context.getParameter("isDrug");
+		if (!StringUtils.isBlank(isDrugParam)) {
+			return "true".equalsIgnoreCase(isDrugParam.trim())
+			        ? ItemType.PHARMACEUTICAL
+			        : ItemType.NON_PHARMACEUTICAL;
+		}
+
+		// 3. No filter – return all types
+		return null;
+	}
+
+	/**
+	 * @deprecated Use {@link #resolveItemTypeFilter(RequestContext)} instead.
+	 *             Retained only to avoid breaking any subclasses or tests that
+	 *             may call this method directly.
+	 */
+	@Deprecated
 	private Boolean isDrugSearch(RequestContext context) {
 		String isDrug = context.getParameter("isDrug");
 		if (StringUtils.isBlank(isDrug))
@@ -72,8 +119,13 @@ public class StockItemResource extends ResourceBase<StockItemDTO> {
 	
 	protected PageableResult getStockItemsDirect(RequestContext context) {
 		StockItemSearchFilter filter = new StockItemSearchFilter();
-		filter.setIsDrug(isDrugSearch(context));
+
+		// Use the unified resolver so both isDrug and itemType params work
+		ItemType itemTypeFilter = resolveItemTypeFilter(context);
+		filter.setItemType(itemTypeFilter);
+
 		filter.setIncludeVoided(context.getIncludeAll());
+
 		String param = context.getParameter("drugUuid");
 		if (!StringUtils.isBlank(param)) {
 			Drug drug = Context.getConceptService().getDrugByUuid(param);
@@ -109,7 +161,7 @@ public class StockItemResource extends ResourceBase<StockItemDTO> {
 		param = context.getParameter("etcdProductId");
 		if (!StringUtils.isBlank(param)) {
 			filter.setEtcdProductId(param);
-}
+		}
 		
 		filter.setStartIndex(context.getStartIndex());
 		filter.setLimit(context.getLimit());
@@ -118,53 +170,58 @@ public class StockItemResource extends ResourceBase<StockItemDTO> {
 	}
 	
 	protected PageableResult searchDrugsAndConcepts(RequestContext context, String searchToken) {
-        Boolean isDrugSearch = isDrugSearch(context);
-        boolean searchDrugs = true;
-        boolean searchConcepts = true;
-        if (isDrugSearch != null) {
-            if (isDrugSearch) {
-                searchConcepts = false;
-            } else {
-                searchDrugs = false;
-            }
-        }
+		ItemType itemTypeFilter = resolveItemTypeFilter(context);
 
-        StockItemSearchFilter filter = new StockItemSearchFilter();
-        filter.setIsDrug(isDrugSearch);
-        filter.setIncludeVoided(context.getIncludeAll());
-        filter.setStartIndex(context.getStartIndex());
-        filter.setLimit(context.getLimit());
+		// Determine which entity types to search based on the resolved filter.
+		// LAB_COMMODITY items are concept-based, so they follow the concept search path.
+		boolean searchDrugs = true;
+		boolean searchConcepts = true;
+		if (itemTypeFilter != null) {
+			if (itemTypeFilter == ItemType.PHARMACEUTICAL) {
+				// Drugs are always pharmaceutical; concepts may also be pharmaceutical
+				// but the primary driver for "isDrug=true" historically was the drug search.
+				searchConcepts = false;
+			} else {
+				// NON_PHARMACEUTICAL and LAB_COMMODITY are concept-based only
+				searchDrugs = false;
+			}
+		}
+
+		StockItemSearchFilter filter = new StockItemSearchFilter();
+		filter.setItemType(itemTypeFilter);
+		filter.setIncludeVoided(context.getIncludeAll());
+		filter.setStartIndex(context.getStartIndex());
+		filter.setLimit(context.getLimit());
 		filter.setGenericConceptCode(searchToken);
 		filter.setEtcdProductId(searchToken);
 
+		String param = context.getParameter("drugUuid");
+		if (!StringUtils.isBlank(param)) {
+			Drug drug = Context.getConceptService().getDrugByUuid(param);
+			if (drug == null) {
+				return emptyResult(context);
+			}
+			filter.setDrugId(drug.getDrugId());
+		}
 
-        String param = context.getParameter("drugUuid");
-        if (!StringUtils.isBlank(param)) {
-            Drug drug = Context.getConceptService().getDrugByUuid(param);
-            if (drug == null) {
-                return emptyResult(context);
-            }
-            filter.setDrugId(drug.getDrugId());
-        }
+		param = context.getParameter("conceptUuid");
+		if (!StringUtils.isBlank(param)) {
+			Concept concept = Context.getConceptService().getConcept(param);
+			if (concept == null) {
+				return emptyResult(context);
+			}
+			filter.setConceptId(concept.getConceptId());
+		}
 
-        param = context.getParameter("conceptUuid");
-        if (!StringUtils.isBlank(param)) {
-            Concept concept = Context.getConceptService().getConcept(param);
-            if (concept == null) {
-                return emptyResult(context);
-            }
-            filter.setConceptId(concept.getConceptId());
-        }
+		param = context.getParameter("categoryUuid");
+		if (!StringUtils.isBlank(param)) {
+			Concept concept = Context.getConceptService().getConcept(param);
+			if (concept == null) {
+				return emptyResult(context);
+			}
+			filter.setCategoryId(concept.getConceptId());
+		}
 
-        param = context.getParameter("categoryUuid");
-        if (!StringUtils.isBlank(param)) {
-            Concept concept = Context.getConceptService().getConcept(param);
-            if (concept == null) {
-                return emptyResult(context);
-            }
-            filter.setCategoryId(concept.getConceptId());
-        }
-		
 		param = context.getParameter("genericConceptCode");
 		if (!StringUtils.isBlank(param)) {
 			filter.setGenericConceptCode(param);
@@ -175,41 +232,54 @@ public class StockItemResource extends ResourceBase<StockItemDTO> {
 			filter.setEtcdProductId(param);
 		}
 
-        ConceptService service = Context.getConceptService();
-        Integer maxIntermediateResult = GlobalProperties.getStockItemSearchMaxDrugConceptIntermediateResult();
-        List<Integer> itemsFound = getStockManagementService().searchStockItemCommonName(searchToken, filter.getIsDrug(), context.getIncludeAll(), maxIntermediateResult);
-        if (!itemsFound.isEmpty()) {
-            filter.setStockItemIds(itemsFound);
-            maxIntermediateResult = Math.max(0, maxIntermediateResult - itemsFound.size());
-        }
+		ConceptService service = Context.getConceptService();
+		Integer maxIntermediateResult = GlobalProperties.getStockItemSearchMaxDrugConceptIntermediateResult();
 
-        if (searchConcepts) {
-            List<Locale> locales = new ArrayList<Locale>(LocaleUtility.getLocalesInOrder());
-            List<Concept> searchResults = service.getConcepts(searchToken, locales, true, null, null, null, null, null, 0, maxIntermediateResult + (searchDrugs ? 0 : maxIntermediateResult))
-                    .stream()
-                    .map(p -> p.getConcept())
-                    .collect(Collectors.toList());
-            if (searchResults.isEmpty())
-                searchConcepts = false;
-            else
-                filter.setConcepts(searchResults);
-        }
-        if (searchDrugs) {
-            List<Drug> drugs = service.getDrugs(searchToken, null, true, false, true, 0, maxIntermediateResult +
-                    (searchConcepts ?
-                            Math.max(0, maxIntermediateResult - (filter.getConcepts() != null ? filter.getConcepts().size() : 0)) :
-                            maxIntermediateResult));
-            if (drugs.isEmpty())
-                searchDrugs = false;
-            else
-                filter.setDrugs(drugs);
-        }
-        if (searchConcepts && searchDrugs) {
-            filter.setSearchEitherDrugsOrConcepts(true);
-        }
-        Result<StockItemDTO> result = getStockManagementService().findStockItems(filter);
-        return toAlreadyPaged(result, context);
-    }
+		// Pass the resolved isDrug flag to the common-name search so it can still
+		// apply a type filter at the DB level. For LAB_COMMODITY we pass null so
+		// concept-based lab items are included (the itemType column will do the
+		// final filtering in findStockItems).
+		Boolean isDrugForCommonNameSearch = itemTypeFilter == null ? null
+		        : (itemTypeFilter == ItemType.PHARMACEUTICAL ? Boolean.TRUE : Boolean.FALSE);
+
+		List<Integer> itemsFound = getStockManagementService().searchStockItemCommonName(
+		        searchToken, isDrugForCommonNameSearch, context.getIncludeAll(), maxIntermediateResult);
+		if (!itemsFound.isEmpty()) {
+			filter.setStockItemIds(itemsFound);
+			maxIntermediateResult = Math.max(0, maxIntermediateResult - itemsFound.size());
+		}
+
+		if (searchConcepts) {
+			List<Locale> locales = new ArrayList<>(LocaleUtility.getLocalesInOrder());
+			List<Concept> searchResults = service.getConcepts(searchToken, locales, true, null, null, null, null, null, 0,
+			        maxIntermediateResult + (searchDrugs ? 0 : maxIntermediateResult))
+			        .stream()
+			        .map(p -> p.getConcept())
+			        .collect(Collectors.toList());
+			if (searchResults.isEmpty())
+				searchConcepts = false;
+			else
+				filter.setConcepts(searchResults);
+		}
+
+		if (searchDrugs) {
+			List<Drug> drugs = service.getDrugs(searchToken, null, true, false, true, 0,
+			        maxIntermediateResult + (searchConcepts
+			                ? Math.max(0, maxIntermediateResult - (filter.getConcepts() != null ? filter.getConcepts().size() : 0))
+			                : maxIntermediateResult));
+			if (drugs.isEmpty())
+				searchDrugs = false;
+			else
+				filter.setDrugs(drugs);
+		}
+
+		if (searchConcepts && searchDrugs) {
+			filter.setSearchEitherDrugsOrConcepts(true);
+		}
+
+		Result<StockItemDTO> result = getStockManagementService().findStockItems(filter);
+		return toAlreadyPaged(result, context);
+	}
 	
 	@Override
 	protected PageableResult doGetAll(RequestContext context) throws ResponseException {
@@ -254,6 +324,32 @@ public class StockItemResource extends ResourceBase<StockItemDTO> {
 			instance.setReorderLevel(BigDecimal.valueOf(value));
 		}
 	}
+
+	/**
+	 * Setter for the {@code itemType} property on create/update requests.
+	 * Accepts both the enum name (e.g. {@code "PHARMACEUTICAL"}) and the
+	 * integer value (e.g. {@code "1"}).  Also keeps the legacy {@code isDrug}
+	 * field in sync inside the DTO so service-layer code that still reads
+	 * {@code isDrug} behaves correctly.
+	 */
+	@PropertySetter("itemType")
+	public void setItemType(StockItemDTO instance, Object value) {
+		if (value == null) {
+			instance.setItemType(null);
+			return;
+		}
+		String raw = value.toString().trim();
+		ItemType resolved;
+		try {
+			// Try numeric first (0, 1, 2)
+			int numeric = Integer.parseInt(raw);
+			resolved = ItemType.fromValue(numeric);
+		} catch (NumberFormatException e) {
+			// Try enum name (PHARMACEUTICAL, NON_PHARMACEUTICAL, LAB_COMMODITY)
+			resolved = ItemType.valueOf(raw.toUpperCase());
+		}
+		instance.setItemType(resolved);
+	}
 	
 	@Override
 	public DelegatingResourceDescription getCreatableProperties() throws ResourceDoesNotSupportOperationException {
@@ -272,6 +368,7 @@ public class StockItemResource extends ResourceBase<StockItemDTO> {
 		description.addProperty("etcdProductId");
 		description.addProperty("ppbRegistrationCode");
 		description.addProperty("packageCode");
+		description.addProperty("itemType");
 		return description;
 	}
 	
@@ -296,6 +393,10 @@ public class StockItemResource extends ResourceBase<StockItemDTO> {
 		description.addProperty("etcdProductId");
 		description.addProperty("ppbRegistrationCode");
 		description.addProperty("packageCode");
+		// New: allows reclassifying a concept-based item between
+		// NON_PHARMACEUTICAL and LAB_COMMODITY. Service layer guards
+		// against reclassifying drug-linked items.
+		description.addProperty("itemType");
 		return description;
 	}
 	
@@ -337,10 +438,16 @@ public class StockItemResource extends ResourceBase<StockItemDTO> {
 			description.addProperty("voided");
 			description.addProperty("expiryNotice");
 			description.addProperty("levelOfUse");
-		    description.addProperty("genericConceptCode");
-		    description.addProperty("etcdProductId");
+			description.addProperty("genericConceptCode");
+			description.addProperty("etcdProductId");
 			description.addProperty("ppbRegistrationCode");
 			description.addProperty("packageCode");
+			// New: exposes the canonical item type in responses.
+			// Consumers that previously relied on isDrug can check:
+			//   itemType === "PHARMACEUTICAL"  ↔  isDrug === true
+			//   itemType === "NON_PHARMACEUTICAL" ↔  isDrug === false
+			//   itemType === "LAB_COMMODITY"   ↔  new
+			description.addProperty("itemType");
 		}
 		
 		if (rep instanceof DefaultRepresentation) {
@@ -360,6 +467,8 @@ public class StockItemResource extends ResourceBase<StockItemDTO> {
 			description.addProperty("drugName");
 			description.addProperty("conceptUuid");
 			description.addProperty("conceptName");
+			// Include itemType in ref so list pages can filter client-side without a full fetch
+			description.addProperty("itemType");
 		}
 		
 		return description;
@@ -378,18 +487,14 @@ public class StockItemResource extends ResourceBase<StockItemDTO> {
 	}
 	
 	@PropertyGetter("references")
-    public Collection<StockItemReferenceDTO> getStockItemReferences(StockItemDTO stockItemDTO) {
-        List<StockItemReferenceDTO> stockItemReferenceDTOS = new ArrayList<>();
-
-        for (StockItemReference stockItemReference : getStockManagementService().getStockItemReferenceByStockItem(stockItemDTO.getUuid())) {
-            StockItemReferenceResource stockItemReferenceResource = new StockItemReferenceResource();
-
-            stockItemReferenceDTOS.add(stockItemReferenceResource.convertToDTO(stockItemReference));
-        }
-
-
-        return stockItemReferenceDTOS;
-    }
+	public Collection<StockItemReferenceDTO> getStockItemReferences(StockItemDTO stockItemDTO) {
+		List<StockItemReferenceDTO> stockItemReferenceDTOS = new ArrayList<>();
+		for (StockItemReference stockItemReference : getStockManagementService().getStockItemReferenceByStockItem(stockItemDTO.getUuid())) {
+			StockItemReferenceResource stockItemReferenceResource = new StockItemReferenceResource();
+			stockItemReferenceDTOS.add(stockItemReferenceResource.convertToDTO(stockItemReference));
+		}
+		return stockItemReferenceDTOS;
+	}
 	
 	@PropertyGetter("permission")
 	public SimpleObject getPermission(StockItemDTO stockItemDTO) {
@@ -404,11 +509,15 @@ public class StockItemResource extends ResourceBase<StockItemDTO> {
 	public Model getGETModel(Representation rep) {
 		ModelImpl modelImpl = (ModelImpl) super.getGETModel(rep);
 		if (rep instanceof DefaultRepresentation || rep instanceof FullRepresentation) {
-			modelImpl.property("uuid", new StringProperty()).property("drugUuid", new StringProperty())
-			        .property("drugName", new StringProperty()).property("conceptUuid", new StringProperty())
-			        .property("conceptName", new StringProperty()).property("hasExpiration", new BooleanProperty())
+			modelImpl.property("uuid", new StringProperty())
+			        .property("drugUuid", new StringProperty())
+			        .property("drugName", new StringProperty())
+			        .property("conceptUuid", new StringProperty())
+			        .property("conceptName", new StringProperty())
+			        .property("hasExpiration", new BooleanProperty())
 			        .property("preferredVendorUuid", new StringProperty())
-			        .property("preferredVendorName", new StringProperty()).property("purchasePrice", new DecimalProperty())
+			        .property("preferredVendorName", new StringProperty())
+			        .property("purchasePrice", new DecimalProperty())
 			        .property("purchasePriceUoMUuid", new StringProperty())
 			        .property("purchasePriceUoMName", new StringProperty())
 			        .property("purchasePriceUoMFactor", new DecimalProperty())
@@ -420,31 +529,41 @@ public class StockItemResource extends ResourceBase<StockItemDTO> {
 			        .property("defaultStockOperationsUoMUuid", new StringProperty())
 			        .property("defaultStockOperationsUoMName", new StringProperty())
 			        .property("defaultStockOperationsUoMFactor", new DecimalProperty())
-			        .property("categoryUuid", new StringProperty()).property("categoryName", new StringProperty())
-			        .property("dateCreated", new DateTimeProperty()).property("creatorGivenName", new StringProperty())
-			        .property("creatorFamilyName", new StringProperty()).property("voided", new BooleanProperty())
-			        .property("commonName", new StringProperty()).property("acronym", new StringProperty())
-			        .property("reorderLevel", new DecimalProperty()).property("reorderLevelUoMUuid", new StringProperty())
+			        .property("categoryUuid", new StringProperty())
+			        .property("categoryName", new StringProperty())
+			        .property("dateCreated", new DateTimeProperty())
+			        .property("creatorGivenName", new StringProperty())
+			        .property("creatorFamilyName", new StringProperty())
+			        .property("voided", new BooleanProperty())
+			        .property("commonName", new StringProperty())
+			        .property("acronym", new StringProperty())
+			        .property("reorderLevel", new DecimalProperty())
+			        .property("reorderLevelUoMUuid", new StringProperty())
 			        .property("reorderLevelUoMName", new StringProperty())
 			        .property("reorderLevelUoMFactor", new DecimalProperty())
 			        .property("expiryNotice", new IntegerProperty())
-					.property("levelOfUse", new StringProperty())
-					.property("genericConceptCode", new StringProperty())
-					.property("etcdProductId", new StringProperty())
-					.property("ppbRegistrationCode", new StringProperty())
-					.property("packageCode", new StringProperty());
+			        .property("levelOfUse", new StringProperty())
+			        .property("genericConceptCode", new StringProperty())
+			        .property("etcdProductId", new StringProperty())
+			        .property("ppbRegistrationCode", new StringProperty())
+			        .property("packageCode", new StringProperty())
+			        // New: enum string – one of PHARMACEUTICAL, NON_PHARMACEUTICAL, LAB_COMMODITY
+			        .property("itemType", new StringProperty()
+			                ._enum(Arrays.asList("PHARMACEUTICAL", "NON_PHARMACEUTICAL", "LAB_COMMODITY"))
+			                .description("Canonical item type. Replaces the legacy isDrug boolean. "
+			                        + "PHARMACEUTICAL ≡ isDrug=true, NON_PHARMACEUTICAL ≡ isDrug=false, LAB_COMMODITY is new."));
 		}
-		if (rep instanceof DefaultRepresentation) {}
-		
-		if (rep instanceof FullRepresentation) {}
-		
+
 		if (rep instanceof RefRepresentation) {
-			modelImpl.property("uuid", new StringProperty()).property("drugUuid", new StringProperty())
-			        .property("drugName", new StringProperty()).property("conceptUuid", new StringProperty())
-			        .property("conceptName", new StringProperty());
+			modelImpl.property("uuid", new StringProperty())
+			        .property("drugUuid", new StringProperty())
+			        .property("drugName", new StringProperty())
+			        .property("conceptUuid", new StringProperty())
+			        .property("conceptName", new StringProperty())
+			        .property("itemType", new StringProperty()
+			                ._enum(Arrays.asList("PHARMACEUTICAL", "NON_PHARMACEUTICAL", "LAB_COMMODITY")));
 		}
 		
 		return modelImpl;
 	}
-	
 }

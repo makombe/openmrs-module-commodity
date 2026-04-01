@@ -29,6 +29,7 @@ import org.openmrs.api.db.hibernate.search.LuceneQuery;
 import org.openmrs.module.stockmanagement.api.dto.*;
 import org.openmrs.module.stockmanagement.api.dto.reporting.*;
 import org.openmrs.module.stockmanagement.api.model.*;
+import org.openmrs.module.stockmanagement.api.model.StockItem.ItemType;
 import org.openmrs.module.stockmanagement.api.utils.DateUtil;
 
 import java.math.BigDecimal;
@@ -414,6 +415,19 @@ public class StockManagementDao extends DaoBase {
         return query;
     }
 
+    /**
+     * Builds a Lucene full-text query for stock item common names / acronyms.
+     * <p>
+     * The {@code isDrugSearch} parameter is kept for backward compatibility.
+     * It still filters using the indexed {@code isDrug} field (which stays in
+     * sync with {@code itemType} via the entity setter) so existing Lucene index
+     * entries continue to work without re-indexing.
+     * <p>
+     * For {@link ItemType#LAB_COMMODITY} searches, callers should pass
+     * {@code isDrugSearch = null} so that all concept-based items are returned;
+     * the {@code itemType} column filter in {@link #findStockItems} then narrows
+     * the result to lab commodities specifically.
+     */
     protected LuceneQuery<StockItem> newStockItemQuery(String itemName, Boolean isDrugSearch, boolean includeAll) {
         if (StringUtils.isBlank(itemName)) {
             return null;
@@ -424,13 +438,14 @@ public class StockManagementDao extends DaoBase {
         query.append("((");
         query.append(this.newStockCommonNameQuery(tokenizedName, drugsQuery, true));
         query.append(")^0.3 OR acronym:(\"").append(drugsQuery).append("\")^0.6)");
+
+        // isDrug is still @Field-indexed and kept in sync with itemType by the
+        // entity setters, so this legacy Lucene filter continues to work correctly
+        // for PHARMACEUTICAL (true) and NON_PHARMACEUTICAL (false) searches.
+        // LAB_COMMODITY callers pass null here and rely on the HQL itemType filter.
         if (isDrugSearch != null) {
             query.append(" AND isDrug:");
-            if (isDrugSearch) {
-                query.append("true");
-            } else {
-                query.append("false");
-            }
+            query.append(isDrugSearch ? "true" : "false");
         }
 
         Class stockItemClass = StockItem.class;
@@ -461,6 +476,16 @@ public class StockManagementDao extends DaoBase {
         return new ArrayList<>();
     }
 
+
+    /* 
+    findStockItems – CHANGED:
+    1. Added si.itemType as itemType to the SELECT projection so DTOs
+    receive the canonical type from the database.
+    2. Replaced the legacy filter.getIsDrug() block with
+    filter.resolveEffectiveItemType() which understands all three types.
+    Legacy callers that set only isDrug still work because
+    resolveEffectiveItemType() falls back to isDrug. 
+    */
     public Result<StockItemDTO> findStockItems(StockItemSearchFilter filter) {
         HashMap<String, Object> parameterList = new HashMap<>();
         HashMap<String, Collection> parameterWithList = new HashMap<>();
@@ -503,7 +528,10 @@ public class StockManagementDao extends DaoBase {
                 "si.creator.userId as creator,\n" +
                 "si.dateCreated as dateCreated,\n" +
                 "si.expiryNotice as expiryNotice,\n" +
-                "si.voided as voided\n" +
+                "si.voided as voided,\n" +
+                // NEW: project the canonical item type so DTOs always carry it.
+                // Hibernate resolves this via ItemTypeConverter, returning the enum.
+                "si.itemType as itemType\n" +
                 "from stockmanagement.StockItem si left join\n" +
                 " si.drug d left join\n" +
                 "\t si.concept c left join si.preferredVendor pv left join si.purchasePriceUoM ppu left join \n" +
@@ -527,12 +555,27 @@ public class StockManagementDao extends DaoBase {
             parameterList.put("conceptId", filter.getConceptId());
         }
 
-        if (filter.getIsDrug() != null) {
-            if (filter.getIsDrug()) {
-                appendFilter(hqlFilter, "si.drug.drugId is not null");
-            } else {
-                appendFilter(hqlFilter, "si.drug.drugId is null");
-            }
+        /* 
+        CHANGED: Use resolveEffectiveItemType() instead of getIsDrug().
+        
+        resolveEffectiveItemType() returns:
+        - The explicit itemType if set (PHARMACEUTICAL / NON_PHARMACEUTICAL /
+        LAB_COMMODITY)
+        - OR derives it from the legacy isDrug boolean for backward compat
+        - OR null (no type filter → return all types)
+        
+        Filtering on si.itemType is more precise than the old drug-null checks
+        and correctly handles the three-way split.
+        
+        Backward compatibility: callers that previously set filter.setIsDrug(true)
+        continue to work because setIsDrug(true) in StockItemSearchFilter now
+        sets itemType = PHARMACEUTICAL, so resolveEffectiveItemType() returns
+        PHARMACEUTICAL just as before. 
+        */
+        ItemType effectiveItemType = filter.resolveEffectiveItemType();
+        if (effectiveItemType != null) {
+            appendFilter(hqlFilter, "si.itemType = :itemType");
+            parameterList.put("itemType", effectiveItemType);
         }
 
         StringBuilder itemFilter = new StringBuilder();
@@ -678,6 +721,14 @@ public class StockManagementDao extends DaoBase {
         return result;
     }
 
+    /*** 
+    findStockItemEntities – CHANGED:
+    Replaced the legacy isDrug Criteria restriction (drug is null/not null)
+    with an itemType equality check. All three ItemType values are handled.
+    Backward compat: callers using filter.setIsDrug() continue to work
+    because resolveEffectiveItemType() maps isDrug → ItemType.
+
+    */
     public Result<StockItem> findStockItemEntities(StockItemSearchFilter filter) {
         DbSession dbSession = getSession();
         Criteria criteria = dbSession.createCriteria(StockItem.class, "si");
@@ -685,12 +736,10 @@ public class StockManagementDao extends DaoBase {
             criteria.add(Restrictions.eq("si.uuid", filter.getUuid()));
         }
 
-        if (filter.getIsDrug() != null) {
-            if (filter.getIsDrug()) {
-                criteria.add(Restrictions.isNotNull("si.drug"));
-            } else {
-                criteria.add(Restrictions.isNull("si.drug"));
-            }
+        // CHANGED: use itemType instead of null/not-null drug check
+        ItemType effectiveItemType = filter.resolveEffectiveItemType();
+        if (effectiveItemType != null) {
+            criteria.add(Restrictions.eq("si.itemType", effectiveItemType));
         }
 
         if (!filter.getIncludeVoided()) {
@@ -725,6 +774,12 @@ public class StockManagementDao extends DaoBase {
         return result;
     }
 
+    /* 
+    getExistingStockItemIds – CHANGED:
+    Replaced per-filter isDrug null/not-null drug check with an itemType
+    equality filter. Uses resolveEffectiveItemType() on each ItemGroupFilter
+    so that legacy callers using setIsDrug() still work. 
+    */
     public List<StockItemDTO> getExistingStockItemIds(
             Collection<StockItemSearchFilter.ItemGroupFilter> stockItemFilters) {
         if (stockItemFilters == null || stockItemFilters.isEmpty())
@@ -735,6 +790,7 @@ public class StockManagementDao extends DaoBase {
         for (StockItemSearchFilter.ItemGroupFilter filter : stockItemFilters) {
             String paramIndexString = Integer.toString(paramIndex);
             StringBuilder itemGroupClause = new StringBuilder();
+
             if (filter.getDrugId() != null) {
                 appendFilter(itemGroupClause, String.format("si.drug.drugId = :drugId%1s", paramIndexString));
                 parameterList.put(String.format("drugId%1s", paramIndexString), filter.getDrugId());
@@ -745,13 +801,17 @@ public class StockManagementDao extends DaoBase {
                 parameterList.put(String.format("conceptId%1s", paramIndexString), filter.getConceptId());
             }
 
-            if (filter.getIsDrug() != null) {
-                if (filter.getIsDrug()) {
-                    appendFilter(itemGroupClause, "si.drug.drugId is not null");
-                } else {
-                    appendFilter(itemGroupClause, "si.drug.drugId is null");
-                }
+            // CHANGED: replaced isDrug null/not-null drug check with itemType equality.
+            // resolveEffectiveItemType() derives the type from the explicit itemType first,
+            // then falls back to the legacy isDrug boolean, so existing callers that use
+            // setIsDrug(true/false) on ItemGroupFilter continue to work unchanged.
+            ItemType resolvedType = filter.resolveEffectiveItemType();
+            if (resolvedType != null) {
+                appendFilter(itemGroupClause,
+                        String.format("si.itemType = :itemType%1s", paramIndexString));
+                parameterList.put(String.format("itemType%1s", paramIndexString), resolvedType);
             }
+
             if (itemGroupClause.length() > 0) {
                 appendORFilter(itemGroupFilters, itemGroupClause.toString());
             }
@@ -3867,12 +3927,31 @@ public class StockManagementDao extends DaoBase {
             parameterList.put("orderNumber", orderNumber);
         }
 
+        /* 
+        CHANGED: replaced the legacy isDrug null-check filter with
+        resolveEffectiveItemType() from OrderItemSearchFilter.
+        
+        Previously:
         if (filter.getIsDrug() != null) {
-            if (filter.getIsDrug()) {
-                appendFilter(hqlFilter, "si.drug.drugId is not null");
-            } else {
-                appendFilter(hqlFilter, "si.drug.drugId is null");
-            }
+        if (filter.getIsDrug()) {
+        appendFilter(hqlFilter, "si.drug.drugId is not null");
+        } else {
+        appendFilter(hqlFilter, "si.drug.drugId is null");
+        }
+        }
+        
+        The old drug-null check cannot distinguish NON_PHARMACEUTICAL from
+        LAB_COMMODITY since both have no drug association. Filtering on
+        si.itemType is precise for all three types.
+        
+        Backward compatibility: callers that still set filter.setIsDrug(true/false)
+        continue to work because OrderItemSearchFilter.setIsDrug() internally sets
+        itemType, so resolveEffectiveItemType() returns the correct ItemType. 
+        */
+        ItemType effectiveItemType = filter.resolveEffectiveItemType();
+        if (effectiveItemType != null) {
+            appendFilter(hqlFilter, "si.itemType = :itemType");
+            parameterList.put("itemType", effectiveItemType);
         }
 
         if (filter.getSearchEitherDrugOrConceptStockItems()) {
@@ -4012,7 +4091,6 @@ public class StockManagementDao extends DaoBase {
 
         return result;
     }
-
     private Map<Integer, Object[]> getOrderQuantities(List<Integer> orderIds) {
         if (orderIds == null || orderIds.isEmpty()) {
             return new HashMap<>();

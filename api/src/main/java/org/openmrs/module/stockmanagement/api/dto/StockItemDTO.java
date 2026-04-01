@@ -1,6 +1,7 @@
 package org.openmrs.module.stockmanagement.api.dto;
 
 
+import org.openmrs.module.stockmanagement.api.model.StockItem.ItemType;
 import org.openmrs.module.stockmanagement.api.model.StockItemReference;
 
 import java.math.BigDecimal;
@@ -122,10 +123,113 @@ public class StockItemDTO {
 	private String ppbRegistrationCode;
 
 	private String packageCode;
-	
+
+	/**
+	 * Canonical item type – the primary type discriminator going forward.
+	 * <p>
+	 * Values:
+	 * <ul>
+	 *   <li>{@link ItemType#PHARMACEUTICAL}     – previously represented by {@code isDrug = true}</li>
+	 *   <li>{@link ItemType#NON_PHARMACEUTICAL} – previously represented by {@code isDrug = false}</li>
+	 *   <li>{@link ItemType#LAB_COMMODITY}      – new third category</li>
+	 * </ul>
+	 * When populated by the DAO/service layer from an existing record that pre-dates
+	 * the {@code item_type} column, it is derived from the legacy {@code is_drug} value.
+	 */
+	private ItemType itemType;
 
 	
-	
+	/**
+	 * Returns the canonical item type.
+	 * <p>
+	 * If {@code itemType} has not been explicitly set (e.g. a DTO populated by a
+	 * legacy query projection that only sets {@code isDrug}), the method falls back
+	 * to deriving the type from the legacy {@code isDrug} field so callers always
+	 * receive a meaningful value.
+	 */
+	public ItemType getItemType() {
+		if (itemType != null) {
+			return itemType;
+		}
+		// Derive from legacy drugId presence as a last resort so that DTOs
+		// hydrated by older query paths still report a usable type.
+		if (drugId != null) {
+			return ItemType.PHARMACEUTICAL;
+		}
+		return null; // cannot determine without explicit data
+	}
+
+	/**
+	 * Sets the canonical item type and keeps the legacy {@code isDrug} signal
+	 * internally consistent so that any code still reading {@code isDrug} behaves
+	 * correctly.
+	 *
+	 * @param itemType the new type; {@code null} clears the explicit override
+	 */
+	public void setItemType(ItemType itemType) {
+		this.itemType = itemType;
+	}
+
+	/** Returns {@code true} if this DTO represents a pharmaceutical drug item. */
+	public boolean isPharmaceutical() {
+		return getItemType() == ItemType.PHARMACEUTICAL;
+	}
+
+	/** Returns {@code true} if this DTO represents a non-pharmaceutical item. */
+	public boolean isNonPharmaceutical() {
+		return getItemType() == ItemType.NON_PHARMACEUTICAL;
+	}
+
+	/** Returns {@code true} if this DTO represents a lab commodity. */
+	public boolean isLabCommodity() {
+		return getItemType() == ItemType.LAB_COMMODITY;
+	}
+
+	/**
+	 * Legacy boolean accessor kept for backward compatibility with service-layer
+	 * and reporting code that has not yet migrated to {@link #getItemType()}.
+	 * <p>
+	 * Returns {@code true} when {@code itemType == PHARMACEUTICAL},
+	 * {@code false} for all other types, and {@code null} when no type
+	 * information is available.
+	 *
+	 * @deprecated Use {@link #getItemType()} instead.
+	 */
+	@Deprecated
+	public Boolean getIsDrug() {
+		ItemType resolved = getItemType();
+		if (resolved == null) {
+			return null;
+		}
+		return resolved == ItemType.PHARMACEUTICAL;
+	}
+
+	/**
+	 * Legacy boolean setter kept for backward compatibility.
+	 * Derives and sets {@link #itemType} from the boolean value so the two
+	 * representations stay in sync. Will never overwrite an existing
+	 * {@link ItemType#LAB_COMMODITY} value with a false-mapped
+	 * {@link ItemType#NON_PHARMACEUTICAL}, protecting lab items from
+	 * accidental reclassification by old code paths.
+	 *
+	 * @deprecated Use {@link #setItemType(ItemType)} instead.
+	 */
+	@Deprecated
+	public void setIsDrug(Boolean isDrug) {
+		if (isDrug == null) {
+			// Only clear itemType if it hasn't been set to LAB_COMMODITY
+			if (this.itemType != ItemType.LAB_COMMODITY) {
+				this.itemType = null;
+			}
+			return;
+		}
+		// Guard: don't overwrite LAB_COMMODITY with a coerced boolean value
+		if (this.itemType == ItemType.LAB_COMMODITY) {
+			return;
+		}
+		this.itemType = isDrug ? ItemType.PHARMACEUTICAL : ItemType.NON_PHARMACEUTICAL;
+	}
+
 	public Integer getId() {
 		return id;
 	}
@@ -545,30 +649,39 @@ public class StockItemDTO {
 	public String getGenericConceptCode() {
 		return genericConceptCode;
 	}
+
 	public void setGenericConceptCode(String genericConceptCode) {
 		this.genericConceptCode = genericConceptCode;
 	}
+
 	public String getEtcdProductId() {
 		return etcdProductId;
 	}
+
 	public void setEtcdProductId(String etcdProductId) {
 		this.etcdProductId = etcdProductId;
 	}
+
 	public String getLevelOfUse() {
 		return levelOfUse;
 	}
+
 	public void setLevelOfUse(String levelOfUse) {
 		this.levelOfUse = levelOfUse;
 	}
+
 	public String getPpbRegistrationCode() {
 		return ppbRegistrationCode;
 	}
+
 	public void setPpbRegistrationCode(String ppbRegistrationCode) {
 		this.ppbRegistrationCode = ppbRegistrationCode;
 	}
+
 	public String getPackageCode() {
 		return packageCode;
 	}
+
 	public void setPackageCode(String packageCode) {
 		this.packageCode = packageCode;
 	}

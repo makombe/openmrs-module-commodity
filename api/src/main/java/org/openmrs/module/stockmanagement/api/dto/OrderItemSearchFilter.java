@@ -1,5 +1,7 @@
 package org.openmrs.module.stockmanagement.api.dto;
 
+import org.openmrs.module.stockmanagement.api.model.StockItem.ItemType;
+
 import java.util.Date;
 import java.util.List;
 
@@ -24,7 +26,23 @@ public class OrderItemSearchFilter {
 	private String orderNumber;
 	
 	private List<Integer> patientIds;
-	
+
+	/**
+	 * New canonical item-type filter.
+	 * <p>
+	 * Takes precedence over the legacy {@link #isDrug} flag when both are present.
+	 * Use {@link #resolveEffectiveItemType()} in DAO/service code rather than
+	 * reading either field directly.
+	 */
+	private ItemType itemType;
+
+	/**
+	 * Legacy boolean filter kept for backward compatibility.
+	 * New code should use {@link #setItemType(ItemType)} instead.
+	 *
+	 * @deprecated Use {@link #itemType} instead.
+	 */
+	@Deprecated
 	private Boolean isDrug;
 	
 	private List<Integer> stockItemIds;
@@ -58,6 +76,91 @@ public class OrderItemSearchFilter {
 	private Integer limit;
 	
 	private boolean includeVoided = false;
+
+	/**
+	 * Returns the canonical item type set on this filter.
+	 *
+	 * @see #resolveEffectiveItemType() for the value DAO/service code should use.
+	 */
+	public ItemType getItemType() {
+		return itemType;
+	}
+
+	/**
+	 * Sets the canonical item-type filter and keeps the legacy {@link #isDrug}
+	 * flag in sync so that any existing code that still reads {@code isDrug}
+	 * behaves correctly.
+	 * <p>
+	 * Pass {@code null} to remove the type filter (return all types).
+	 */
+	public void setItemType(ItemType itemType) {
+		this.itemType = itemType;
+		if (itemType == null) {
+			this.isDrug = null;
+		} else if (itemType == ItemType.PHARMACEUTICAL) {
+			this.isDrug = true;
+		} else {
+			// NON_PHARMACEUTICAL and LAB_COMMODITY both map to isDrug=false for
+			// legacy code; LAB_COMMODITY items have no drug association.
+			this.isDrug = false;
+		}
+	}
+
+	/**
+	 * Returns the legacy isDrug flag.
+	 *
+	 * @deprecated Use {@link #resolveEffectiveItemType()} instead.
+	 */
+	@Deprecated
+	public Boolean getIsDrug() {
+		return isDrug;
+	}
+
+	/**
+	 * Sets the legacy isDrug flag and derives {@link #itemType} from it so the
+	 * two representations stay consistent.
+	 * <p>
+	 * Will never overwrite an existing {@link ItemType#LAB_COMMODITY} value with
+	 * {@link ItemType#NON_PHARMACEUTICAL}, preventing accidental reclassification
+	 * of lab-commodity filters by code paths that still use this method.
+	 *
+	 * @deprecated Use {@link #setItemType(ItemType)} instead.
+	 */
+	@Deprecated
+	public void setIsDrug(Boolean isDrug) {
+		this.isDrug = isDrug;
+		// Guard: don't overwrite an explicitly set LAB_COMMODITY with a coerced value
+		if (this.itemType == ItemType.LAB_COMMODITY) {
+			return;
+		}
+		if (isDrug == null) {
+			this.itemType = null;
+		} else {
+			this.itemType = isDrug ? ItemType.PHARMACEUTICAL : ItemType.NON_PHARMACEUTICAL;
+		}
+	}
+
+	/**
+	 * Resolves the effective {@link ItemType} to apply in a DAO/service query.
+	 * <p>
+	 * Resolution priority:
+	 * <ol>
+	 *   <li>Returns {@link #itemType} if explicitly set.</li>
+	 *   <li>Derives the type from the legacy {@link #isDrug} boolean if set.</li>
+	 *   <li>Returns {@code null} when neither field is set (no type filter).</li>
+	 * </ol>
+	 * DAO implementations should call this method rather than reading
+	 * {@code isDrug} and {@code itemType} separately.
+	 */
+	public ItemType resolveEffectiveItemType() {
+		if (itemType != null) {
+			return itemType;
+		}
+		if (isDrug != null) {
+			return isDrug ? ItemType.PHARMACEUTICAL : ItemType.NON_PHARMACEUTICAL;
+		}
+		return null;
+	}
 	
 	public Integer getId() {
 		return id;
@@ -233,14 +336,6 @@ public class OrderItemSearchFilter {
 	
 	public void setStartIndex(Integer startIndex) {
 		this.startIndex = startIndex;
-	}
-	
-	public Boolean getIsDrug() {
-		return isDrug;
-	}
-	
-	public void setIsDrug(Boolean isDrug) {
-		this.isDrug = isDrug;
 	}
 	
 	public List<Integer> getEncounterIds() {

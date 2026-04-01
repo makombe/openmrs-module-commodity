@@ -33,6 +33,7 @@ import org.openmrs.module.stockmanagement.api.reporting.Report;
 import org.openmrs.module.stockmanagement.api.utils.*;
 import org.openmrs.module.stockmanagement.api.jobs.StockItemImportJob;
 import org.openmrs.module.stockmanagement.api.model.*;
+import org.openmrs.module.stockmanagement.api.model.StockItem.ItemType;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.openmrs.module.stockmanagement.tasks.StockOperationNotificationTask;
@@ -398,6 +399,7 @@ public class StockManagementServiceImpl extends BaseOpenmrsService implements St
     public StockItem saveStockItem(StockItemDTO stockItemDTO) {
         StockItem stockItem = null;
         boolean isNew = false;
+
         if (stockItemDTO.getUuid() == null) {
             isNew = true;
             stockItem = new StockItem();
@@ -405,54 +407,125 @@ public class StockManagementServiceImpl extends BaseOpenmrsService implements St
             stockItem.setDateCreated(new Date());
 
             if (!StringUtils.isBlank(stockItemDTO.getDrugUuid())) {
+                // Drug-based item → always PHARMACEUTICAL regardless of what the
+                // caller passed in itemType. A Drug entity is inherently a drug.
                 Drug drug = Context.getConceptService().getDrugByUuid(stockItemDTO.getDrugUuid());
-                if (drug != null) {
-                    StockItemSearchFilter filter = new StockItemSearchFilter();
-                    filter.setDrugId(drug.getDrugId());
-                    filter.setIsDrug(true);
-                    filter.setIncludeVoided(true);
-                    filter.setStartIndex(0);
-                    filter.setLimit(1);
-                    Result<StockItemDTO> stockItemResult = findStockItems(filter);
-                    if (!stockItemResult.getData().isEmpty()) {
-                        invalidRequest("stockmanagement.stockitem.drugexists");
-                    }
-                    stockItem.setDrug(drug);
-                    stockItem.setIsDrug(true);
-                    stockItem.setConcept(drug.getConcept());
-                } else {
+                if (drug == null) {
                     invalidRequest("stockmanagement.stockitem.drugnoexist");
                 }
-            } else if (!StringUtils.isBlank(stockItemDTO.getConceptUuid())) {
-                Concept concept = Context.getConceptService().getConceptByUuid(stockItemDTO.getConceptUuid());
-                if (concept != null) {
-                    StockItemSearchFilter filter = new StockItemSearchFilter();
-                    filter.setIsDrug(false);
-                    filter.setConceptId(concept.getConceptId());
-                    filter.setIncludeVoided(true);
-                    filter.setStartIndex(0);
-                    filter.setLimit(1);
-                    Result<StockItemDTO> stockItemResult = findStockItems(filter);
-                    if (!stockItemResult.getData().isEmpty()) {
-                        invalidRequest("stockmanagement.stockitem.conceptexists");
-                    }
 
-                    stockItem.setIsDrug(false);
-                    stockItem.setConcept(concept);
-                } else {
+                StockItemSearchFilter filter = new StockItemSearchFilter();
+                filter.setDrugId(drug.getDrugId());
+                filter.setItemType(ItemType.PHARMACEUTICAL); // replaces setIsDrug(true)
+                filter.setIncludeVoided(true);
+                filter.setStartIndex(0);
+                filter.setLimit(1);
+                if (!findStockItems(filter).getData().isEmpty()) {
+                    invalidRequest("stockmanagement.stockitem.drugexists");
+                }
+
+                stockItem.setDrug(drug);
+                stockItem.setConcept(drug.getConcept());
+                // setItemType keeps isDrug in sync automatically
+                stockItem.setItemType(ItemType.PHARMACEUTICAL);
+
+            } else if (!StringUtils.isBlank(stockItemDTO.getConceptUuid())) {
+                // ---------------------------------------------------------------
+                // Concept-based item → NON_PHARMACEUTICAL or LAB_COMMODITY.
+                //
+                // Resolution order:
+                // 1. Explicit itemType from the DTO (NON_PHARMACEUTICAL or
+                // LAB_COMMODITY) – caller knows what they are creating.
+                // 2. Legacy isDrug flag on the DTO (backward compat).
+                // 3. Default to NON_PHARMACEUTICAL (preserves original behaviour).
+                //
+                // PHARMACEUTICAL is rejected here: a pharmaceutical item must be
+                // created with a drugUuid so it gets a proper Drug association.
+                // ---------------------------------------------------------------
+                Concept concept = Context.getConceptService().getConceptByUuid(stockItemDTO.getConceptUuid());
+                if (concept == null) {
                     invalidRequest("stockmanagement.stockitem.conceptnoexist");
                 }
+
+                // Resolve the intended type from the DTO
+                ItemType resolvedType = stockItemDTO.getItemType();
+                if (resolvedType == null) {
+                    // Fall back to legacy isDrug flag
+                    Boolean legacyIsDrug = stockItemDTO.getIsDrug();
+                    resolvedType = (legacyIsDrug != null && legacyIsDrug)
+                            ? ItemType.PHARMACEUTICAL
+                            : ItemType.NON_PHARMACEUTICAL;
+                }
+
+                // Prevent creating a concept-only item as PHARMACEUTICAL –
+                // pharmaceutical items must go through the drug path above.
+                if (resolvedType == ItemType.PHARMACEUTICAL) {
+                    invalidRequest("stockmanagement.stockitem.pharmaceuticalmusthavedrug");
+                }
+
+                // Check for duplicate: same concept + same type must not already exist
+                StockItemSearchFilter filter = new StockItemSearchFilter();
+                filter.setItemType(resolvedType); // replaces setIsDrug(false)
+                filter.setConceptId(concept.getConceptId());
+                filter.setIncludeVoided(true);
+                filter.setStartIndex(0);
+                filter.setLimit(1);
+                if (!findStockItems(filter).getData().isEmpty()) {
+                    invalidRequest("stockmanagement.stockitem.conceptexists");
+                }
+
+                stockItem.setConcept(concept);
+                // setItemType keeps isDrug in sync automatically
+                stockItem.setItemType(resolvedType);
+
             } else {
                 invalidRequest("stockmanagement.stockitem.drugorconceptrequired");
             }
+
         } else {
+            // -------------------------------------------------------------------
+            // UPDATE path
+            // -------------------------------------------------------------------
             stockItem = getStockItemByUuid(stockItemDTO.getUuid());
             if (stockItem == null) {
                 invalidRequest("stockmanagement.stockitem.notexists");
             }
-            if (stockItem.getIsDrug() == null) {
-                stockItem.setIsDrug(stockItem.getDrug() != null);
+
+            // Ensure itemType is always populated on legacy records that were
+            // saved before the item_type column existed (itemType may be null if
+            // Hibernate loaded a row that had no value in the column).
+            if (stockItem.getItemType() == null) {
+                // Derive from isDrug flag or drug association as a safe fallback
+                if (stockItem.getDrug() != null) {
+                    stockItem.setItemType(ItemType.PHARMACEUTICAL);
+                } else if (stockItem.getIsDrug() != null) {
+                    stockItem.setItemType(ItemType.fromIsDrug(stockItem.getIsDrug()));
+                } else {
+                    stockItem.setItemType(ItemType.NON_PHARMACEUTICAL);
+                }
             }
+
+            // Allow reclassification between NON_PHARMACEUTICAL and LAB_COMMODITY
+            // for concept-based items only. Drug-linked items are locked to
+            // PHARMACEUTICAL and must never be reclassified.
+            if (stockItemDTO.getItemType() != null
+                    && stockItemDTO.getItemType() != stockItem.getItemType()) {
+
+                if (stockItem.getDrug() != null
+                        && stockItemDTO.getItemType() != ItemType.PHARMACEUTICAL) {
+                    // Drug-linked item cannot be reclassified away from PHARMACEUTICAL
+                    invalidRequest("stockmanagement.stockitem.drugidmustbepharmaceutical");
+                }
+
+                if (stockItemDTO.getItemType() == ItemType.PHARMACEUTICAL
+                        && stockItem.getDrug() == null) {
+                    // Cannot promote a concept-only item to PHARMACEUTICAL without a drug
+                    invalidRequest("stockmanagement.stockitem.pharmaceuticalmusthavedrug");
+                }
+
+                stockItem.setItemType(stockItemDTO.getItemType());
+            }
+
             stockItem.setChangedBy(Context.getAuthenticatedUser());
             stockItem.setDateChanged(new Date());
         }
@@ -461,6 +534,22 @@ public class StockManagementServiceImpl extends BaseOpenmrsService implements St
         stockItem.setAcronym(stockItemDTO.getAcronym());
         stockItem.setHasExpiration(stockItemDTO.getHasExpiration());
         stockItem.setExpiryNotice(stockItemDTO.getExpiryNotice());
+
+        if (!StringUtils.isBlank(stockItemDTO.getLevelOfUse())) {
+            stockItem.setLevelOfUse(stockItemDTO.getLevelOfUse());
+        }
+        if (!StringUtils.isBlank(stockItemDTO.getGenericConceptCode())) {
+            stockItem.setGenericConceptCode(stockItemDTO.getGenericConceptCode());
+        }
+        if (!StringUtils.isBlank(stockItemDTO.getEtcdProductId())) {
+            stockItem.setEtcdProductId(stockItemDTO.getEtcdProductId());
+        }
+        if (!StringUtils.isBlank(stockItemDTO.getPpbRegistrationCode())) {
+            stockItem.setPpbRegistrationCode(stockItemDTO.getPpbRegistrationCode());
+        }
+        if (!StringUtils.isBlank(stockItemDTO.getPackageCode())) {
+            stockItem.setPackageCode(stockItemDTO.getPackageCode());
+        }
 
         if (!StringUtils.isBlank(stockItemDTO.getPreferredVendorUuid())) {
             StockSource stockSource = getStockSourceByUuid(stockItemDTO.getPreferredVendorUuid());
@@ -498,8 +587,8 @@ public class StockManagementServiceImpl extends BaseOpenmrsService implements St
 
             if (!StringUtils.isBlank(stockItemDTO.getPurchasePriceUoMUuid())
                     && stockItemDTO.getPurchasePrice() != null) {
-                StockItemPackagingUOM stockItemPackagingUOM = getStockItemPackagingUOMByUuid(stockItemDTO
-                        .getPurchasePriceUoMUuid());
+                StockItemPackagingUOM stockItemPackagingUOM = getStockItemPackagingUOMByUuid(
+                        stockItemDTO.getPurchasePriceUoMUuid());
                 if (stockItemPackagingUOM == null) {
                     invalidRequest("stockmanagement.stockitem.purchasepriceuomnoexist");
                 } else if (!stockItemPackagingUOM.getStockItem().getId().equals(stockItem.getId())) {
@@ -512,9 +601,10 @@ public class StockManagementServiceImpl extends BaseOpenmrsService implements St
                 stockItem.setPurchasePriceUoM(null);
             }
 
-            if (!StringUtils.isBlank(stockItemDTO.getReorderLevelUoMUuid()) && stockItemDTO.getReorderLevel() != null) {
-                StockItemPackagingUOM stockItemPackagingUOM = getStockItemPackagingUOMByUuid(stockItemDTO
-                        .getReorderLevelUoMUuid());
+            if (!StringUtils.isBlank(stockItemDTO.getReorderLevelUoMUuid())
+                    && stockItemDTO.getReorderLevel() != null) {
+                StockItemPackagingUOM stockItemPackagingUOM = getStockItemPackagingUOMByUuid(
+                        stockItemDTO.getReorderLevelUoMUuid());
                 if (stockItemPackagingUOM == null) {
                     invalidRequest("stockmanagement.stockitem.reorderleveluomnoexist");
                 } else if (!stockItemPackagingUOM.getStockItem().getId().equals(stockItem.getId())) {
@@ -528,8 +618,8 @@ public class StockManagementServiceImpl extends BaseOpenmrsService implements St
             }
 
             if (!StringUtils.isBlank(stockItemDTO.getDispensingUnitPackagingUoMUuid())) {
-                StockItemPackagingUOM stockItemPackagingUOM = getStockItemPackagingUOMByUuid(stockItemDTO
-                        .getDispensingUnitPackagingUoMUuid());
+                StockItemPackagingUOM stockItemPackagingUOM = getStockItemPackagingUOMByUuid(
+                        stockItemDTO.getDispensingUnitPackagingUoMUuid());
                 if (stockItemPackagingUOM == null) {
                     invalidRequest("stockmanagement.stockitem.dispensingunituomnoexist");
                 } else if (!stockItemPackagingUOM.getStockItem().getId().equals(stockItem.getId())) {
@@ -541,10 +631,11 @@ public class StockManagementServiceImpl extends BaseOpenmrsService implements St
             }
 
             if (!StringUtils.isBlank(stockItemDTO.getDefaultStockOperationsUoMUuid())) {
-                StockItemPackagingUOM stockItemPackagingUOM = getStockItemPackagingUOMByUuid(stockItemDTO
-                        .getDefaultStockOperationsUoMUuid());
+                StockItemPackagingUOM stockItemPackagingUOM = getStockItemPackagingUOMByUuid(
+                        stockItemDTO.getDefaultStockOperationsUoMUuid());
                 if (stockItemPackagingUOM == null) {
-                    throw new StockManagementException("stockmanagement.stockitem.defaultstockoperationsuomnoexist");
+                    throw new StockManagementException(
+                            "stockmanagement.stockitem.defaultstockoperationsuomnoexist");
                 } else if (!stockItemPackagingUOM.getStockItem().getId().equals(stockItem.getId())) {
                     invalidRequest("stockmanagement.stockitem.defaultstockoperationsuomnotrelatedtostockitem");
                 }
@@ -557,7 +648,7 @@ public class StockManagementServiceImpl extends BaseOpenmrsService implements St
         dao.saveStockItem(stockItem);
 
         return stockItem;
-    }
+    } 
 
     public StockItemPackagingUOM getStockItemPackagingUOMByUuid(String uuid) {
         return dao.getStockItemPackagingUOMByUuid(uuid);
