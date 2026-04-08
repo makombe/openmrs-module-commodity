@@ -7,8 +7,6 @@ import org.openmrs.LocationTag;
 import org.openmrs.api.LocationService;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.stockmanagement.StockLocationTags;
-import org.openmrs.module.stockmanagement.api.StockManagementService;
-import org.openmrs.module.stockmanagement.api.model.Party;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -75,7 +73,22 @@ public class LocationTagsSynchronize implements StartupTask {
             subStore = locationService.saveLocationTag(subStore);
         }
         return subStore;
-    }   
+    }
+    
+    private LocationTag ensureMainLab(LocationService locationService) {
+        LocationTag mainLab = locationService.getLocationTagByName(StockLocationTags.MAIN_LAB_LOCATION_TAG);
+        if (mainLab == null) {
+            log.debug("Created main lab tag");
+            mainLab = new LocationTag();
+            mainLab.setUuid("5ba3e184-97a8-4b03-b7d5-021df5831571");
+            mainLab.setName(StockLocationTags.MAIN_LAB_LOCATION_TAG);
+            mainLab.setDescription("Main laboratory location.");
+            mainLab.setDateCreated(new Date());
+            mainLab.setCreator(Context.getAuthenticatedUser());
+            mainLab = locationService.saveLocationTag(mainLab);
+        }
+        return mainLab;
+    }
 	
 	private Location getSuitableParentLocation(List<Location> locations){
         Map<Optional<Location>, List<Location>> parents = locations.stream().collect(Collectors.groupingBy(p -> Optional.ofNullable(p.getParentLocation())));
@@ -93,11 +106,13 @@ public class LocationTagsSynchronize implements StartupTask {
             LocationTag mainStoreTag = ensureMainStore(locationService);
             LocationTag mainPharmacyTag = ensureMainPharmacy(locationService);
             LocationTag subStoreTag = ensureSubStore(locationService);
+            LocationTag mainLabTag = ensureMainLab(locationService);
             ensureDispensary(locationService);
 
             Location pharmacy = null;
             Location mainStore = null;
             Location subStore = null;
+            Location mainLab = null;
 
             List<Location> locationsWithTag = locationService.getLocationsHavingAllTags(Arrays.asList(mainStoreTag));
             if(!locationsWithTag.isEmpty()){
@@ -126,6 +141,16 @@ public class LocationTagsSynchronize implements StartupTask {
                     subStore = tempLocation.get();
                 }else{
                     subStore = locationsWithTag.get(0);
+                }
+            }
+
+            locationsWithTag = locationService.getLocationsHavingAllTags(Arrays.asList(mainLabTag));
+            if(!locationsWithTag.isEmpty()){
+                Optional<Location> tempLocation = locationsWithTag.stream().filter(p->p.getRetired() == null || !p.getRetired()).findFirst();
+                if(tempLocation.isPresent()){
+                    mainLab = tempLocation.get();
+                }else{
+                    mainLab = locationsWithTag.get(0);
                 }
             }
 
