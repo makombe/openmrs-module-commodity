@@ -9,4 +9,6 @@ public class StockLocationTags {
 	public static final String DISPENSARY_LOCATION_TAG = "Dispensary";
 
 	public static final String SUB_STORAGE_LOCATION_TAG = "Sub Store";
+
+	public static final String MAIN_LAB_LOCATION_TAG = "Main Lab";
 }

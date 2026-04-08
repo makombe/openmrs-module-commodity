@@ -3,7 +3,6 @@ package org.openmrs.module.stockmanagement.web.resource;
 import io.swagger.models.Model;
 import io.swagger.models.ModelImpl;
 import io.swagger.models.properties.*;
-import liquibase.pro.packaged.S;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
