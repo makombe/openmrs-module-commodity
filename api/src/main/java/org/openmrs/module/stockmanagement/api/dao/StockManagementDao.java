@@ -9,8 +9,7 @@
  */
 package org.openmrs.module.stockmanagement.api.dao;
 
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.collections.Transformer;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.hibernate.*;
@@ -25,7 +24,6 @@ import org.openmrs.*;
 import org.openmrs.api.ConceptNameType;
 import org.openmrs.api.context.Context;
 import org.openmrs.api.db.hibernate.DbSession;
-import org.openmrs.api.db.hibernate.search.LuceneQuery;
 import org.openmrs.module.stockmanagement.api.dto.*;
 import org.openmrs.module.stockmanagement.api.dto.reporting.*;
 import org.openmrs.module.stockmanagement.api.model.*;
@@ -384,96 +382,33 @@ public class StockManagementDao extends DaoBase {
         query.executeUpdate();
     }
 
-    private StringBuilder newStockCommonNameQuery(List<String> tokenizedName, String escapedName,
-            boolean searchKeywords) {
-        StringBuilder query = new StringBuilder();
-        query.append("(");
-        if (searchKeywords) {
-            query.append(" commonName:(\"" + escapedName + "\")^0.7");
-            if (!tokenizedName.isEmpty()) {
-                query.append(" OR (");
-                Iterator var5 = tokenizedName.iterator();
-
-                while (var5.hasNext()) {
-                    String token = (String) var5.next();
-                    query.append(" (commonName:(");
-                    query.append(token);
-                    query.append(")^0.6 OR commonName:(");
-                    query.append(token);
-                    query.append("*)^0.3 OR commonName:(");
-                    query.append(token);
-                    query.append("~0.8)^0.1)");
-                }
-
-                query.append(")^0.3");
-            }
-        } else {
-            query.append(" commonName:\"" + escapedName + "\"");
-        }
-
-        query.append(")");
-        return query;
-    }
-
-    /**
-     * Builds a Lucene full-text query for stock item common names / acronyms.
-     * <p>
-     * The {@code isDrugSearch} parameter is kept for backward compatibility.
-     * It still filters using the indexed {@code isDrug} field (which stays in
-     * sync with {@code itemType} via the entity setter) so existing Lucene index
-     * entries continue to work without re-indexing.
-     * <p>
-     * For {@link ItemType#LAB_COMMODITY} searches, callers should pass
-     * {@code isDrugSearch = null} so that all concept-based items are returned;
-     * the {@code itemType} column filter in {@link #findStockItems} then narrows
-     * the result to lab commodities specifically.
-     */
-    protected LuceneQuery<StockItem> newStockItemQuery(String itemName, Boolean isDrugSearch, boolean includeAll) {
-        if (StringUtils.isBlank(itemName)) {
-            return null;
-        }
-        StringBuilder query = new StringBuilder();
-        String drugsQuery = LuceneQuery.escapeQuery(itemName);
-        List tokenizedName = Arrays.asList(drugsQuery.trim().split("\\+"));
-        query.append("((");
-        query.append(this.newStockCommonNameQuery(tokenizedName, drugsQuery, true));
-        query.append(")^0.3 OR acronym:(\"").append(drugsQuery).append("\")^0.6)");
-
-        // isDrug is still @Field-indexed and kept in sync with itemType by the
-        // entity setters, so this legacy Lucene filter continues to work correctly
-        // for PHARMACEUTICAL (true) and NON_PHARMACEUTICAL (false) searches.
-        // LAB_COMMODITY callers pass null here and rely on the HQL itemType filter.
-        if (isDrugSearch != null) {
-            query.append(" AND isDrug:");
-            query.append(isDrugSearch ? "true" : "false");
-        }
-
-        Class stockItemClass = StockItem.class;
-        Session session = getCurrentHibernateSession();
-        LuceneQuery<StockItem> itemsQuery = LuceneQuery.newQuery(stockItemClass, session, query.toString());
-        if (!includeAll) {
-            itemsQuery.include("voided", Boolean.valueOf(false));
-        }
-        return itemsQuery;
-    }
-
     public List<Integer> searchStockItemCommonName(String text, Boolean isDrugSearch, boolean includeAll,
             int maxItems) {
-        LuceneQuery commonNameAcronyQuery = this.newStockItemQuery(text, isDrugSearch, includeAll);
-        if (commonNameAcronyQuery == null)
-            return new ArrayList<>();
-        List stockItemIds = commonNameAcronyQuery.listProjection("id");
-        if (!stockItemIds.isEmpty()) {
-            CollectionUtils.transform(stockItemIds, new Transformer() {
-                public Object transform(Object input) {
-                    return ((Object[]) input)[0];
-                }
-            });
-            int maxSize = stockItemIds.size() < maxItems ? stockItemIds.size() : maxItems;
-            stockItemIds = stockItemIds.subList(0, maxSize);
-            return stockItemIds;
-        }
-        return new ArrayList<>();
+        List<String> tokenizedName = Arrays.asList(text.trim().split("\\+"));
+		return searchSessionFactory.getSearchSession().search(StockItem.class)
+				.select(f -> f.id(Integer.class)).where(f -> {
+					return f.bool().with(b -> {
+						b.minimumShouldMatchNumber(1);
+						b.should(f.bool().with(bb -> {
+							bb.minimumShouldMatchNumber(1);
+							bb.should(f.phrase().field("commonName").matching(text).boost(1.7f));
+							bb.should(f.match().field("commonName").matching(text).boost(1.6f));
+							bb.should(f.bool().with(bbb -> {
+								for (String token : tokenizedName) {
+									bbb.must(f.wildcard().field("commonName").matching(token + "*"));
+								}
+							}).boost(1.3f));
+							bb.should(f.match().field("commonName").matching(text).fuzzy(1, 2).boost(1.1f));
+						}));
+						b.should(f.phrase().field("acronym").matching(text).boost(1.6f));
+						if (isDrugSearch != null) {
+							b.filter(f.match().field("isDrug").matching(isDrugSearch));
+						}
+						if (!includeAll) {
+							b.filter(f.match().field("voided").matching(false));
+						}
+					});
+				}).fetchHits(maxItems);
     }
 
 

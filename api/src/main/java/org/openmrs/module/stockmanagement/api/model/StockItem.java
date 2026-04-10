@@ -1,8 +1,9 @@
 package org.openmrs.module.stockmanagement.api.model;
 
-import org.hibernate.search.annotations.DocumentId;
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.Indexed;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.DocumentId;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.GenericField;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
 import org.openmrs.Concept;
 import org.openmrs.Drug;
 
@@ -137,7 +138,7 @@ public class StockItem extends org.openmrs.BaseChangeableOpenmrsData implements 
 	 * <strong>Do not set this field directly</strong> – use {@link #setItemType(ItemType)} or
 	 * {@link #setIsDrug(Boolean)} instead; both methods keep the two fields in sync.
 	 */
-	@Field
+	@GenericField
 	@Column(name = "is_drug", nullable = false)
 	private Boolean isDrug;
 
@@ -152,16 +153,16 @@ public class StockItem extends org.openmrs.BaseChangeableOpenmrsData implements 
 	 *   <li>2 – Lab Commodity</li>
 	 * </ul>
 	 */
-	@Field
+	@GenericField
 	@Column(name = "item_type", nullable = false)
 	@Convert(converter = ItemTypeConverter.class)
 	private ItemType itemType;
 
-	@Field
+	@FullTextField
 	@Column(name = "common_name", length = 255, nullable = true)
 	private String commonName;
 
-	@Field
+	@FullTextField
 	@Column(name = "acronym", length = 255, nullable = true)
 	private String acronym;
 
