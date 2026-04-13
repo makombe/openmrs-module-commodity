@@ -40,7 +40,8 @@ import java.util.stream.Collectors;
         "1.9.*", "1.10.*", "1.11.*", "1.12.*", "2.*" })
 public class StockOperationResource extends ResourceBase<StockOperationDTO> {
 	
-	private Map<String, SimpleObject> permissionCache;
+	//private Map<String, SimpleObject> permissionCache;
+    private static final ThreadLocal<Map<String, SimpleObject>> permissionCacheHolder = new ThreadLocal<>();
 	
 	public StockOperationResource() {
 	}
@@ -71,7 +72,9 @@ public class StockOperationResource extends ResourceBase<StockOperationDTO> {
         StockOperationSearchFilter filter = new StockOperationSearchFilter();
         filter.setIncludeVoided(context.getIncludeAll());
         filter.setStartIndex(context.getStartIndex());
-        filter.setLimit(context.getLimit());
+        int requestedLimit = context.getLimit();
+        int maxPageSize = 50;
+        filter.setLimit(Math.min(requestedLimit > 0 ? requestedLimit : maxPageSize, maxPageSize));
         String param = context.getParameter("q");
         if (StringUtils.isNotBlank(param))
             filter.setSearchText(param);
@@ -168,10 +171,14 @@ public class StockOperationResource extends ResourceBase<StockOperationDTO> {
             StockOperationItemSearchFilter itemSearchFilter = new StockOperationItemSearchFilter();
             itemSearchFilter.setIncludeStockUnitName(true);
             itemSearchFilter.setIncludePackagingUnitName(true);
-            itemSearchFilter.setStockOperationUuids(result.getData().stream().map(p -> p.getUuid()).collect(Collectors.toList()));
+            itemSearchFilter.setStockOperationUuids(
+                    result.getData().stream().map(StockOperationDTO::getUuid).collect(Collectors.toList()));
             Result<StockOperationItemDTO> items = getStockManagementService().findStockOperationItems(itemSearchFilter);
             for (StockOperationDTO stockOperation : result.getData()) {
-                stockOperation.setStockOperationItems(items.getData().stream().filter(p -> p.getStockOperationUuid().equals(stockOperation.getUuid())).collect(Collectors.toList()));
+                stockOperation.setStockOperationItems(
+                        items.getData().stream()
+                                .filter(p -> p.getStockOperationUuid().equals(stockOperation.getUuid()))
+                                .collect(Collectors.toList()));
             }
         }
 
@@ -385,8 +392,15 @@ public class StockOperationResource extends ResourceBase<StockOperationDTO> {
 	
 	@PropertyGetter("permission")
     public SimpleObject getPermission(StockOperationDTO stockOperationDTO) {
-        if(permissionCache != null && permissionCache.containsKey(stockOperationDTO.getUuid()))
-            return permissionCache.get(stockOperationDTO.getUuid());
+        Map<String, SimpleObject> cache = permissionCacheHolder.get();
+        if (cache == null) {
+            cache = new HashMap<>();
+            permissionCacheHolder.set(cache);
+        }
+
+        if (cache.containsKey(stockOperationDTO.getUuid())) {
+            return cache.get(stockOperationDTO.getUuid());
+        }
 
         SimpleObject simpleObject = new SimpleObject();
         simpleObject.add("canView", true);
@@ -467,25 +481,24 @@ public class StockOperationResource extends ResourceBase<StockOperationDTO> {
         simpleObject.add("isRequisitionAndCanIssueStock", isRequisitionAndCanIssueStock);
         simpleObject.add("canUpdateBatchInformation", canUpdateBatchInformation);
 
-        if(permissionCache == null){
-            permissionCache=new HashMap<>();
-            permissionCache.put(stockOperationDTO.getUuid(), simpleObject);
-        }
+        cache.put(stockOperationDTO.getUuid(), simpleObject);
         return simpleObject;
     }
 	
 	@PropertyGetter("stockOperationItems")
     public Collection<StockOperationItemDTO> getStockOperationItems(StockOperationDTO stockOperationDTO) {
         if (stockOperationDTO.getStockOperationItems() != null)
-            return stockOperationDTO.getStockOperationItems();
+            return stockOperationDTO.getStockOperationItems(); // already loaded in doSearch
+
         StockOperationItemSearchFilter itemSearchFilter = new StockOperationItemSearchFilter();
         itemSearchFilter.setIncludeStockUnitName(true);
         itemSearchFilter.setIncludePackagingUnitName(true);
         itemSearchFilter.setStockOperationUuids(Arrays.asList(stockOperationDTO.getUuid()));
-        Result<StockOperationItemDTO> itemsResult = getStockManagementService().findStockOperationItems(itemSearchFilter);
+        Result<StockOperationItemDTO> itemsResult = getStockManagementService()
+                .findStockOperationItems(itemSearchFilter);
         List<StockOperationItemDTO> items = itemsResult.getData();
 
-        if (!items.isEmpty()) {
+          if (!items.isEmpty()) {
             Set<Integer> stockItemIds = items.stream()
                     .map(StockOperationItemDTO::getStockItemId)
                     .filter(Objects::nonNull)
@@ -494,13 +507,10 @@ public class StockOperationResource extends ResourceBase<StockOperationDTO> {
             Date operationOrToday = stockOperationDTO.getOperationDate() != null
                     ? stockOperationDTO.getOperationDate()
                     : new Date();
-
-            // Optional: define a period (e.g., last 30 days before operation date)
             Date periodStart = DateUtils.addDays(operationOrToday, -30);
-            Date periodEnd = operationOrToday;
 
             Map<Integer, StockItemSummaryDTO> summaries = getStockManagementService()
-                    .getAggregatedStockItemSummaries(stockItemIds, operationOrToday, periodStart, periodEnd);
+                    .getAggregatedStockItemSummaries(stockItemIds, operationOrToday, periodStart, operationOrToday);
 
             for (StockOperationItemDTO item : items) {
                 StockItemSummaryDTO sum = summaries.get(item.getStockItemId());
@@ -508,9 +518,8 @@ public class StockOperationResource extends ResourceBase<StockOperationDTO> {
                     item.setQuantityDispensed(sum.getDispensed());
                     item.setQuantityReceived(sum.getReceived());
                     item.setBeginningBalance(sum.getBeginningBalance());
-                    item.setStockInHand(sum.getCurrentBalance()); // ← this is the key one: stock as of that day
-                    // stockOutDays would require more logic (daily balance tracking)
-                    item.setStockOutDays(0); // placeholder - implement if needed
+                    item.setStockInHand(sum.getCurrentBalance());
+                    item.setStockOutDays(0);
                 } else {
                     item.setQuantityDispensed(BigDecimal.ZERO);
                     item.setQuantityReceived(BigDecimal.ZERO);
