@@ -1317,7 +1317,22 @@ public class StockManagementServiceImpl extends BaseOpenmrsService implements St
             stockOperation.setReason(null);
         }
 
-        stockOperation.setAtLocation(Context.getLocationService().getLocationByUuid(dto.getAtLocationUuid()));
+
+        if (!StringUtils.isBlank(dto.getAtLocationUuid())) {
+            stockOperation.setAtLocation(
+                    Context.getLocationService().getLocationByUuid(dto.getAtLocationUuid()));
+        } else if (!StringUtils.isBlank(dto.getSourceUuid())) {
+            // Derive atLocation from source party's location (backward-compatible fallback)
+            Party sourceParty = dao.getPartyByUuid(dto.getSourceUuid());
+            if (sourceParty != null && sourceParty.getLocation() != null) {
+                stockOperation.setAtLocation(sourceParty.getLocation());
+            }
+        }
+
+        if (stockOperation.getAtLocation() == null) {
+            throw new StockManagementException(
+                    messageSourceService.getMessage("stockmanagement.stockoperation.atlocationrequired"));
+        }
 
         if (!StringUtils.isBlank(dto.getSourceUuid())) {
             stockOperation.setSource(dao.getPartyByUuid(dto.getSourceUuid()));
