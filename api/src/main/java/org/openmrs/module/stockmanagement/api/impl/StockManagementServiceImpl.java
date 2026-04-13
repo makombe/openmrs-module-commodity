@@ -41,6 +41,7 @@ import org.openmrs.notification.Alert;
 import org.openmrs.notification.Template;
 import org.openmrs.util.OpenmrsConstants;
 
+
 import javax.mail.Session;
 import java.math.BigDecimal;
 import java.nio.file.Path;
@@ -60,6 +61,7 @@ public class StockManagementServiceImpl extends BaseOpenmrsService implements St
     private static final UUID STOCK_OPERATION_PROCESSING_LOCK = UUID.randomUUID();
     private static final UUID DISPENSING_PROCESSING_LOCK = UUID.randomUUID();
     private static final Map<String, UUID> LOCATION_DISPENSING_OPERATION_LOCKS = new HashMap<>();
+    private static final String RECEIPT_OPERATION_TYPE_UUID = "44444444-4444-4444-4444-444444444444";
 
     public StockManagementServiceImpl() {
 
@@ -1319,10 +1321,19 @@ public class StockManagementServiceImpl extends BaseOpenmrsService implements St
 
 
         if (!StringUtils.isBlank(dto.getAtLocationUuid())) {
+            // Explicit atLocationUuid always takes priority
             stockOperation.setAtLocation(
                     Context.getLocationService().getLocationByUuid(dto.getAtLocationUuid()));
+        } else if (RECEIPT_OPERATION_TYPE_UUID.equals(dto.getOperationTypeUuid())) {
+            // For receipt operations, derive atLocation from destination party
+            if (!StringUtils.isBlank(dto.getDestinationUuid())) {
+                Party destinationParty = dao.getPartyByUuid(dto.getDestinationUuid());
+                if (destinationParty != null && destinationParty.getLocation() != null) {
+                    stockOperation.setAtLocation(destinationParty.getLocation());
+                }
+            }
         } else if (!StringUtils.isBlank(dto.getSourceUuid())) {
-            // Derive atLocation from source party's location (backward-compatible fallback)
+            // For all other operations, derive atLocation from source party
             Party sourceParty = dao.getPartyByUuid(dto.getSourceUuid());
             if (sourceParty != null && sourceParty.getLocation() != null) {
                 stockOperation.setAtLocation(sourceParty.getLocation());
