@@ -204,6 +204,20 @@ public class StockItemDTO {
 		return resolved == ItemType.PHARMACEUTICAL;
 	}
 
+	public String getDisplayName() {
+		if (drugName != null && !drugName.isEmpty()) {
+			int sep = drugName.indexOf(" - ");
+			return sep > -1 ? drugName.substring(0, sep).trim() : drugName;
+		}
+		if (commonName != null && !commonName.isEmpty()) {
+			return commonName;
+		}
+		if (conceptName != null && !conceptName.isEmpty()) {
+			return conceptName;
+		}
+		return null;
+	}
+
 	/**
 	 * Legacy boolean setter kept for backward compatibility.
 	 * Derives and sets {@link #itemType} from the boolean value so the two

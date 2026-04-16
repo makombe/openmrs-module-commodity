@@ -88,6 +88,8 @@ public class StockOperationItemDTO {
     private BigDecimal beginningBalance;
     private BigDecimal stockInHand;
     private Integer stockOutDays;
+	private String displayName;
+	private String drugName;
 	
 	public Integer getStockItemId() {
 		return stockItemId;
@@ -438,5 +440,20 @@ public class StockOperationItemDTO {
 	}
 	public void setLossesAndAdjustments(List<StockItemLossesAndAdjustmentsDTO> lossesAndAdjustments) {
 		this.lossesAndAdjustments = lossesAndAdjustments;
-	}	
+	}
+	
+	public String getDisplayName() {
+		return displayName;
+	}
+
+	public void setDisplayName(String displayName) {
+		this.displayName = displayName;
+	}
+	public String getDrugName() {
+		return drugName;
+	}
+
+	public void setDrugName(String drugName) {
+		this.drugName = drugName;
+	}
 }

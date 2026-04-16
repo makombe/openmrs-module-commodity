@@ -278,6 +278,27 @@ public class StockItemResource extends ResourceBase<StockItemDTO> {
 		}
 
 		Result<StockItemDTO> result = getStockManagementService().findStockItems(filter);
+		boolean groupByFormulary = "true".equalsIgnoreCase(context.getParameter("groupByFormulary"));
+		if (groupByFormulary && result.getData() != null && !result.getData().isEmpty()) {
+			List<StockItemDTO> deduplicated = result.getData().stream()
+					.collect(Collectors.toMap(
+							item -> {
+								String drugName = item.getDrugName();
+								if (drugName != null && drugName.contains(" - ")) {
+									return drugName.substring(0, drugName.indexOf(" - ")).trim();
+								}
+								return item.getConceptUuid() != null ? item.getConceptUuid() : item.getUuid();
+							},
+							item -> item,
+							(existing, duplicate) -> existing,
+							LinkedHashMap::new))
+					.values()
+					.stream()
+					.collect(Collectors.toList());
+
+			result.getData().clear();
+			result.getData().addAll(deduplicated);
+		}
 		return toAlreadyPaged(result, context);
 	}
 	
@@ -349,6 +370,11 @@ public class StockItemResource extends ResourceBase<StockItemDTO> {
 			resolved = ItemType.valueOf(raw.toUpperCase());
 		}
 		instance.setItemType(resolved);
+	}
+	
+	@PropertyGetter("displayName")
+	public String getDisplayName(StockItemDTO dto) {
+		return dto.getDisplayName();
 	}
 	
 	@Override
@@ -448,6 +474,7 @@ public class StockItemResource extends ResourceBase<StockItemDTO> {
 			//   itemType === "NON_PHARMACEUTICAL" ↔  isDrug === false
 			//   itemType === "LAB_COMMODITY"   ↔  new
 			description.addProperty("itemType");
+			description.addProperty("displayName");
 		}
 		
 		if (rep instanceof DefaultRepresentation) {

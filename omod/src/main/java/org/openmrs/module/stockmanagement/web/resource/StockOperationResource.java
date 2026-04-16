@@ -36,38 +36,39 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@Resource(name = RestConstants.VERSION_1 + "/" + ModuleConstants.MODULE_ID + "/stockoperation", supportedClass = StockOperationDTO.class, supportedOpenmrsVersions = {
-        "1.9.*", "1.10.*", "1.11.*", "1.12.*", "2.*" })
+@Resource(name = RestConstants.VERSION_1 + "/" + ModuleConstants.MODULE_ID
+        + "/stockoperation", supportedClass = StockOperationDTO.class, supportedOpenmrsVersions = {
+                "1.9.*", "1.10.*", "1.11.*", "1.12.*", "2.*" })
 public class StockOperationResource extends ResourceBase<StockOperationDTO> {
-	
-	//private Map<String, SimpleObject> permissionCache;
+
+    // private Map<String, SimpleObject> permissionCache;
     private static final ThreadLocal<Map<String, SimpleObject>> permissionCacheHolder = new ThreadLocal<>();
-	
-	public StockOperationResource() {
-	}
-	
-	@Override
-	public StockOperationDTO getByUniqueId(String uniqueId) {
-		StockOperationSearchFilter filter = new StockOperationSearchFilter();
-		filter.setStockOperationUuid(uniqueId);
-		Result<StockOperationDTO> result = getStockManagementService().findStockOperations(filter);
-		StockOperationDTO stockOperationDTO = result.getData().isEmpty() ? null : result.getData().get(0);
-		if (stockOperationDTO != null && StockOperationType.STOCK_ISSUE.equals(stockOperationDTO.getOperationType())) {
-			Result<StockOperationLinkDTO> parents = getStockManagementService().getParentStockOperationLinks(
-			    stockOperationDTO.getUuid());
-			if (parents.getData() != null && parents.getData().size() > 0) {
-				stockOperationDTO.setRequisitionStockOperationUuid(parents.getData().get(0).getParentUuid());
-			}
-		}
-		return stockOperationDTO;
-	}
-	
-	@Override
-	protected void delete(StockOperationDTO delegate, String reason, RequestContext context) throws ResponseException {
-		throw new ResourceDoesNotSupportOperationException();
-	}
-	
-	@Override
+
+    public StockOperationResource() {
+    }
+
+    @Override
+    public StockOperationDTO getByUniqueId(String uniqueId) {
+        StockOperationSearchFilter filter = new StockOperationSearchFilter();
+        filter.setStockOperationUuid(uniqueId);
+        Result<StockOperationDTO> result = getStockManagementService().findStockOperations(filter);
+        StockOperationDTO stockOperationDTO = result.getData().isEmpty() ? null : result.getData().get(0);
+        if (stockOperationDTO != null && StockOperationType.STOCK_ISSUE.equals(stockOperationDTO.getOperationType())) {
+            Result<StockOperationLinkDTO> parents = getStockManagementService().getParentStockOperationLinks(
+                    stockOperationDTO.getUuid());
+            if (parents.getData() != null && parents.getData().size() > 0) {
+                stockOperationDTO.setRequisitionStockOperationUuid(parents.getData().get(0).getParentUuid());
+            }
+        }
+        return stockOperationDTO;
+    }
+
+    @Override
+    protected void delete(StockOperationDTO delegate, String reason, RequestContext context) throws ResponseException {
+        throw new ResourceDoesNotSupportOperationException();
+    }
+
+    @Override
     protected PageableResult doSearch(RequestContext context) {
         StockOperationSearchFilter filter = new StockOperationSearchFilter();
         filter.setIncludeVoided(context.getIncludeAll());
@@ -175,159 +176,159 @@ public class StockOperationResource extends ResourceBase<StockOperationDTO> {
                     result.getData().stream().map(StockOperationDTO::getUuid).collect(Collectors.toList()));
             Result<StockOperationItemDTO> items = getStockManagementService().findStockOperationItems(itemSearchFilter);
             for (StockOperationDTO stockOperation : result.getData()) {
-                stockOperation.setStockOperationItems(
-                        items.getData().stream()
-                                .filter(p -> p.getStockOperationUuid().equals(stockOperation.getUuid()))
-                                .collect(Collectors.toList()));
+                List<StockOperationItemDTO> operationItems = items.getData().stream()
+                        .filter(p -> p.getStockOperationUuid().equals(stockOperation.getUuid()))
+                        .collect(Collectors.toList());
+                enrichDisplayNames(operationItems);
+                stockOperation.setStockOperationItems(operationItems);
             }
         }
 
         return toAlreadyPaged(result, context);
     }
-	
-	@Override
-	protected PageableResult doGetAll(RequestContext context) throws ResponseException {
-		return doSearch(context);
-	}
-	
-	@Override
-	public StockOperationDTO newDelegate() {
-		return new StockOperationDTO();
-	}
-	
-	@Override
-	public StockOperationDTO save(StockOperationDTO delegate) {
-		try {
-			StockOperation stockOperation = getStockManagementService().saveStockOperation(delegate);
-			return getByUniqueId(stockOperation.getUuid());
-		}
-		catch (StockManagementException exception) {
-			throw new RestClientException(exception.getMessage());
-		}
-	}
-	
-	@Override
-	public DelegatingResourceDescription getCreatableProperties() throws ResourceDoesNotSupportOperationException {
-		DelegatingResourceDescription description = new DelegatingResourceDescription();
-		description.addProperty("destinationUuid");
-		description.addProperty("externalReference");
-		description.addProperty("operationDate");
-		description.addProperty("reasonUuid");
-		description.addProperty("remarks");
-		description.addProperty("sourceUuid");
-		description.addProperty("operationTypeUuid");
-		description.addProperty("responsiblePersonUuid");
-		description.addProperty("approvalRequired");
-		description.addProperty("responsiblePersonOther");
-		description.addProperty("requisitionStockOperationUuid");
-		description.addProperty("stockOperationItems");
+
+    @Override
+    protected PageableResult doGetAll(RequestContext context) throws ResponseException {
+        return doSearch(context);
+    }
+
+    @Override
+    public StockOperationDTO newDelegate() {
+        return new StockOperationDTO();
+    }
+
+    @Override
+    public StockOperationDTO save(StockOperationDTO delegate) {
+        try {
+            StockOperation stockOperation = getStockManagementService().saveStockOperation(delegate);
+            return getByUniqueId(stockOperation.getUuid());
+        } catch (StockManagementException exception) {
+            throw new RestClientException(exception.getMessage());
+        }
+    }
+
+    @Override
+    public DelegatingResourceDescription getCreatableProperties() throws ResourceDoesNotSupportOperationException {
+        DelegatingResourceDescription description = new DelegatingResourceDescription();
+        description.addProperty("destinationUuid");
+        description.addProperty("externalReference");
+        description.addProperty("operationDate");
+        description.addProperty("reasonUuid");
+        description.addProperty("remarks");
+        description.addProperty("sourceUuid");
+        description.addProperty("operationTypeUuid");
+        description.addProperty("responsiblePersonUuid");
+        description.addProperty("approvalRequired");
+        description.addProperty("responsiblePersonOther");
+        description.addProperty("requisitionStockOperationUuid");
+        description.addProperty("stockOperationItems");
         description.addProperty("requestType");
-		return description;
-	}
-	
-	@Override
-	public DelegatingResourceDescription getUpdatableProperties() {
-		DelegatingResourceDescription description = new DelegatingResourceDescription();
-		description.addProperty("destinationUuid");
-		description.addProperty("externalReference");
-		description.addProperty("operationDate");
-		description.addProperty("reasonUuid");
-		description.addProperty("remarks");
-		description.addProperty("sourceUuid");
-		description.addProperty("approvalRequired");
-		description.addProperty("responsiblePersonUuid");
-		description.addProperty("responsiblePersonOther");
-		description.addProperty("stockOperationItems");
+        return description;
+    }
+
+    @Override
+    public DelegatingResourceDescription getUpdatableProperties() {
+        DelegatingResourceDescription description = new DelegatingResourceDescription();
+        description.addProperty("destinationUuid");
+        description.addProperty("externalReference");
+        description.addProperty("operationDate");
+        description.addProperty("reasonUuid");
+        description.addProperty("remarks");
+        description.addProperty("sourceUuid");
+        description.addProperty("approvalRequired");
+        description.addProperty("responsiblePersonUuid");
+        description.addProperty("responsiblePersonOther");
+        description.addProperty("stockOperationItems");
         description.addProperty("requestType");
-		return description;
-	}
-	
-	@Override
-	public void purge(StockOperationDTO delegate, RequestContext context) throws ResponseException {
-		delete(delegate, null, context);
-	}
-	
-	@Override
-	public DelegatingResourceDescription getRepresentationDescription(Representation rep) {
-		DelegatingResourceDescription description = new DelegatingResourceDescription();
-		if (rep instanceof DefaultRepresentation || rep instanceof FullRepresentation) {
-			description.addProperty("uuid");
-			description.addProperty("cancelReason");
-			description.addProperty("cancelledBy");
-			description.addProperty("cancelledByGivenName");
-			description.addProperty("cancelledByFamilyName");
-			description.addProperty("cancelledDate");
-			description.addProperty("completedBy");
-			description.addProperty("completedByGivenName");
-			description.addProperty("completedByFamilyName");
-			description.addProperty("completedDate");
-			description.addProperty("destinationUuid");
-			description.addProperty("destinationName");
-			description.addProperty("externalReference");
-			description.addProperty("atLocationUuid");
-			description.addProperty("atLocationName");
-			description.addProperty("operationDate");
-			description.addProperty("locked");
-			description.addProperty("operationNumber");
-			description.addProperty("operationOrder");
-			description.addProperty("approvalRequired");
-			description.addProperty("reasonUuid");
-			description.addProperty("reasonName");
-			description.addProperty("remarks");
-			description.addProperty("sourceUuid");
-			description.addProperty("sourceName");
-			description.addProperty("status");
-			description.addProperty("returnReason");
-			description.addProperty("rejectionReason");
-			description.addProperty("operationTypeUuid");
-			description.addProperty("operationType");
-			description.addProperty("operationTypeName");
-			description.addProperty("responsiblePersonUuid");
-			description.addProperty("responsiblePersonGivenName");
-			description.addProperty("responsiblePersonFamilyName");
-			description.addProperty("responsiblePersonOther");
-			description.addProperty("creator");
-			description.addProperty("dateCreated");
-			description.addProperty("creatorGivenName");
-			description.addProperty("creatorFamilyName");
-			description.addProperty("requisitionStockOperationUuid");
-			description.addProperty("submittedByGivenName");
-			description.addProperty("submittedByFamilyName");
-			description.addProperty("submittedDate");
-			description.addProperty("returnedByGivenName");
-			description.addProperty("returnedByFamilyName");
-			description.addProperty("returnedDate");
-			description.addProperty("requestType");
-			description.addProperty("rejectedByGivenName");
-			description.addProperty("rejectedByFamilyName");
-			description.addProperty("rejectedDate");
-			
-			description.addProperty("dispatchedByGivenName");
-			description.addProperty("dispatchedByFamilyName");
-			description.addProperty("dispatchedDate");
-			
-		}
-		
-		if (rep instanceof DefaultRepresentation) {
-			description.addLink("full", ".?v=" + RestConstants.REPRESENTATION_FULL);
-		}
-		
-		if (rep instanceof FullRepresentation) {
-			description.addProperty("permission");
-			description.addProperty("stockOperationItems");
-			description.addSelfLink();
-		}
-		
-		if (rep instanceof RefRepresentation) {
-			description.addProperty("uuid");
-			description.addProperty("operationNumber");
-			
-		}
-		
-		return description;
-	}
-	
-	@PropertySetter("stockOperationItems")
+        return description;
+    }
+
+    @Override
+    public void purge(StockOperationDTO delegate, RequestContext context) throws ResponseException {
+        delete(delegate, null, context);
+    }
+
+    @Override
+    public DelegatingResourceDescription getRepresentationDescription(Representation rep) {
+        DelegatingResourceDescription description = new DelegatingResourceDescription();
+        if (rep instanceof DefaultRepresentation || rep instanceof FullRepresentation) {
+            description.addProperty("uuid");
+            description.addProperty("cancelReason");
+            description.addProperty("cancelledBy");
+            description.addProperty("cancelledByGivenName");
+            description.addProperty("cancelledByFamilyName");
+            description.addProperty("cancelledDate");
+            description.addProperty("completedBy");
+            description.addProperty("completedByGivenName");
+            description.addProperty("completedByFamilyName");
+            description.addProperty("completedDate");
+            description.addProperty("destinationUuid");
+            description.addProperty("destinationName");
+            description.addProperty("externalReference");
+            description.addProperty("atLocationUuid");
+            description.addProperty("atLocationName");
+            description.addProperty("operationDate");
+            description.addProperty("locked");
+            description.addProperty("operationNumber");
+            description.addProperty("operationOrder");
+            description.addProperty("approvalRequired");
+            description.addProperty("reasonUuid");
+            description.addProperty("reasonName");
+            description.addProperty("remarks");
+            description.addProperty("sourceUuid");
+            description.addProperty("sourceName");
+            description.addProperty("status");
+            description.addProperty("returnReason");
+            description.addProperty("rejectionReason");
+            description.addProperty("operationTypeUuid");
+            description.addProperty("operationType");
+            description.addProperty("operationTypeName");
+            description.addProperty("responsiblePersonUuid");
+            description.addProperty("responsiblePersonGivenName");
+            description.addProperty("responsiblePersonFamilyName");
+            description.addProperty("responsiblePersonOther");
+            description.addProperty("creator");
+            description.addProperty("dateCreated");
+            description.addProperty("creatorGivenName");
+            description.addProperty("creatorFamilyName");
+            description.addProperty("requisitionStockOperationUuid");
+            description.addProperty("submittedByGivenName");
+            description.addProperty("submittedByFamilyName");
+            description.addProperty("submittedDate");
+            description.addProperty("returnedByGivenName");
+            description.addProperty("returnedByFamilyName");
+            description.addProperty("returnedDate");
+            description.addProperty("requestType");
+            description.addProperty("rejectedByGivenName");
+            description.addProperty("rejectedByFamilyName");
+            description.addProperty("rejectedDate");
+
+            description.addProperty("dispatchedByGivenName");
+            description.addProperty("dispatchedByFamilyName");
+            description.addProperty("dispatchedDate");
+
+        }
+
+        if (rep instanceof DefaultRepresentation) {
+            description.addLink("full", ".?v=" + RestConstants.REPRESENTATION_FULL);
+        }
+
+        if (rep instanceof FullRepresentation) {
+            description.addProperty("permission");
+            description.addProperty("stockOperationItems");
+            description.addSelfLink();
+        }
+
+        if (rep instanceof RefRepresentation) {
+            description.addProperty("uuid");
+            description.addProperty("operationNumber");
+
+        }
+
+        return description;
+    }
+
+    @PropertySetter("stockOperationItems")
     public void setStockOperationItems(StockOperationDTO instance, ArrayList<Map<String, ?>> items) {
 
         if (items == null) {
@@ -348,7 +349,8 @@ public class StockOperationResource extends ResourceBase<StockOperationDTO> {
         } else {
             StockOperationItemSearchFilter itemSearchFilter = new StockOperationItemSearchFilter();
             itemSearchFilter.setStockOperationUuids(Arrays.asList(instance.getUuid()));
-            existingStockOperationItems = getStockManagementService().findStockOperationItems(itemSearchFilter).getData();
+            existingStockOperationItems = getStockManagementService().findStockOperationItems(itemSearchFilter)
+                    .getData();
         }
         List<StockOperationItemDTO> itemsToUpdate = new ArrayList<>();
 
@@ -356,19 +358,24 @@ public class StockOperationResource extends ResourceBase<StockOperationDTO> {
         for (Map<String, ?> item : items) {
             StockOperationItemDTO itemDTO = null;
             boolean isNew = true;
-            if (item.containsKey("uuid") && item.get("uuid") != null && !StringUtils.isBlank(item.get("uuid").toString())) {
+            if (item.containsKey("uuid") && item.get("uuid") != null
+                    && !StringUtils.isBlank(item.get("uuid").toString())) {
                 String uuid = item.get("uuid").toString();
                 if (existingStockOperationItems == null) {
                     StockOperationItemSearchFilter itemSearchFilter = new StockOperationItemSearchFilter();
                     itemSearchFilter.setUuid(uuid);
-                    existingStockOperationItems = getStockManagementService().findStockOperationItems(itemSearchFilter).getData();
+                    existingStockOperationItems = getStockManagementService().findStockOperationItems(itemSearchFilter)
+                            .getData();
                     if (!existingStockOperationItems.isEmpty()) {
                         itemSearchFilter.setUuid(null);
-                        itemSearchFilter.setStockOperationUuids(Arrays.asList(existingStockOperationItems.get(0).getStockOperationUuid()));
-                        existingStockOperationItems = getStockManagementService().findStockOperationItems(itemSearchFilter).getData();
+                        itemSearchFilter.setStockOperationUuids(
+                                Arrays.asList(existingStockOperationItems.get(0).getStockOperationUuid()));
+                        existingStockOperationItems = getStockManagementService()
+                                .findStockOperationItems(itemSearchFilter).getData();
                     }
                 }
-                Optional<StockOperationItemDTO> existingItem = existingStockOperationItems.stream().filter(p -> uuid.equals(p.getUuid())).findFirst();
+                Optional<StockOperationItemDTO> existingItem = existingStockOperationItems.stream()
+                        .filter(p -> uuid.equals(p.getUuid())).findFirst();
                 if (existingItem.isPresent()) {
                     isNew = false;
                     itemDTO = existingItem.get();
@@ -380,7 +387,8 @@ public class StockOperationResource extends ResourceBase<StockOperationDTO> {
             }
 
             DelegatingResourceDescription propertiesToApply = isNew ? creatableProperties : modifiableProperties;
-            for (Map.Entry<String, DelegatingResourceDescription.Property> prop : propertiesToApply.getProperties().entrySet()) {
+            for (Map.Entry<String, DelegatingResourceDescription.Property> prop : propertiesToApply.getProperties()
+                    .entrySet()) {
                 if (item.containsKey(prop.getKey()) && !RestConstants.PROPERTY_FOR_TYPE.equals(prop.getKey())) {
                     handler.setProperty(itemDTO, prop.getKey(), item.get(prop.getKey()));
                 }
@@ -389,8 +397,8 @@ public class StockOperationResource extends ResourceBase<StockOperationDTO> {
         }
         instance.setStockOperationItems(itemsToUpdate);
     }
-	
-	@PropertyGetter("permission")
+
+    @PropertyGetter("permission")
     public SimpleObject getPermission(StockOperationDTO stockOperationDTO) {
         Map<String, SimpleObject> cache = permissionCacheHolder.get();
         if (cache == null) {
@@ -410,7 +418,8 @@ public class StockOperationResource extends ResourceBase<StockOperationDTO> {
         boolean canReceiveItems = stockOperationDTO.canReceiveItems();
         boolean canDisplayReceivedItems = stockOperationDTO.canDisplayReceivedItems();
         boolean isRequisitionAndCanIssueStock = stockOperationDTO.isRequisitionAndCanIssueStock();
-        StockOperationType stockOperationType = getStockManagementService().getStockOperationTypeByUuid(stockOperationDTO.getOperationTypeUuid());
+        StockOperationType stockOperationType = getStockManagementService()
+                .getStockOperationTypeByUuid(stockOperationDTO.getOperationTypeUuid());
         boolean canUpdateBatchInformation = stockOperationDTO.canUpdateBatchInformation(stockOperationType);
         Boolean userHasEditPermissions = null;
 
@@ -419,56 +428,60 @@ public class StockOperationResource extends ResourceBase<StockOperationDTO> {
                     Context.getAuthenticatedUser(),
                     Context.getLocationService().getLocationByUuid(stockOperationDTO.getAtLocationUuid()),
                     getStockManagementService().getStockOperationTypeByUuid(stockOperationDTO.getOperationTypeUuid()),
-                    Arrays.asList(Privileges.TASK_STOCKMANAGEMENT_STOCKOPERATIONS_MUTATE, Privileges.TASK_STOCKMANAGEMENT_STOCKOPERATIONS_APPROVE)
-            );
+                    Arrays.asList(Privileges.TASK_STOCKMANAGEMENT_STOCKOPERATIONS_MUTATE,
+                            Privileges.TASK_STOCKMANAGEMENT_STOCKOPERATIONS_APPROVE));
 
-            if(canEdit) {
-                canEdit = canEdit && privilegeScopes.stream().anyMatch(p -> p.getPrivilege().equals(Privileges.TASK_STOCKMANAGEMENT_STOCKOPERATIONS_MUTATE));
-            }else{
-                userHasEditPermissions = Boolean.valueOf(privilegeScopes.stream().anyMatch(p -> p.getPrivilege().equals(Privileges.TASK_STOCKMANAGEMENT_STOCKOPERATIONS_MUTATE)));
+            if (canEdit) {
+                canEdit = canEdit && privilegeScopes.stream()
+                        .anyMatch(p -> p.getPrivilege().equals(Privileges.TASK_STOCKMANAGEMENT_STOCKOPERATIONS_MUTATE));
+            } else {
+                userHasEditPermissions = Boolean.valueOf(privilegeScopes.stream().anyMatch(
+                        p -> p.getPrivilege().equals(Privileges.TASK_STOCKMANAGEMENT_STOCKOPERATIONS_MUTATE)));
             }
-            canApprove = canApprove && privilegeScopes.stream().anyMatch(p -> p.getPrivilege().equals(Privileges.TASK_STOCKMANAGEMENT_STOCKOPERATIONS_APPROVE));
+            canApprove = canApprove && privilegeScopes.stream()
+                    .anyMatch(p -> p.getPrivilege().equals(Privileges.TASK_STOCKMANAGEMENT_STOCKOPERATIONS_APPROVE));
         }
 
         if (canReceiveItems || isRequisitionAndCanIssueStock) {
-            if(StringUtils.isBlank(stockOperationDTO.getDestinationUuid())){
+            if (StringUtils.isBlank(stockOperationDTO.getDestinationUuid())) {
                 canReceiveItems = false;
                 isRequisitionAndCanIssueStock = false;
-            }else {
+            } else {
                 Party party = getStockManagementService().getPartyByUuid(stockOperationDTO.getDestinationUuid());
-                if(party == null || party.getLocation() == null){
+                if (party == null || party.getLocation() == null) {
                     canReceiveItems = false;
                     isRequisitionAndCanIssueStock = false;
                 }
-                if(canReceiveItems){
+                if (canReceiveItems) {
                     HashSet<PrivilegeScope> privilegeScopes = getStockManagementService().getPrivilegeScopes(
                             Context.getAuthenticatedUser(),
                             party.getLocation(),
-                            getStockManagementService().getStockOperationTypeByUuid(stockOperationDTO.getOperationTypeUuid()),
-                            Arrays.asList(Privileges.TASK_STOCKMANAGEMENT_STOCKOPERATIONS_RECEIVEITEMS)
-                    );
-                    canReceiveItems = canReceiveItems && privilegeScopes.stream().anyMatch(p -> p.getPrivilege().equals(Privileges.TASK_STOCKMANAGEMENT_STOCKOPERATIONS_RECEIVEITEMS));
+                            getStockManagementService()
+                                    .getStockOperationTypeByUuid(stockOperationDTO.getOperationTypeUuid()),
+                            Arrays.asList(Privileges.TASK_STOCKMANAGEMENT_STOCKOPERATIONS_RECEIVEITEMS));
+                    canReceiveItems = canReceiveItems && privilegeScopes.stream().anyMatch(
+                            p -> p.getPrivilege().equals(Privileges.TASK_STOCKMANAGEMENT_STOCKOPERATIONS_RECEIVEITEMS));
                 }
-                if(isRequisitionAndCanIssueStock){
+                if (isRequisitionAndCanIssueStock) {
                     HashSet<PrivilegeScope> privilegeScopes = getStockManagementService().getPrivilegeScopes(
                             Context.getAuthenticatedUser(),
                             party.getLocation(),
                             getStockManagementService().getStockOperationTypeByType(StockOperationType.STOCK_ISSUE),
-                            Arrays.asList(Privileges.TASK_STOCKMANAGEMENT_STOCKOPERATIONS_MUTATE)
-                    );
-                    isRequisitionAndCanIssueStock = isRequisitionAndCanIssueStock && privilegeScopes.stream().anyMatch(p -> p.getPrivilege().equals(Privileges.TASK_STOCKMANAGEMENT_STOCKOPERATIONS_MUTATE));
+                            Arrays.asList(Privileges.TASK_STOCKMANAGEMENT_STOCKOPERATIONS_MUTATE));
+                    isRequisitionAndCanIssueStock = isRequisitionAndCanIssueStock && privilegeScopes.stream().anyMatch(
+                            p -> p.getPrivilege().equals(Privileges.TASK_STOCKMANAGEMENT_STOCKOPERATIONS_MUTATE));
                 }
             }
         }
 
-        if(canUpdateBatchInformation){
-            if(userHasEditPermissions == null){
+        if (canUpdateBatchInformation) {
+            if (userHasEditPermissions == null) {
                 HashSet<PrivilegeScope> privilegeScopes = getStockManagementService().getPrivilegeScopes(
                         Context.getAuthenticatedUser(),
                         Context.getLocationService().getLocationByUuid(stockOperationDTO.getAtLocationUuid()),
-                        getStockManagementService().getStockOperationTypeByUuid(stockOperationDTO.getOperationTypeUuid()),
-                        Arrays.asList(Privileges.TASK_STOCKMANAGEMENT_STOCKOPERATIONS_MUTATE)
-                );
+                        getStockManagementService()
+                                .getStockOperationTypeByUuid(stockOperationDTO.getOperationTypeUuid()),
+                        Arrays.asList(Privileges.TASK_STOCKMANAGEMENT_STOCKOPERATIONS_MUTATE));
                 userHasEditPermissions = Boolean.valueOf(!privilegeScopes.isEmpty());
             }
             canUpdateBatchInformation = userHasEditPermissions.booleanValue();
@@ -484,11 +497,13 @@ public class StockOperationResource extends ResourceBase<StockOperationDTO> {
         cache.put(stockOperationDTO.getUuid(), simpleObject);
         return simpleObject;
     }
-	
-	@PropertyGetter("stockOperationItems")
+
+    @PropertyGetter("stockOperationItems")
     public Collection<StockOperationItemDTO> getStockOperationItems(StockOperationDTO stockOperationDTO) {
-        if (stockOperationDTO.getStockOperationItems() != null)
-            return stockOperationDTO.getStockOperationItems(); // already loaded in doSearch
+        if (stockOperationDTO.getStockOperationItems() != null) {
+            enrichDisplayNames(stockOperationDTO.getStockOperationItems());
+            return stockOperationDTO.getStockOperationItems();
+        } // already loaded in doSearch
 
         StockOperationItemSearchFilter itemSearchFilter = new StockOperationItemSearchFilter();
         itemSearchFilter.setIncludeStockUnitName(true);
@@ -498,7 +513,7 @@ public class StockOperationResource extends ResourceBase<StockOperationDTO> {
                 .findStockOperationItems(itemSearchFilter);
         List<StockOperationItemDTO> items = itemsResult.getData();
 
-          if (!items.isEmpty()) {
+        if (!items.isEmpty()) {
             Set<Integer> stockItemIds = items.stream()
                     .map(StockOperationItemDTO::getStockItemId)
                     .filter(Objects::nonNull)
@@ -533,94 +548,133 @@ public class StockOperationResource extends ResourceBase<StockOperationDTO> {
         StockItemPackagingUOMSearchFilter filter = new StockItemPackagingUOMSearchFilter();
         filter.setIncludeVoided(false);
         filter.setStockItemUuids(items.stream().map(p -> p.getStockItemUuid()).distinct().collect(Collectors.toList()));
-        List<StockItemPackagingUOMDTO> packagingUnits = getStockManagementService().findStockItemPackagingUOMs(filter).getData();
-        List<StockItemLossesAndAdjustmentsDTO> lossesAndAdjustments = getStockManagementService().findStockItemLossesAndAdjustments(filter).getData();
-
+        List<StockItemPackagingUOMDTO> packagingUnits = getStockManagementService().findStockItemPackagingUOMs(filter)
+                .getData();
+        List<StockItemLossesAndAdjustmentsDTO> lossesAndAdjustments = getStockManagementService()
+                .findStockItemLossesAndAdjustments(filter).getData();
 
         boolean canUpdateBatchInformation = false;
         SimpleObject permissions = getPermission(stockOperationDTO);
         Map<Integer, Boolean> stockBatchHasTransactions = null;
-        if(permissions != null){
-            if(permissions.containsKey("canUpdateBatchInformation")) {
-                canUpdateBatchInformation = (boolean)permissions.get("canUpdateBatchInformation");
-                if(canUpdateBatchInformation){
-                    stockBatchHasTransactions = getStockManagementService().checkStockBatchHasTransactionsAfterOperation(stockOperationDTO.getId(), items.stream().filter(p->p.getStockBatchId() != null).map(p -> p.getStockBatchId()).distinct().collect(Collectors.toList()));
+        if (permissions != null) {
+            if (permissions.containsKey("canUpdateBatchInformation")) {
+                canUpdateBatchInformation = (boolean) permissions.get("canUpdateBatchInformation");
+                if (canUpdateBatchInformation) {
+                    stockBatchHasTransactions = getStockManagementService()
+                            .checkStockBatchHasTransactionsAfterOperation(stockOperationDTO.getId(),
+                                    items.stream().filter(p -> p.getStockBatchId() != null)
+                                            .map(p -> p.getStockBatchId()).distinct().collect(Collectors.toList()));
                 }
             }
         }
 
         for (StockOperationItemDTO itemDTO : items) {
-            List<StockItemPackagingUOMDTO> units = packagingUnits.stream().filter(p -> p.getStockItemUuid().equals(itemDTO.getStockItemUuid())).collect(Collectors.toList());
+            List<StockItemPackagingUOMDTO> units = packagingUnits.stream()
+                    .filter(p -> p.getStockItemUuid().equals(itemDTO.getStockItemUuid())).collect(Collectors.toList());
             if (!units.isEmpty()) {
                 itemDTO.setPackagingUnits(units);
             }
-            if(canUpdateBatchInformation){
-                itemDTO.setCanUpdateBatchInformation( stockBatchHasTransactions != null && !stockBatchHasTransactions.containsKey(itemDTO.getStockBatchId()));
+            if (canUpdateBatchInformation) {
+                itemDTO.setCanUpdateBatchInformation(stockBatchHasTransactions != null
+                        && !stockBatchHasTransactions.containsKey(itemDTO.getStockBatchId()));
             }
         }
 
         for (StockOperationItemDTO itemDTO : items) {
-            List<StockItemLossesAndAdjustmentsDTO> adj = lossesAndAdjustments.stream().filter(p -> p.getStockItemUuid().equals(itemDTO.getStockItemUuid())).collect(Collectors.toList());
+            List<StockItemLossesAndAdjustmentsDTO> adj = lossesAndAdjustments.stream()
+                    .filter(p -> p.getStockItemUuid().equals(itemDTO.getStockItemUuid())).collect(Collectors.toList());
             if (!adj.isEmpty()) {
                 itemDTO.setLossesAndAdjustments(adj);
+            }
+        }
+        for (StockOperationItemDTO itemDTO : items) {
+            String nameSource = itemDTO.getDrugName() != null && !itemDTO.getDrugName().isEmpty()
+                    ? itemDTO.getDrugName()
+                    : itemDTO.getCommonName();
+
+            if (nameSource != null && !nameSource.isEmpty()) {
+                int sep = nameSource.indexOf(" - ");
+                itemDTO.setDisplayName(sep > -1 ? nameSource.substring(0, sep).trim() : nameSource);
             }
         }
 
         return items;
     }
-	
-	@Override
-	public List<String> getPropertiesToExposeAsSubResources() {
-		return Arrays.asList("action");
-	}
-	
-	@Override
-	public Model getGETModel(Representation rep) {
-		ModelImpl modelImpl = (ModelImpl) super.getGETModel(rep);
-		if (rep instanceof DefaultRepresentation || rep instanceof FullRepresentation) {
-			modelImpl.property("uuid", new StringProperty()).property("cancelReason", new StringProperty())
-			        .property("cancelledBy", new IntegerProperty()).property("cancelledByGivenName", new StringProperty())
-			        .property("cancelledByFamilyName", new StringProperty())
-			        .property("cancelledDate", new DateTimeProperty()).property("completedBy", new IntegerProperty())
-			        .property("completedByGivenName", new StringProperty())
-			        .property("completedByFamilyName", new StringProperty())
-			        .property("completedDate", new DateTimeProperty()).property("destinationUuid", new StringProperty())
-			        .property("destinationName", new StringProperty()).property("externalReference", new StringProperty())
-			        .property("atLocationUuid", new StringProperty()).property("atLocationName", new StringProperty())
-			        .property("operationDate", new DateTimeProperty()).property("locked", new BooleanProperty())
-			        .property("operationNumber", new StringProperty()).property("operationOrder", new IntegerProperty())
-			        .property("reasonUuid", new StringProperty()).property("reasonName", new StringProperty())
-			        .property("remarks", new StringProperty()).property("sourceUuid", new StringProperty())
-			        .property("sourceName", new StringProperty()).property("status", new StringProperty())
-			        .property("returnReason", new StringProperty()).property("rejectionReason", new StringProperty())
-			        .property("operationTypeUuid", new StringProperty()).property("operationType", new StringProperty())
-			        .property("operationTypeName", new StringProperty())
-			        .property("responsiblePersonUuid", new StringProperty())
-			        .property("responsiblePersonGivenName", new StringProperty())
-			        .property("responsiblePersonFamilyName", new StringProperty())
-			        .property("responsiblePersonOther", new StringProperty())
-			        .property("approvalRequired", new BooleanProperty()).property("dateCreated", new DateTimeProperty())
-			        .property("creatorGivenName", new StringProperty()).property("creatorFamilyName", new StringProperty())
-			        .property("submittedByGivenName", new StringProperty())
-			        .property("submittedByFamilyName", new StringProperty()).property("submittedDate", new DateProperty())
-			        .property("returnedByGivenName", new StringProperty())
-			        .property("returnedByFamilyName", new StringProperty()).property("returnedDate", new DateProperty())
-			        .property("rejectedByGivenName", new StringProperty())
-			        .property("rejectedByFamilyName", new StringProperty()).property("rejectedDate", new DateProperty())
+
+    @Override
+    public List<String> getPropertiesToExposeAsSubResources() {
+        return Arrays.asList("action");
+    }
+
+    @Override
+    public Model getGETModel(Representation rep) {
+        ModelImpl modelImpl = (ModelImpl) super.getGETModel(rep);
+        if (rep instanceof DefaultRepresentation || rep instanceof FullRepresentation) {
+            modelImpl.property("uuid", new StringProperty()).property("cancelReason", new StringProperty())
+                    .property("cancelledBy", new IntegerProperty())
+                    .property("cancelledByGivenName", new StringProperty())
+                    .property("cancelledByFamilyName", new StringProperty())
+                    .property("cancelledDate", new DateTimeProperty()).property("completedBy", new IntegerProperty())
+                    .property("completedByGivenName", new StringProperty())
+                    .property("completedByFamilyName", new StringProperty())
+                    .property("completedDate", new DateTimeProperty()).property("destinationUuid", new StringProperty())
+                    .property("destinationName", new StringProperty())
+                    .property("externalReference", new StringProperty())
+                    .property("atLocationUuid", new StringProperty()).property("atLocationName", new StringProperty())
+                    .property("operationDate", new DateTimeProperty()).property("locked", new BooleanProperty())
+                    .property("operationNumber", new StringProperty()).property("operationOrder", new IntegerProperty())
+                    .property("reasonUuid", new StringProperty()).property("reasonName", new StringProperty())
+                    .property("remarks", new StringProperty()).property("sourceUuid", new StringProperty())
+                    .property("sourceName", new StringProperty()).property("status", new StringProperty())
+                    .property("returnReason", new StringProperty()).property("rejectionReason", new StringProperty())
+                    .property("operationTypeUuid", new StringProperty()).property("operationType", new StringProperty())
+                    .property("operationTypeName", new StringProperty())
+                    .property("responsiblePersonUuid", new StringProperty())
+                    .property("responsiblePersonGivenName", new StringProperty())
+                    .property("responsiblePersonFamilyName", new StringProperty())
+                    .property("responsiblePersonOther", new StringProperty())
+                    .property("approvalRequired", new BooleanProperty()).property("dateCreated", new DateTimeProperty())
+                    .property("creatorGivenName", new StringProperty())
+                    .property("creatorFamilyName", new StringProperty())
+                    .property("submittedByGivenName", new StringProperty())
+                    .property("submittedByFamilyName", new StringProperty())
+                    .property("submittedDate", new DateProperty())
+                    .property("returnedByGivenName", new StringProperty())
+                    .property("returnedByFamilyName", new StringProperty()).property("returnedDate", new DateProperty())
+                    .property("rejectedByGivenName", new StringProperty())
+                    .property("rejectedByFamilyName", new StringProperty()).property("rejectedDate", new DateProperty())
                     .property("requestType", new StringProperty());
-		}
-		if (rep instanceof DefaultRepresentation) {}
-		
-		if (rep instanceof FullRepresentation) {
-			modelImpl.property("stockOperationItems", new ArrayProperty());
-		}
-		
-		if (rep instanceof RefRepresentation) {
-			modelImpl.property("uuid", new StringProperty());
-			modelImpl.property("operationNumber", new StringProperty());
-		}
-		
-		return modelImpl;
-	}
-	
+        }
+        if (rep instanceof DefaultRepresentation) {
+        }
+
+        if (rep instanceof FullRepresentation) {
+            modelImpl.property("stockOperationItems", new ArrayProperty());
+        }
+
+        if (rep instanceof RefRepresentation) {
+            modelImpl.property("uuid", new StringProperty());
+            modelImpl.property("operationNumber", new StringProperty());
+        }
+
+        return modelImpl;
+    }
+
+    private static void enrichDisplayNames(List<StockOperationItemDTO> items) {
+        if (items == null || items.isEmpty())
+            return;
+        for (StockOperationItemDTO item : items) {
+            if (item.getDisplayName() != null)
+                continue; // already set, skip
+            // drugName is usually null on StockOperationItemDTO — fall back to commonName
+            String source = item.getDrugName() != null && !item.getDrugName().isEmpty()
+                    ? item.getDrugName()
+                    : item.getCommonName();
+            if (source != null && !source.isEmpty()) {
+                int sep = source.indexOf(" - ");
+                item.setDisplayName(sep > -1 ? source.substring(0, sep).trim() : source);
+            }
+        }
+    }
+
 }
