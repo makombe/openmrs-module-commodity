@@ -5201,7 +5201,7 @@ CREATE TRIGGER stockmgmt_location_after_delete
 
   <changeSet id="stockmanagement-20260227-1600" author="makombe">
         <preConditions onFail="MARK_RAN">
-            <not><tableExists tableName="external_requisition_status" /></not>
+            <not><tableExists tableName="stockmgmt_external_requisition_status" /></not>
         </preConditions>
         <comment>
             Create table for external requisition status
@@ -5223,11 +5223,20 @@ CREATE TRIGGER stockmgmt_location_after_delete
   </changeSet>
 
   <changeSet id="stockmanagement-20260305-12220" author="makombe">
+    <preConditions onFail="MARK_RAN">
+        <sqlCheck expectedResult="0">
+            SELECT COUNT(*) 
+            FROM information_schema.table_constraints 
+            WHERE constraint_type = 'UNIQUE' 
+            AND table_name = 'stockmgmt_external_requisition_status' 
+            AND constraint_name = 'uk_external_req_status_uuid'
+            AND table_schema = DATABASE()
+        </sqlCheck>
+    </preConditions>
     <addNotNullConstraint 
         columnDataType="varchar(38)" 
         columnName="uuid" 
         tableName="stockmgmt_external_requisition_status"/>
-        
     <addUniqueConstraint 
         columnNames="uuid" 
         constraintName="uk_external_req_status_uuid" 
@@ -5332,30 +5341,28 @@ CREATE TRIGGER stockmgmt_location_after_delete
     </sql>
   </changeSet>
 
-  <changeSet id="stockmanagement-20260317-1001" author="makombe">
+ <changeSet id="stockmanagement-20260317-1001" author="makombe">
     <preConditions onFail="MARK_RAN">
         <tableExists tableName="stockmgmt_external_requisition_status" />
+        <not>
+            <columnExists tableName="stockmgmt_external_requisition_status" columnName="receipt_number"/>
+        </not>
     </preConditions>
     <comment>
         Add receipt and delivery tracking columns to stockmgmt_external_requisition_status table
     </comment>
-
     <addColumn tableName="stockmgmt_external_requisition_status">
         <column name="receipt_number" type="varchar(100)" />
     </addColumn>
-
     <addColumn tableName="stockmgmt_external_requisition_status">
         <column name="receipt_message" type="text" />
     </addColumn>
-
     <addColumn tableName="stockmgmt_external_requisition_status">
         <column name="delivery_status" type="varchar(100)" />
     </addColumn>
-
     <addColumn tableName="stockmgmt_external_requisition_status">
         <column name="pod_notification_status" type="varchar(100)" />
     </addColumn>
-
 </changeSet>
 
 <changeSet id="stockmgmt-add-item-type-column-20260331-1002" author="makombe">
