@@ -4,9 +4,9 @@ on:
   # Manually triggered workflow using the "Run workflow" button
   workflow_dispatch:
   push:
-    branches: [stock-v2]
+    branches: [stock-2.8.4-platform]
   pull_request:
-    branches: [stock-v2]
+    branches: [stock-2.8.4-platform]
 
 jobs:
   build:
