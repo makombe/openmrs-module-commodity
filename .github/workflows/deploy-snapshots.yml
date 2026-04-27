@@ -26,7 +26,7 @@ jobs:
 
   publish:
     needs: build
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/stock-v2')
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'stock-2.8.4-platform')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
