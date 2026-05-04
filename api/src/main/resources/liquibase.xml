@@ -5675,6 +5675,129 @@ CREATE TRIGGER stockmgmt_location_after_delete
     </sql>
   </changeSet>
 
+  <!-- Add OTHER item type (value = 3) support -->
+<changeSet id="stockmanagement-add-other-item-type-20260504-1001" author="makombe">
+  <preConditions onFail="MARK_RAN">
+    <columnExists tableName="stockmgmt_stock_item" columnName="item_type"/>
+  </preConditions>
+  <comment>
+    Documents the OTHER item type (value = 3) for items that are neither
+    pharmaceutical, non-pharmaceutical, nor lab commodities.
+    No DDL change is needed — the existing TINYINT(1) column already
+    accepts the value 3; we just update the triggers to handle it.
+  </comment>
+  <!-- No-op SQL to satisfy Liquibase requiring at least one statement -->
+  <sql>SELECT 1</sql>
+</changeSet>
+
+<!-- Update INSERT trigger to handle OTHER item type -->
+<changeSet id="stockmanagement-trigger-item-type-insert-20260504-1002" author="makombe" runOnChange="true">
+  <preConditions onFail="MARK_RAN">
+    <columnExists tableName="stockmgmt_stock_item" columnName="item_type"/>
+  </preConditions>
+  <comment>
+    Update INSERT trigger to recognise item_type = 3 (OTHER).
+    OTHER items have is_drug = 0, just like NON_PHARMACEUTICAL and LAB_COMMODITY.
+  </comment>
+
+  <sql splitStatements="false">
+    DROP TRIGGER IF EXISTS trg_stockitem_itemtype_insert;
+  </sql>
+
+  <sql splitStatements="false">
+    CREATE TRIGGER trg_stockitem_itemtype_insert
+    BEFORE INSERT ON stockmgmt_stock_item
+    FOR EACH ROW
+    BEGIN
+      /*
+       * item_type values:
+       *   0 = NON_PHARMACEUTICAL  → is_drug = 0
+       *   1 = PHARMACEUTICAL      → is_drug = 1
+       *   2 = LAB_COMMODITY       → is_drug = 0
+       *   3 = OTHER               → is_drug = 0
+       *
+       * If item_type is NULL (legacy INSERT that only sets is_drug),
+       * derive item_type from is_drug.
+       * Otherwise derive is_drug from item_type.
+       */
+      IF NEW.item_type IS NULL THEN
+        -- Legacy INSERT path: derive item_type from is_drug.
+        -- is_drug = 1 maps to PHARMACEUTICAL; everything else stays NON_PHARMACEUTICAL.
+        SET NEW.item_type = CASE WHEN NEW.is_drug = 1 THEN 1 ELSE 0 END;
+      ELSE
+        -- New INSERT path: derive is_drug from item_type.
+        -- Only PHARMACEUTICAL (1) sets is_drug = 1; all others set is_drug = 0.
+        SET NEW.is_drug = CASE WHEN NEW.item_type = 1 THEN 1 ELSE 0 END;
+      END IF;
+    END
+  </sql>
+
+  <rollback>
+    <sql splitStatements="false">
+      DROP TRIGGER IF EXISTS trg_stockitem_itemtype_insert;
+    </sql>
+  </rollback>
+</changeSet>
+
+<!-- Update UPDATE trigger to handle OTHER item type -->
+<changeSet id="stockmanagement-trigger-item-type-update-20260504-1003" author="makombe" runOnChange="true">
+  <preConditions onFail="MARK_RAN">
+    <columnExists tableName="stockmgmt_stock_item" columnName="item_type"/>
+  </preConditions>
+  <comment>
+    Update UPDATE trigger to recognise item_type = 3 (OTHER).
+    Both LAB_COMMODITY (2) and OTHER (3) must be protected from being
+    overwritten by legacy code that only flips is_drug.
+  </comment>
+
+  <sql splitStatements="false">
+    DROP TRIGGER IF EXISTS trg_stockitem_itemtype_update;
+  </sql>
+
+  <sql splitStatements="false">
+    CREATE TRIGGER trg_stockitem_itemtype_update
+    BEFORE UPDATE ON stockmgmt_stock_item
+    FOR EACH ROW
+    BEGIN
+      /*
+       * Three cases:
+       *
+       * 1. item_type changed → sync is_drug from the new item_type.
+       *    Only PHARMACEUTICAL (1) yields is_drug = 1.
+       *
+       * 2. item_type unchanged AND is_drug changed (legacy UPDATE path):
+       *    - If the current type is NON_PHARMACEUTICAL (0) or PHARMACEUTICAL (1),
+       *      it is safe to coerce item_type from the new is_drug value.
+       *    - If the current type is LAB_COMMODITY (2) or OTHER (3), protect it:
+       *      revert the is_drug change back to 0 so the specialised type is
+       *      not silently overwritten by legacy code.
+       *
+       * 3. Neither changed → nothing to do.
+       */
+      IF NEW.item_type != OLD.item_type THEN
+        -- Case 1: item_type is the driver.
+        SET NEW.is_drug = CASE WHEN NEW.item_type = 1 THEN 1 ELSE 0 END;
+
+      ELSEIF NEW.is_drug != OLD.is_drug THEN
+        -- Case 2: is_drug is the driver (legacy UPDATE path).
+        IF OLD.item_type IN (0, 1) THEN
+          -- Safe to coerce: standard pharmaceutical / non-pharmaceutical item.
+          SET NEW.item_type = CASE WHEN NEW.is_drug = 1 THEN 1 ELSE 0 END;
+        ELSE
+          -- Protect LAB_COMMODITY (2) and OTHER (3): revert the is_drug change.
+          SET NEW.is_drug = 0;
+        END IF;
+      END IF;
+    END
+  </sql>
+
+  <rollback>
+    <sql splitStatements="false">
+      DROP TRIGGER IF EXISTS trg_stockitem_itemtype_update;
+    </sql>
+  </rollback>
+</changeSet>
+
 
 
 </databaseChangeLog>

@@ -35,7 +35,9 @@ public class StockItem extends org.openmrs.BaseChangeableOpenmrsData implements 
 		/** Formerly is_drug = true */
 		PHARMACEUTICAL(1),
 		/** New third category */
-		LAB_COMMODITY(2);
+		LAB_COMMODITY(2),
+		/** New fourth category */
+		OTHER(3);
 
 		private final int value;
 
@@ -151,6 +153,7 @@ public class StockItem extends org.openmrs.BaseChangeableOpenmrsData implements 
 	 *   <li>0 – Non-Pharmaceutical</li>
 	 *   <li>1 – Pharmaceutical (Drug)</li>
 	 *   <li>2 – Lab Commodity</li>
+	 *   <li>3 – Other</li>
 	 * </ul>
 	 */
 	@GenericField
@@ -217,11 +220,11 @@ public class StockItem extends org.openmrs.BaseChangeableOpenmrsData implements 
 	public void setDrug(Drug drug) {
 		this.drug = drug;
 		if (!((drug != null && isDrug != null && isDrug) || (drug == null && isDrug != null && !isDrug))) {
-			// Sync both fields when the drug association changes
 			boolean drugPresent = drug != null;
 			this.isDrug = drugPresent;
-			// Only update itemType when it hasn't been explicitly set to something else
-			if (this.itemType == null || this.itemType == ItemType.NON_PHARMACEUTICAL || this.itemType == ItemType.PHARMACEUTICAL) {
+			if (this.itemType == null
+					|| this.itemType == ItemType.NON_PHARMACEUTICAL
+					|| this.itemType == ItemType.PHARMACEUTICAL) {
 				this.itemType = drugPresent ? ItemType.PHARMACEUTICAL : ItemType.NON_PHARMACEUTICAL;
 			}
 		}
@@ -273,9 +276,9 @@ public class StockItem extends org.openmrs.BaseChangeableOpenmrsData implements 
 	public void setIsDrug(Boolean isDrug) {
 		this.isDrug = isDrug;
 		if (isDrug != null) {
-			// Only coerce itemType when it is not already set to LAB_COMMODITY
-			// so that existing "isDrug = false" callers don't silently overwrite a lab item.
-			if (this.itemType == null || this.itemType != ItemType.LAB_COMMODITY) {
+			if (this.itemType == null
+					|| (this.itemType != ItemType.LAB_COMMODITY
+							&& this.itemType != ItemType.OTHER)) {
 				this.itemType = isDrug ? ItemType.PHARMACEUTICAL : ItemType.NON_PHARMACEUTICAL;
 			}
 		}
@@ -294,6 +297,14 @@ public class StockItem extends org.openmrs.BaseChangeableOpenmrsData implements 
 	/** Returns {@code true} if this item is a lab commodity. */
 	public boolean isLabCommodity() {
 		return getItemType() == ItemType.LAB_COMMODITY;
+	}
+
+	/**
+	 * Returns {@code true} if this item does not fall into pharmaceutical,
+	 * non-pharmaceutical, or lab commodity categories.
+	 */
+	public boolean isOther() {
+		return getItemType() == ItemType.OTHER;
 	}
 
 	public boolean getHasExpiration() {
