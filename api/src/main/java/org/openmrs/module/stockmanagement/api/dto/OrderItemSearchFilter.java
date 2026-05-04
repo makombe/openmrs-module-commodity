@@ -129,8 +129,9 @@ public class OrderItemSearchFilter {
 	@Deprecated
 	public void setIsDrug(Boolean isDrug) {
 		this.isDrug = isDrug;
-		// Guard: don't overwrite an explicitly set LAB_COMMODITY with a coerced value
-		if (this.itemType == ItemType.LAB_COMMODITY) {
+		// Guard: don't overwrite an explicitly set LAB_COMMODITY or OTHER with a
+		// coerced value — both carry semantic meaning a boolean cannot express.
+		if (this.itemType == ItemType.LAB_COMMODITY || this.itemType == ItemType.OTHER) {
 			return;
 		}
 		if (isDrug == null) {

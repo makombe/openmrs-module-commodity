@@ -132,6 +132,7 @@ public class StockItemDTO {
 	 *   <li>{@link ItemType#PHARMACEUTICAL}     – previously represented by {@code isDrug = true}</li>
 	 *   <li>{@link ItemType#NON_PHARMACEUTICAL} – previously represented by {@code isDrug = false}</li>
 	 *   <li>{@link ItemType#LAB_COMMODITY}      – new third category</li>
+	 *   <li>{@link ItemType#OTHER}              – new fourth category</li>
 	 * </ul>
 	 * When populated by the DAO/service layer from an existing record that pre-dates
 	 * the {@code item_type} column, it is derived from the legacy {@code is_drug} value.
@@ -186,6 +187,14 @@ public class StockItemDTO {
 	}
 
 	/**
+	 * Returns {@code true} if this DTO represents an item that does not fall into
+	 * pharmaceutical, non-pharmaceutical, or lab commodity categories.
+	 */
+	public boolean isOther() {
+		return getItemType() == ItemType.OTHER;
+	}
+
+	/**
 	 * Legacy boolean accessor kept for backward compatibility with service-layer
 	 * and reporting code that has not yet migrated to {@link #getItemType()}.
 	 * <p>
@@ -231,14 +240,16 @@ public class StockItemDTO {
 	@Deprecated
 	public void setIsDrug(Boolean isDrug) {
 		if (isDrug == null) {
-			// Only clear itemType if it hasn't been set to LAB_COMMODITY
-			if (this.itemType != ItemType.LAB_COMMODITY) {
+			// Only clear itemType for the two standard boolean-mappable types.
+			// LAB_COMMODITY and OTHER must never be silently cleared by the legacy path
+			// because both carry semantic meaning that a boolean cannot express.
+			if (this.itemType != ItemType.LAB_COMMODITY && this.itemType != ItemType.OTHER) {
 				this.itemType = null;
 			}
 			return;
 		}
-		// Guard: don't overwrite LAB_COMMODITY with a coerced boolean value
-		if (this.itemType == ItemType.LAB_COMMODITY) {
+		// Guard: never overwrite LAB_COMMODITY or OTHER via the legacy boolean path.
+		if (this.itemType == ItemType.LAB_COMMODITY || this.itemType == ItemType.OTHER) {
 			return;
 		}
 		this.itemType = isDrug ? ItemType.PHARMACEUTICAL : ItemType.NON_PHARMACEUTICAL;

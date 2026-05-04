@@ -89,10 +89,12 @@ public class StockItemImportJob {
 	 *   <li>{@code 0} or {@code non_pharmaceutical}  → {@link ItemType#NON_PHARMACEUTICAL}</li>
 	 *   <li>{@code 1} or {@code pharmaceutical}       → {@link ItemType#PHARMACEUTICAL}</li>
 	 *   <li>{@code 2} or {@code lab_commodity}        → {@link ItemType#LAB_COMMODITY}</li>
+	 *  <li>{@code 3} or {@code other}                 → {@link ItemType#OTHER}</li>
 	 * </ul>
 	 * When omitted the type is derived automatically: a row with a {@code drug_id} is treated
 	 * as {@link ItemType#PHARMACEUTICAL}; a row with only a {@code concept_id} defaults to
 	 * {@link ItemType#NON_PHARMACEUTICAL} unless this column says otherwise.
+	 * {@link ItemType#LAB_COMMODITY} and {@link ItemType#OTHER} are only allowed for concept-based items (no {@code drug_id}).
 	 */
 	private int ITEM_TYPE = 21;
 	
@@ -143,6 +145,9 @@ public class StockItemImportJob {
 			case "lab_commodity":
 			case "lab":
 				return ItemType.LAB_COMMODITY;
+			case "3":
+			case "other":
+				return ItemType.OTHER;
 			default:
 				throw new IllegalArgumentException("Unknown item type: " + raw);
 		}
@@ -397,10 +402,15 @@ public class StockItemImportJob {
 	/**
 	 * Resolves the effective {@link ItemType} for a parsed row.
 	 * <ol>
-	 *   <li>If the CSV supplied an explicit ITEM_TYPE value it is used as-is.</li>
-	 *   <li>If a {@code drug_id} is present the item is {@link ItemType#PHARMACEUTICAL}.</li>
-	 *   <li>Otherwise it defaults to {@link ItemType#NON_PHARMACEUTICAL} (legacy behaviour).</li>
+	 * <li>If the CSV supplied an explicit ITEM_TYPE value it is used as-is.</li>
+	 * <li>If a {@code drug_id} is present the item is
+	 * {@link ItemType#PHARMACEUTICAL}.</li>
+	 * <li>Otherwise it defaults to {@link ItemType#NON_PHARMACEUTICAL} (legacy
+	 * behaviour).</li>
 	 * </ol>
+	 * Note: {@link ItemType#OTHER} and {@link ItemType#LAB_COMMODITY} are never
+	 * inferred
+	 * automatically — they must be supplied in column 21 of the CSV.
 	 */
 	private ItemType resolveItemType(Object[] parsedRow) {
 		if (parsedRow[ITEM_TYPE] != null) {
@@ -408,7 +418,7 @@ public class StockItemImportJob {
 		}
 		return parsedRow[DRUG_ID] != null ? ItemType.PHARMACEUTICAL : ItemType.NON_PHARMACEUTICAL;
 	}
-	
+
 	@SuppressWarnings({ "unchecked" })
 	private void updateStockItems(Map<Integer, Object[]> stockItems) {
 		StockManagementService stockManagementService = Context.getService(StockManagementService.class);

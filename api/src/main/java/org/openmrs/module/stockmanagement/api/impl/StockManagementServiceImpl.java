@@ -507,7 +507,7 @@ public class StockManagementServiceImpl extends BaseOpenmrsService implements St
                 }
             }
 
-            // Allow reclassification between NON_PHARMACEUTICAL and LAB_COMMODITY
+            // Allow reclassification between NON_PHARMACEUTICAL, LAB_COMMODITY, and OTHER
             // for concept-based items only. Drug-linked items are locked to
             // PHARMACEUTICAL and must never be reclassified.
             if (stockItemDTO.getItemType() != null
