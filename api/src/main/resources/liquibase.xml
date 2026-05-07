@@ -5798,6 +5798,149 @@ CREATE TRIGGER stockmgmt_location_after_delete
   </rollback>
 </changeSet>
 
+<changeSet id="stockmanagement-20260507-backfill-party-1" author="makombe">
+  <preConditions onFail="MARK_RAN">
+    <tableExists tableName="stockmgmt_party"/>
+    <tableExists tableName="stockmgmt_location_tree"/>
+  </preConditions>
+  <comment>
+    Backfill stockmgmt_party and stockmgmt_location_tree for any location
+    tagged as Main Store, Main Pharmacy, Dispensary, Sub Store, or Main Lab
+    that is missing a party entry. This repairs locations that were tagged
+    after the trigger was narrowed to Sub Store only.
+  </comment>
+  <sql>
+    INSERT INTO stockmgmt_location_tree
+        (parent_location_id, child_location_id, depth, uuid)
+    SELECT
+        ltm.location_id,
+        ltm.location_id,
+        0,
+        uuid()
+    FROM location_tag_map ltm
+    JOIN location_tag lt
+        ON lt.location_tag_id = ltm.location_tag_id
+       AND lt.uuid IN (
+           '89a80c4d-2899-11ed-bdcb-507b9dea1806',  -- Main Pharmacy
+           'fe7c970f-2aba-11ed-ba4a-507b9dea1806',  -- Dispensary
+           'e539ebca-2899-11ed-bdcb-507b9dea1806',  -- Main Store
+           'b973cb5a-2d9e-4a1e-ad7f-215f49f9577e',  -- Sub Store
+           '5ba3e184-97a8-4b03-b7d5-021df5831571'   -- Main Lab
+       )
+    WHERE NOT EXISTS (
+        SELECT 1
+        FROM stockmgmt_location_tree slt
+        WHERE slt.parent_location_id = ltm.location_id
+          AND slt.child_location_id  = ltm.location_id
+          AND slt.depth = 0
+    );
+  </sql>
+  <sql>
+    INSERT INTO stockmgmt_party
+        (location_id, creator, date_created, uuid)
+    SELECT
+        ltm.location_id,
+        1,
+        CURDATE(),
+        uuid()
+    FROM location_tag_map ltm
+    JOIN location_tag lt
+        ON lt.location_tag_id = ltm.location_tag_id
+       AND lt.uuid IN (
+           '89a80c4d-2899-11ed-bdcb-507b9dea1806',
+           'fe7c970f-2aba-11ed-ba4a-507b9dea1806',
+           'e539ebca-2899-11ed-bdcb-507b9dea1806',
+           'b973cb5a-2d9e-4a1e-ad7f-215f49f9577e',
+           '5ba3e184-97a8-4b03-b7d5-021df5831571'
+       )
+    WHERE NOT EXISTS (
+        SELECT 1
+        FROM stockmgmt_party sp
+        WHERE sp.location_id = ltm.location_id
+    );
+  </sql>
+  <rollback>
+    <!-- Backfill data cannot be safely reversed -->
+  </rollback>
+</changeSet>
+
+<changeSet id="stockmanagement-20260508-trigger-location-insert-2" author="makombe"
+           runOnChange="true">
+  <preConditions onFail="MARK_RAN">
+    <dbms type="mysql"/>
+  </preConditions>
+  <comment>
+    Recreate stockmgmt_location_after_insert to cover ALL managed location
+    tags: Main Pharmacy, Dispensary, Main Store, Sub Store, and Main Lab.
+    Previous versions of this trigger were narrowed to a subset of tags,
+    causing party entries to be skipped for newly tagged locations.
+  </comment>
+  <sql splitStatements="true" endDelimiter="\$\$"><![CDATA[
+    DROP TRIGGER IF EXISTS `stockmgmt_location_after_insert`;
+    $$
+    CREATE TRIGGER `stockmgmt_location_after_insert`
+    AFTER INSERT ON `location_tag_map`
+    FOR EACH ROW
+    BEGIN
+      /*
+       * When a location receives any of the five managed stock tags,
+       * ensure it is represented in both the location-tree closure table
+       * and the party table. We guard with NOT EXISTS so re-tagging a
+       * location (e.g. adding a second managed tag) never creates
+       * duplicate rows.
+       *
+       * Managed tag UUIDs:
+       *   89a80c4d-2899-11ed-bdcb-507b9dea1806  Main Pharmacy
+       *   fe7c970f-2aba-11ed-ba4a-507b9dea1806  Dispensary
+       *   e539ebca-2899-11ed-bdcb-507b9dea1806  Main Store
+       *   b973cb5a-2d9e-4a1e-ad7f-215f49f9577e  Sub Store
+       *   5ba3e184-97a8-4b03-b7d5-021df5831571  Main Lab
+       */
+      IF NEW.location_tag_id IN (
+          SELECT location_tag_id
+          FROM   location_tag
+          WHERE  uuid IN (
+              '89a80c4d-2899-11ed-bdcb-507b9dea1806',
+              'fe7c970f-2aba-11ed-ba4a-507b9dea1806',
+              'e539ebca-2899-11ed-bdcb-507b9dea1806',
+              'b973cb5a-2d9e-4a1e-ad7f-215f49f9577e',
+              '5ba3e184-97a8-4b03-b7d5-021df5831571'
+          )
+      ) THEN
+
+        IF NOT EXISTS (
+            SELECT 1
+            FROM   stockmgmt_location_tree
+            WHERE  parent_location_id = NEW.location_id
+              AND  child_location_id  = NEW.location_id
+              AND  depth = 0
+        ) THEN
+          INSERT INTO stockmgmt_location_tree
+              (parent_location_id, child_location_id, depth, uuid)
+          VALUES
+              (NEW.location_id, NEW.location_id, 0, uuid());
+        END IF;
+
+        IF NOT EXISTS (
+            SELECT 1
+            FROM   stockmgmt_party
+            WHERE  location_id = NEW.location_id
+        ) THEN
+          INSERT INTO stockmgmt_party
+              (location_id, creator, date_created, uuid)
+          VALUES
+              (NEW.location_id, 1, CURDATE(), uuid());
+        END IF;
+
+      END IF;
+    END
+    $$
+  ]]></sql>
+  <rollback>
+    DROP TRIGGER IF EXISTS `stockmgmt_location_after_insert`;
+  </rollback>
+</changeSet>
+
 
 
 </databaseChangeLog>
