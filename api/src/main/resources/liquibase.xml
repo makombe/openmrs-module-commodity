@@ -5822,11 +5822,11 @@ CREATE TRIGGER stockmgmt_location_after_delete
     JOIN location l ON l.location_id = ltm.location_id
     JOIN location_tag lt ON lt.location_tag_id = ltm.location_tag_id
        AND lt.uuid IN (
-           '89a80c4d-2899-11ed-bdcb-507b9dea1806',
-           'fe7c970f-2aba-11ed-ba4a-507b9dea1806',
-           'e539ebca-2899-11ed-bdcb-507b9dea1806',
-           'b973cb5a-2d9e-4a1e-ad7f-215f49f9577e',
-           '5ba3e184-97a8-4b03-b7d5-021df5831571'
+           '89a80c4d-2899-11ed-bdcb-507b9dea1806', -- Main Pharmacy
+           'fe7c970f-2aba-11ed-ba4a-507b9dea1806', -- Dispensary
+           'e539ebca-2899-11ed-bdcb-507b9dea1806', -- Main Store
+           'b973cb5a-2d9e-4a1e-ad7f-215f49f9577e', -- Sub Store
+           '5ba3e184-97a8-4b03-b7d5-021df5831571'  -- Main Lab
        )
     WHERE NOT EXISTS (
         SELECT 1 FROM stockmgmt_location_tree slt
