@@ -5923,7 +5923,16 @@ public class StockManagementDao extends DaoBase {
                 "    ON so.operation_type_id = sot.stock_operation_type_id " +
                 "WHERE si.etcd_product_id IS NOT NULL " +
                 "GROUP BY si.etcd_product_id " +
-                "HAVING SUM(CASE WHEN sit.date_created <= ? THEN ABS(sit.quantity) ELSE 0 END) > 0";
+                "HAVING (" +
+                "COALESCE(SUM(CASE WHEN sit.date_created <= ? AND (sb.expiration IS NULL OR sb.expiration > ?) " +
+                "    THEN sit.quantity * sipu.factor ELSE 0 END), 0) <> 0 " +
+                "OR COALESCE(SUM(CASE WHEN sit.date_created BETWEEN ? AND ? AND sit.quantity > 0 " +
+                "    AND sot.uuid = '44444444-4444-4444-4444-444444444444' " +
+                "    THEN sit.quantity * sipu.factor ELSE 0 END), 0) <> 0 " +
+                "OR COALESCE(SUM(CASE WHEN sit.date_created BETWEEN ? AND ? AND sit.quantity < 0 " +
+                "    AND sit.patient_id IS NOT NULL " +
+                "    THEN sit.quantity * -1 * sipu.factor ELSE 0 END), 0) <> 0" +
+                ")";
 
         Query query = getSession().createSQLQuery(sql)
                 .addScalar("productCode", StringType.INSTANCE)
@@ -5938,7 +5947,13 @@ public class StockManagementDao extends DaoBase {
         query.setParameter(4, endOfDay); // AND ?
         query.setParameter(5, startOfDay); // dispensed BETWEEN ?
         query.setParameter(6, endOfDay); // AND ?
-        query.setParameter(7, endOfDay); // HAVING <= ?
+        // HAVING parameters:
+        query.setParameter(7, endOfDay); // SOH <= ?
+        query.setParameter(8, endOfDay); // expiration > ?
+        query.setParameter(9, startOfDay); // received BETWEEN ?
+        query.setParameter(10, endOfDay); // AND ?
+        query.setParameter(11, startOfDay);// dispensed BETWEEN ?
+        query.setParameter(12, endOfDay); // AND ?
 
         @SuppressWarnings("unchecked")
         List<DailyStockLineItemDTO> results = query.list();
