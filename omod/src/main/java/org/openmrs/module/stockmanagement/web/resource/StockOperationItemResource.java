@@ -82,6 +82,9 @@ public class StockOperationItemResource extends ResourceBase<StockOperationItemD
 		description.addProperty("quantityRequestedPackagingUOMUuid");
 		description.addProperty("brandName");
 		description.addProperty("manufacturerName");
+		description.addProperty("sscc");
+		description.addProperty("sgtin");
+		description.addProperty("sgln");	
 		description.addProperty("reasonForRequestedQuantity");
 		return description;
 	}
@@ -99,6 +102,9 @@ public class StockOperationItemResource extends ResourceBase<StockOperationItemD
 		description.addProperty("purchasePrice");
 		description.addProperty("brandName");
 		description.addProperty("manufacturerName");
+		description.addProperty("sscc");
+		description.addProperty("sgtin");
+		description.addProperty("sgln");
 		description.addProperty("reasonForRequestedQuantity");
 		return description;
 	}
@@ -191,6 +197,9 @@ public class StockOperationItemResource extends ResourceBase<StockOperationItemD
 			description.addProperty("lossesAndAdjustments");
 			description.addProperty("displayName");
 			description.addProperty("drugName");
+			description.addProperty("sscc");
+			description.addProperty("sgtin");	
+			description.addProperty("sgln");
 
 		}
 
@@ -235,7 +244,10 @@ public class StockOperationItemResource extends ResourceBase<StockOperationItemD
 					.property("reasonForRequestedQuantity", new StringProperty())
 					.property("manufacturerName", new StringProperty())
 					.property("etcdProductId", new StringProperty())
-					.property("genericConceptCode", new StringProperty());
+					.property("genericConceptCode", new StringProperty())
+					.property("sscc", new StringProperty())
+					.property("sgtin", new StringProperty())
+					.property("sgln", new StringProperty());
 		}
 		if (rep instanceof DefaultRepresentation) {
 		}

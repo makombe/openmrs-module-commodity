@@ -1523,6 +1523,9 @@ public class StockManagementServiceImpl extends BaseOpenmrsService implements St
                         stockBatch.setBatchNo(itemDto.getBatchNo());
                         stockBatch.setBrandName(itemDto.getBrandName());
                         stockBatch.setManufacturerName(itemDto.getManufacturerName());
+                        stockBatch.setSscc(itemDto.getSscc());
+                        stockBatch.setSgtin(itemDto.getSgtin());
+                        stockBatch.setSgln(itemDto.getSgln());
                         if (stockItem.getHasExpiration()) {
                             stockBatch.setExpiration(itemDto.getExpiration());
                         }

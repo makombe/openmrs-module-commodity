@@ -83,6 +83,9 @@ public class StockOperationBatchNumbersResource extends ResourceBase<StockOperat
 			simpleObject.add("expiration", batchNumber.getExpiration());
 			simpleObject.add("brandName", batchNumber.getBrandName());
 			simpleObject.add("manufacturerName", batchNumber.getManufacturerName());
+			simpleObject.add("sscc", batchNumber.getSscc());
+			simpleObject.add("sgtin", batchNumber.getSgtin());
+			simpleObject.add("sgln", batchNumber.getSgln());
 			result.add(simpleObject);
 		}
 		return result;
@@ -117,6 +120,15 @@ public class StockOperationBatchNumbersResource extends ResourceBase<StockOperat
 			}
 			if (item.containsKey("manufacturerName") && item.get("manufacturerName") != null) {
 				itemDTO.setManufacturerName(item.get("manufacturerName").toString());
+			}
+			if (item.containsKey("sscc") && item.get("sscc") != null) {
+				itemDTO.setSscc(item.get("sscc").toString());
+			}
+			if (item.containsKey("sgtin") && item.get("sgtin") != null) {
+				itemDTO.setSgtin(item.get("sgtin").toString());
+			}
+			if (item.containsKey("sgln") && item.get("sgln") != null) {
+				itemDTO.setSgln(item.get("sgln").toString());
 			}
 			instance.getBatchNumbers().add(itemDTO);
 		}

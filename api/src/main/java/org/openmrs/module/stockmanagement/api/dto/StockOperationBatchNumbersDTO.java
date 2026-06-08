@@ -57,6 +57,9 @@ public class StockOperationBatchNumbersDTO {
 		private Date expiration;
 		private String brandName;
 		private String manufacturerName;
+		private String sscc;
+		private String sgtin;
+		private String sgln;
 		
 		public Integer getId() {
 			return id;
@@ -101,6 +104,30 @@ public class StockOperationBatchNumbersDTO {
 		}
 		public void setManufacturerName(String manufacturerName) {
 			this.manufacturerName = manufacturerName;
+		}
+
+		public String getSscc() {
+			return sscc;
+		}
+		
+		public void setSscc(String sscc) {
+			this.sscc = sscc;
+		}
+
+		public String getSgtin() {
+			return sgtin;
+		}
+
+		public void setSgtin(String sgtin) {
+			this.sgtin = sgtin;
+		}
+
+		public String getSgln() {
+			return sgln;
+		}
+		
+		public void setSgln(String sgln) {
+			this.sgln = sgln;
 		}
 	}
 }
