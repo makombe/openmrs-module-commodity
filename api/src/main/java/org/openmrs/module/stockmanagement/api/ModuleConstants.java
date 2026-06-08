@@ -14,5 +14,8 @@ public class ModuleConstants {
 	public static final String DASHBOARD_EXTENSION_POINT_ID = MODULE_ID + ".dashboard";
 	
 	public static final String APP_DATA_WORKING_DIR = "stockmgmt";
+
+	// Logging GP
+	public static final String LOGGING_ENABLED = "stockmanagement.debugmode.enabled";
 	
 }
