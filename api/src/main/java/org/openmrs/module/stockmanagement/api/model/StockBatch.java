@@ -6,7 +6,6 @@ import org.openmrs.BaseOpenmrsData;
 import java.io.Serializable;
 import javax.persistence.*;
 import java.util.Date;
-import java.util.Set;
 
 /**
  * The persistent class for the stockmgmt_stock_batch database table.
@@ -31,6 +30,16 @@ public class StockBatch extends BaseChangeableOpenmrsData implements Serializabl
 
 	@Column(name = "manufacturer_name", length = 255)
 	private String manufacturerName;
+
+	@Column(name = "sscc", length = 255)
+	private String sscc;
+
+	@Column(name = "sgtin", length = 255)
+	private String sgtin;
+
+	@Column(name = "sgln", length = 255)
+	private String sgln;
+	
 	
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "stock_item_id")
@@ -93,5 +102,29 @@ public class StockBatch extends BaseChangeableOpenmrsData implements Serializabl
 	}
 	public void setManufacturerName(String manufacturerName) {
 		this.manufacturerName = manufacturerName;
+	}
+
+	public String getSscc() {
+		return sscc;
+	}
+
+	public void setSscc(String sscc) {
+		this.sscc = sscc;
+	}
+
+	public String getSgtin() {
+		return sgtin;
+	}
+
+	public void setSgtin(String sgtin) {
+		this.sgtin = sgtin;
+	}
+
+	public String getSgln() {
+		return sgln;
+	}
+
+	public void setSgln(String sgln) {
+		this.sgln = sgln;
 	}
 }

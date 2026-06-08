@@ -65,6 +65,9 @@ public class StockItemTransactionDTO {
 	private String operationDestinationPartyName;
 	private String brandName;
 	private String manufacturerName;
+	private String sscc;
+	private String sgtin;
+	private String sgln;
 	
 	public Integer getPartyId() {
 		return partyId;
@@ -302,5 +305,29 @@ public class StockItemTransactionDTO {
 
 	public void setBalance(BigDecimal balance) {
 		this.balance = balance;
+	}
+
+	public String getSscc() {
+		return sscc;
+	}
+
+	public void setSscc(String sscc) {
+		this.sscc = sscc;
+	}
+
+	public String getSgtin() {
+		return sgtin;
+	}
+
+	public void setSgtin(String sgtin) {
+		this.sgtin = sgtin;
+	}
+
+	public String getSgln() {
+		return sgln;
+	}
+
+	public void setSgln(String sgln) {
+		this.sgln = sgln;
 	}
 }

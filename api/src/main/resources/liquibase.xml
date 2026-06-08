@@ -5936,6 +5936,34 @@ CREATE TRIGGER stockmgmt_location_after_delete
     DROP TRIGGER IF EXISTS `stockmgmt_location_after_insert`;
   </rollback>
 </changeSet>
+<changeSet author="makombe" id="stockmanagement-2026-06-08-0916">
+    <preConditions onError="WARN" onFail="MARK_RAN">
+        <tableExists tableName="stockmgmt_stock_batch" />
+        <not>
+            <columnExists columnName="sscc" tableName="stockmgmt_stock_batch"/>
+            <columnExists columnName="sgtin" tableName="stockmgmt_stock_batch"/>
+            <columnExists columnName="sgln" tableName="stockmgmt_stock_batch"/>
+        </not>
+    </preConditions>
+    <comment>
+        adding columns sscc, sgtin, sgln on table stockmgmt_stock_batch
+    </comment>
+    <addColumn tableName="stockmgmt_stock_batch">
+        <column name="sscc" type="varchar(255)">
+            <constraints nullable="true" />
+        </column>
+    </addColumn>
+    <addColumn tableName="stockmgmt_stock_batch">
+        <column name="sgtin" type="varchar(255)">
+            <constraints nullable="true" />
+        </column>
+    </addColumn>
+    <addColumn tableName="stockmgmt_stock_batch">
+        <column name="sgln" type="varchar(255)">
+            <constraints nullable="true" />
+        </column>
+    </addColumn>
+</changeSet>
 
 
 

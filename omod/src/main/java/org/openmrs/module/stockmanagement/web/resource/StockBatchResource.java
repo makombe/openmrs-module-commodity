@@ -100,6 +100,9 @@ public class StockBatchResource extends ResourceBase<StockBatch> {
 			description.addProperty("expiryNotificationDate");
 			description.addProperty("brandName");
 			description.addProperty("manufacturerName");
+			description.addProperty("sscc");
+			description.addProperty("sgtin");
+			description.addProperty("sgln");
 		}
 		
 		if (rep instanceof DefaultRepresentation) {
@@ -128,6 +131,9 @@ public class StockBatchResource extends ResourceBase<StockBatch> {
 			        .property("expiryNotificationDate", new DateTimeProperty())
 					.property("brandName", new StringProperty())
 					.property("manufacturerName", new StringProperty())
+					.property("sscc", new StringProperty())
+					.property("sgtin", new StringProperty())
+					.property("sgln", new StringProperty())
 			        .property("stockItemUuid", new StringProperty()).property("voided", new BooleanProperty());
 		}
 		if (rep instanceof DefaultRepresentation) {}

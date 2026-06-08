@@ -90,6 +90,9 @@ public class StockOperationItemDTO {
     private Integer stockOutDays;
 	private String displayName;
 	private String drugName;
+	private String sscc;
+	private String sgtin;
+	private String sgln;
 	
 	public Integer getStockItemId() {
 		return stockItemId;
@@ -455,5 +458,28 @@ public class StockOperationItemDTO {
 
 	public void setDrugName(String drugName) {
 		this.drugName = drugName;
+	}
+	public String getSscc() {
+		return sscc;
+	}
+
+	public void setSscc(String sscc) {
+		this.sscc = sscc;
+	}
+
+	public String getSgtin() {
+		return sgtin;
+	}
+
+	public void setSgtin(String sgtin) {
+		this.sgtin = sgtin;
+	}
+
+	public String getSgln() {
+		return sgln;
+	}
+
+	public void setSgln(String sgln) {
+		this.sgln = sgln;
 	}
 }
