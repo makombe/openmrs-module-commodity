@@ -581,6 +581,21 @@ public interface StockManagementService extends OpenmrsService {
 	@Authorized(Privileges.APP_STOCKMANAGEMENT_STOCKITEMS)
 	Result<StockItemLossesAndAdjustmentsDTO> findStockItemLossesAndAdjustments(StockItemPackagingUOMSearchFilter filter);
 
+	// Fetch a single track and trace event by UUID
+	TrackAndTraceEvents getTrackAndTraceEventByUuid(String uuid);
+
+	// Save or update a track and trace event
+	@Transactional
+	TrackAndTraceEvents saveTrackAndTraceEvent(TrackAndTraceEvents event);
+	Result<TrackAndTraceEventsDTO> findTrackAndTraceEvents(
+        String eventId,
+        String eventType,
+        String bizType,
+        String status,
+        String reference,
+        String dateFrom,
+        String dateTo,
+        boolean includeRetired);
 
 
 }

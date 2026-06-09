@@ -5964,6 +5964,41 @@ CREATE TRIGGER stockmgmt_location_after_delete
         </column>
     </addColumn>
 </changeSet>
+<changeSet id="stockmanagement-20260609-trackandtrace-1" author="makombe">
+    <preConditions onFail="MARK_RAN">
+        <not>
+            <tableExists tableName="stockmgmt_track_and_trace_events" />
+        </not>
+    </preConditions>
+    <comment>
+        Create the stockmgmt_track_and_trace_events table to store
+        GS1 EPCIS track-and-trace event records received from or
+        submitted to external traceability systems.
+    </comment>
+    <createTable tableName="stockmgmt_track_and_trace_events">
+        <column name="id" autoIncrement="true" type="int">
+            <constraints nullable="false" primaryKey="true" />
+        </column>
+        <column name="event_id" type="varchar(38)">
+            <constraints nullable="false" unique="true"
+                         uniqueConstraintName="uk_tnt_events_event_id" />
+        </column>
+        <column name="event_type" type="varchar(100)" />
+        <column name="biz_type" type="varchar(100)" />
+        <column name="status" type="varchar(100)" />
+        <column name="reference" type="varchar(100)" />
+        <column name="event_time" type="datetime" />
+        <column name="message" type="text" />
+        <column name="creator" type="int" />
+        <column name="retired" type="int" />
+        <column name="date_created" type="datetime" />
+        <column name="date_updated" type="datetime" />
+        <column name="uuid" type="varchar(38)">
+            <constraints nullable="false" unique="true"
+                         uniqueConstraintName="uk_tnt_events_uuid" />
+        </column>
+    </createTable>
+</changeSet>
 
 
 
