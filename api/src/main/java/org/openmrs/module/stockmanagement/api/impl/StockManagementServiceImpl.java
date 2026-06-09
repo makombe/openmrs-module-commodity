@@ -3922,4 +3922,26 @@ public class StockManagementServiceImpl extends BaseOpenmrsService implements St
     public Result<StockItemLossesAndAdjustmentsDTO> findStockItemLossesAndAdjustments(StockItemPackagingUOMSearchFilter filter) {
         return dao.findStockItemLossesAndAdjustments(filter);
     }
+
+    @Override
+    public TrackAndTraceEvents getTrackAndTraceEventByUuid(String uuid) {
+        return dao.getTrackAndTraceEventByUuid(uuid);
+    }
+
+    @Override
+    public TrackAndTraceEvents saveTrackAndTraceEvent(TrackAndTraceEvents event) {
+        return dao.saveTrackAndTraceEvent(event);
+    }
+    @Override
+    public Result<TrackAndTraceEventsDTO> findTrackAndTraceEvents(
+            String eventId, String eventType, String bizType,
+            String status, String reference,
+            String dateFrom, String dateTo,
+            boolean includeRetired) {
+        return dao.findTrackAndTraceEvents(
+                eventId, eventType, bizType,
+                status, reference,
+                dateFrom, dateTo,
+                includeRetired);
+    }
 }

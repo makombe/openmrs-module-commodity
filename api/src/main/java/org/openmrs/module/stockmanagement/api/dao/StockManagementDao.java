@@ -6141,6 +6141,138 @@ public class StockManagementDao extends DaoBase {
         return result;
     }
 
+    public TrackAndTraceEvents getTrackAndTraceEventByUuid(String uuid) {
+        Criteria criteria = sessionFactory.getCurrentSession()
+                .createCriteria(TrackAndTraceEvents.class);
+        criteria.add(Restrictions.eq("uuid", uuid));
+        return (TrackAndTraceEvents) criteria.uniqueResult();
+    }
+
+    public TrackAndTraceEvents saveTrackAndTraceEvent(TrackAndTraceEvents event) {
+        if (event.getUuid() == null || StringUtils.isBlank(event.getUuid())) {
+            throw new IllegalArgumentException("UUID is mandatory for saving a track and trace event.");
+        }
+
+        Criteria criteria = getSession().createCriteria(TrackAndTraceEvents.class);
+        criteria.add(Restrictions.eq("uuid", event.getUuid()));
+        TrackAndTraceEvents existing = (TrackAndTraceEvents) criteria.uniqueResult();
+
+        if (existing != null) {
+            if (event.getEventId() != null)
+                existing.setEventId(event.getEventId());
+            if (event.getEventType() != null)
+                existing.setEventType(event.getEventType());
+            if (event.getBizType() != null)
+                existing.setBizType(event.getBizType());
+            if (event.getStatus() != null)
+                existing.setStatus(event.getStatus());
+            if (event.getReference() != null)
+                existing.setReference(event.getReference());
+            if (event.getEventTime() != null)
+                existing.setEventTime(event.getEventTime());
+            if (event.getMessage() != null)
+                existing.setMessage(event.getMessage());
+            if (event.getRetired() != null)
+                existing.setRetired(event.getRetired());
+
+            existing.setDateUpdated(new Date());
+            getSession().update(existing);
+            return existing;
+        }
+
+        if (event.getDateCreated() == null) {
+            event.setDateCreated(new Date());
+        }
+
+        getSession().save(event);
+        return event;
+    }
+    
+    
+    
+    public Result<TrackAndTraceEventsDTO> findTrackAndTraceEvents(
+            String eventId, String eventType, String bizType,
+            String status, String reference,
+            String dateFrom, String dateTo,
+            boolean includeRetired) {
+
+        Criteria criteria = getSession().createCriteria(TrackAndTraceEvents.class);
+
+        if (StringUtils.isNotBlank(eventId)) {
+            criteria.add(Restrictions.ilike("eventId", eventId + "%"));
+        }
+        if (StringUtils.isNotBlank(eventType)) {
+            criteria.add(Restrictions.eq("eventType", eventType));
+        }
+        if (StringUtils.isNotBlank(bizType)) {
+            criteria.add(Restrictions.eq("bizType", bizType));
+        }
+        if (StringUtils.isNotBlank(status)) {
+            criteria.add(Restrictions.eq("status", status));
+        }
+        if (StringUtils.isNotBlank(reference)) {
+            criteria.add(Restrictions.ilike("reference", "%" + reference + "%"));
+        }
+        if (StringUtils.isNotBlank(dateFrom)) {
+            try {
+                Date from = new java.text.SimpleDateFormat("yyyy-MM-dd").parse(dateFrom);
+                criteria.add(Restrictions.ge("eventTime", from));
+            } catch (Exception ignored) {
+            }
+        }
+        if (StringUtils.isNotBlank(dateTo)) {
+            try {
+                Date to = new java.text.SimpleDateFormat("yyyy-MM-dd").parse(dateTo);
+                // set to end of day
+                java.util.Calendar cal = java.util.Calendar.getInstance();
+                cal.setTime(to);
+                cal.set(java.util.Calendar.HOUR_OF_DAY, 23);
+                cal.set(java.util.Calendar.MINUTE, 59);
+                cal.set(java.util.Calendar.SECOND, 59);
+                criteria.add(Restrictions.le("eventTime", cal.getTime()));
+            } catch (Exception ignored) {
+            }
+        }
+        if (!includeRetired) {
+            criteria.add(Restrictions.or(
+                    Restrictions.eq("retired", 0),
+                    Restrictions.isNull("retired")));
+        }
+
+        Result<TrackAndTraceEvents> rawResult = new Result<>();
+        rawResult.setData(executeCriteria(criteria, rawResult,
+                org.hibernate.criterion.Order.desc("dateCreated")));
+
+        Result<TrackAndTraceEventsDTO> result = new Result<>();
+        result.setPageIndex(rawResult.getPageIndex());
+        result.setPageSize(rawResult.getPageSize());
+        result.setData(rawResult.getData().stream().map(e -> {
+            TrackAndTraceEventsDTO dto = new TrackAndTraceEventsDTO();
+            dto.setUuid(e.getUuid());
+            dto.setEventId(e.getEventId());
+            dto.setEventType(e.getEventType());
+            dto.setBizType(e.getBizType());
+            dto.setStatus(e.getStatus());
+            dto.setReference(e.getReference());
+            dto.setEventTime(e.getEventTime() != null
+                    ? e.getEventTime().toString()
+                    : null);
+            dto.setMessage(e.getMessage());
+            dto.setCreator(e.getCreator());
+            dto.setRetired(e.getRetired());
+            dto.setDateCreated(e.getDateCreated() != null
+                    ? e.getDateCreated().toString()
+                    : null);
+            dto.setDateUpdated(e.getDateUpdated() != null
+                    ? e.getDateUpdated().toString()
+                    : null);
+            return dto;
+        }).collect(java.util.stream.Collectors.toList()));
+
+        return result;
+    }
+    
+    
     // Helper methods
     private Date getStartOfDay(Date date) {
         Calendar cal = Calendar.getInstance();
