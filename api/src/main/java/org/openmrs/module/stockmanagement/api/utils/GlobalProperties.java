@@ -363,4 +363,22 @@ public class GlobalProperties {
 		catch (Exception exception) {}
 		return true;
 	}
+
+	/**
+	 * Checks whether Kenyaemr Logging is enabled
+	 *
+	 * @return true (Enabled) and false (Disabled)
+	 */
+	public static Boolean isLoggingEnabled() {
+		Boolean ret = false;
+		GlobalProperty globalLoggingEnabled = Context.getAdministrationService().getGlobalPropertyObject(
+			ModuleConstants.LOGGING_ENABLED);
+		String isLoggingEnabled = globalLoggingEnabled.getPropertyValue();
+
+		if (isLoggingEnabled != null && isLoggingEnabled.trim().equalsIgnoreCase("true")) {
+			ret = true;
+		}
+
+		return (ret);
+	}
 }

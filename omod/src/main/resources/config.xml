@@ -360,6 +360,62 @@
         </description>
     </globalProperty>
 
+	<globalProperty>
+		<property>tnt.facility.events.submission.base.url</property>
+		<defaultValue>https://tnt-staging.apeiro-digital.com/api/integration/facility/events</defaultValue>
+		<description>
+			The base Url for tnt events submissions receipt/dispense
+		</description>
+	</globalProperty>
+
+	<globalProperty>
+		<property>tnt.facility.events.submission.api.token</property>
+		<defaultValue> </defaultValue>
+		<description>
+			API Token for tnt events submissions receipt/dispense 
+		</description>
+	</globalProperty>
+
+	<globalProperty>
+		<property>stockmanagement.debugmode.enabled</property>
+		<defaultValue>false</defaultValue>
+		<description>
+			Enables logging for troubleshooting. Disable on prod
+		</description>
+	</globalProperty>
+
+	<globalProperty>
+		<property>tnt.facility.events.sscc.identifier</property>
+		<defaultValue>61668185.998129748</defaultValue>
+		<description>
+			Identifies packaging for GS1 products
+		</description>
+	</globalProperty>
+
+	<globalProperty>
+		<property>tnt.facility.events.destination.sgln.identifier</property>
+		<defaultValue>8888888.88888.0</defaultValue>
+		<description>
+			Identifies location for GS1 products
+		</description>
+	</globalProperty>
+
+	<globalProperty>
+		<property>tnt.facility.events.source.sgln.identifier</property>
+		<defaultValue>10000000.00009.0</defaultValue>
+		<description>
+			Identifies location for GS1 products
+		</description>
+	</globalProperty>
+
+	<globalProperty>
+		<property>tnt.facility.events.sgtin.identifier</property>
+		<defaultValue>6161102974997.000000001</defaultValue>
+		<description>
+			Uniquely Identifies product for GS1 products
+		</description>
+	</globalProperty>
+
     <!-- /Global Properties -->
 </module>
 
