@@ -596,6 +596,27 @@ public interface StockManagementService extends OpenmrsService {
         String dateFrom,
         String dateTo,
         boolean includeRetired);
+	    /**
+     * Parses a CSV file and creates one COMPLETED Opening Stock operation per
+     * distinct (OPERATION DATE, LOCATION) group found in the data.
+     *
+     * <p>The operation type is always "initial" (Opening Stock,
+     * UUID 99999999-9999-9999-9999-999999999999). No other operation type is
+     * created or modified by this method.
+     *
+     * @param file      path to the uploaded CSV file
+     * @param hasHeader {@code true} when the first data row is a header row
+     * @return result containing success flag, operation/item counts, and errors
+     */
+    @Transactional
+    @Authorized(Privileges.TASK_STOCKMANAGEMENT_STOCKOPERATIONS_MUTATE)
+    OpeningStockImportResult importOpeningStock(Path file, boolean hasHeader);
+ 
+ 
+
+
+ 
+
 
 
 }

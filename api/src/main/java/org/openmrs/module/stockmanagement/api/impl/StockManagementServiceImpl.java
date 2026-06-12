@@ -27,6 +27,7 @@ import org.openmrs.api.context.Context;
 import org.openmrs.module.stockmanagement.api.dto.*;
 import org.openmrs.module.stockmanagement.api.dto.reporting.*;
 import org.openmrs.module.stockmanagement.api.jobs.AsyncTasksBatchJob;
+import org.openmrs.module.stockmanagement.api.jobs.OpeningStockImportJob;
 import org.openmrs.module.stockmanagement.api.jobs.StockBatchExpiryJob;
 import org.openmrs.module.stockmanagement.api.jobs.StockRuleEvaluationJob;
 import org.openmrs.module.stockmanagement.api.reporting.Report;
@@ -3944,4 +3945,13 @@ public class StockManagementServiceImpl extends BaseOpenmrsService implements St
                 dateFrom, dateTo,
                 includeRetired);
     }
+
+    @Override
+    public OpeningStockImportResult importOpeningStock(Path file, boolean hasHeader) {
+        OpeningStockImportJob job = new OpeningStockImportJob(file, hasHeader, this.dao);
+        job.execute();
+        return job.getResult();
+    }
+
+
 }
