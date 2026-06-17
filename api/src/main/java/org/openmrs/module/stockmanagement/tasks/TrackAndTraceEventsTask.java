@@ -178,16 +178,20 @@ public class TrackAndTraceEventsTask extends AbstractTask {
         }
     }
 
-    private void markFailedEntity(TrackAndTraceEvents entity,
-            StockManagementService stockService,
-            String reason) {
+    private void markFailedEntity(TrackAndTraceEvents entity, StockManagementService stockService, String reason) {
         try {
             entity.setStatus(STATUS_FAILED);
+            // Store failure reason separately — never append to message so the
+            // EPCIS JSON payload remains valid for any future retry or inspection
+            if (entity.getErrorMessage() != null) {
+                entity.setErrorMessage(entity.getErrorMessage() + "\n" + reason);
+            } else {
+                entity.setErrorMessage(reason);
+            }
             stockService.saveTrackAndTraceEvent(entity);
             log.info("TrackAndTraceEventsTask: uuid={} marked failed: {}", entity.getUuid(), reason);
         } catch (Exception e) {
-            log.error("TrackAndTraceEventsTask: failed to persist failure status uuid={}",
-                    entity.getUuid(), e);
+            log.error("TrackAndTraceEventsTask: failed to mark failure uuid={}", entity.getUuid(), e);
         }
     }
 

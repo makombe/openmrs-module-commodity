@@ -6179,6 +6179,8 @@ public class StockManagementDao extends DaoBase {
                 existing.setMessage(event.getMessage());
             if (event.getRetired() != null)
                 existing.setRetired(event.getRetired());
+            if(event.getErrorMessage() != null)
+                existing.setErrorMessage(event.getErrorMessage());
 
             existing.setDateUpdated(new Date());
             getSession().update(existing);
@@ -6263,6 +6265,7 @@ public class StockManagementDao extends DaoBase {
                     ? e.getEventTime().toString()
                     : null);
             dto.setMessage(e.getMessage());
+            dto.setErrorMessage(e.getErrorMessage());
             dto.setCreator(e.getCreator());
             dto.setRetired(e.getRetired());
             dto.setDateCreated(e.getDateCreated() != null

@@ -13,6 +13,7 @@ public class TrackAndTraceEventsDTO {
     private String dateCreated;
     private String dateUpdated;
     private String uuid;
+    private String errorMessage;
 
     public String getEventId() {
         return eventId;
@@ -108,6 +109,12 @@ public class TrackAndTraceEventsDTO {
 
     public void setUuid(String uuid) {
         this.uuid = uuid;
+    }
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
     }
 
 }
