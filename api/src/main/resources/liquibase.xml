@@ -6025,6 +6025,19 @@ CREATE TRIGGER stockmgmt_location_after_delete
     </createTable>
 </changeSet>
 
+<changeSet id="stockmanagement-20260617-tnt-error-message-col" author="makombe">
+    <preConditions onFail="MARK_RAN">
+        <not>
+            <columnExists tableName="stockmgmt_track_and_trace_events" columnName="error_message"/>
+        </not>
+    </preConditions>
+    <addColumn tableName="stockmgmt_track_and_trace_events">
+        <column name="error_message" type="TEXT">
+            <constraints nullable="true"/>
+        </column>
+    </addColumn>
+</changeSet>
+
 
 
 </databaseChangeLog>

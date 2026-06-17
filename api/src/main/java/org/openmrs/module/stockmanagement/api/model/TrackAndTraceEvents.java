@@ -14,12 +14,13 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Lob;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import java.util.Date;
 
-@Entity (name = "stockmanagement.TrackAndTraceEvents")
+@Entity(name = "stockmanagement.TrackAndTraceEvents")
 @Table(name = "stockmgmt_track_and_trace_events")
 public class TrackAndTraceEvents {
 
@@ -47,6 +48,7 @@ public class TrackAndTraceEvents {
     @Temporal(TemporalType.TIMESTAMP)
     private Date eventTime;
 
+    @Lob
     @Column(name = "message", columnDefinition = "TEXT")
     private String message;
 
@@ -66,6 +68,10 @@ public class TrackAndTraceEvents {
 
     @Column(name = "uuid", nullable = false, unique = true, length = 38)
     private String uuid;
+
+    @Lob
+    @Column(name = "error_message", columnDefinition = "TEXT")
+    private String errorMessage;
 
     public Integer getId() {
         return id;
@@ -169,5 +175,13 @@ public class TrackAndTraceEvents {
 
     public void setUuid(String uuid) {
         this.uuid = uuid;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
     }
 }

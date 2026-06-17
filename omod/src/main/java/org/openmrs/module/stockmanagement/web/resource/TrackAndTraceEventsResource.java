@@ -105,6 +105,7 @@ public class TrackAndTraceEventsResource extends ResourceBase<TrackAndTraceEvent
         description.addProperty("reference");
         description.addProperty("eventTime");
         description.addProperty("message");
+        description.addProperty("errorMessage");
         description.addProperty("retired");
         description.addProperty("dateCreated");
         description.addProperty("dateUpdated");
@@ -132,6 +133,7 @@ public class TrackAndTraceEventsResource extends ResourceBase<TrackAndTraceEvent
         description.addProperty("reference");
         description.addProperty("eventTime");
         description.addProperty("message");
+        description.addProperty("errorMessage");
         description.addProperty("retired");
         return description;
     }
@@ -146,6 +148,7 @@ public class TrackAndTraceEventsResource extends ResourceBase<TrackAndTraceEvent
         description.addProperty("reference");
         description.addProperty("eventTime");
         description.addProperty("message");
+        description.addProperty("errorMessage");
         description.addProperty("retired");
         return description;
     }
@@ -164,6 +167,7 @@ public class TrackAndTraceEventsResource extends ResourceBase<TrackAndTraceEvent
                     .property("reference", new StringProperty())
                     .property("eventTime", new DateTimeProperty())
                     .property("message", new StringProperty())
+                    .property("errorMessage", new StringProperty())
                     .property("retired", new IntegerProperty())
                     .property("dateCreated", new DateTimeProperty())
                     .property("dateUpdated", new DateTimeProperty());
@@ -194,6 +198,7 @@ public class TrackAndTraceEventsResource extends ResourceBase<TrackAndTraceEvent
                 .property("reference", new StringProperty())
                 .property("eventTime", new DateTimeProperty())
                 .property("message", new StringProperty())
+                .property("errorMessage", new StringProperty())
                 .property("retired", new IntegerProperty());
     }
 
@@ -206,6 +211,7 @@ public class TrackAndTraceEventsResource extends ResourceBase<TrackAndTraceEvent
                 .property("reference", new StringProperty())
                 .property("eventTime", new DateTimeProperty())
                 .property("message", new StringProperty())
+                .property("errorMessage", new StringProperty())
                 .property("retired", new IntegerProperty());
     }
 }
