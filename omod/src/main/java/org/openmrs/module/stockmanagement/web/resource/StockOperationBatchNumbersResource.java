@@ -9,6 +9,7 @@ import io.swagger.models.properties.StringProperty;
 import org.openmrs.module.stockmanagement.api.ModuleConstants;
 import org.openmrs.module.stockmanagement.api.StockManagementException;
 import org.openmrs.module.stockmanagement.api.dto.*;
+import org.openmrs.module.stockmanagement.api.model.StockBatch;
 import org.openmrs.module.stockmanagement.api.model.StockOperationType;
 import org.openmrs.module.webservices.rest.SimpleObject;
 import org.openmrs.module.webservices.rest.web.ConversionUtil;
@@ -28,9 +29,12 @@ import org.openmrs.module.webservices.rest.web.response.ResponseException;
 import org.springframework.web.client.RestClientException;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Resource(name = RestConstants.VERSION_1 + "/" + ModuleConstants.MODULE_ID + "/stockoperationbatchnumbers", supportedClass = StockOperationBatchNumbersDTO.class, supportedOpenmrsVersions = {
         "1.9.*", "1.10.*", "1.11.*", "1.12.*", "2.*" })
@@ -42,9 +46,18 @@ public class StockOperationBatchNumbersResource extends ResourceBase<StockOperat
 		filter.setStockOperationUuid(uniqueId);
 		Result<StockOperationDTO> result = getStockManagementService().findStockOperations(filter);
 		StockOperationDTO stockOperationDTO = result.getData().isEmpty() ? null : result.getData().get(0);
-		return mapToBatchNumbers(stockOperationDTO);
+		if (stockOperationDTO == null)
+			return null;
+
+		
+		StockOperationItemSearchFilter itemFilter = new StockOperationItemSearchFilter();
+		itemFilter.setStockOperationUuids(Collections.singletonList(uniqueId));
+		itemFilter.setIncludeVoided(false);
+		Result<StockOperationItemDTO> itemResult = getStockManagementService().findStockOperationItems(itemFilter);
+
+		return mapToBatchNumbersWithItems(stockOperationDTO, itemResult.getData());
 	}
-	
+
 	@Override
 	protected void delete(StockOperationBatchNumbersDTO delegate, String reason, RequestContext context)
 	        throws ResponseException {
@@ -185,23 +198,69 @@ public class StockOperationBatchNumbersResource extends ResourceBase<StockOperat
 		return modelImpl;
 	}
 	
-	private StockOperationBatchNumbersDTO mapToBatchNumbers(StockOperationDTO parent){
-		if(parent == null) return null;
+	private StockOperationBatchNumbersDTO mapToBatchNumbersWithItems(
+			StockOperationDTO parent, List<StockOperationItemDTO> items) {
+		if (parent == null)
+			return null;
+
 		StockOperationBatchNumbersDTO batchNumbersDTO = new StockOperationBatchNumbersDTO();
 		batchNumbersDTO.setUuid(parent.getUuid());
 		batchNumbersDTO.setId(parent.getId());
 		batchNumbersDTO.setBatchNumbers(new ArrayList<>());
-		if (parent.getStockOperationItems() != null) {
-			for (StockOperationItemDTO stockOperationItemDTO : parent.getStockOperationItems()) {
-				StockOperationBatchNumbersDTO.StockOperationItemBatchNumber batchNumber = new StockOperationBatchNumbersDTO.StockOperationItemBatchNumber();
-				batchNumber.setId(stockOperationItemDTO.getId());
-				batchNumber.setUuid(stockOperationItemDTO.getUuid());
-				batchNumber.setBatchNo(stockOperationItemDTO.getBatchNo());
-				batchNumber.setExpiration(stockOperationItemDTO.getExpiration());
-				batchNumber.setBrandName(stockOperationItemDTO.getBrandName());
-				batchNumbersDTO.getBatchNumbers().add(batchNumber);
+
+		if (items == null || items.isEmpty())
+			return batchNumbersDTO;
+
+		List<String> batchUuids = items.stream()
+				.filter(i -> i.getStockBatchUuid() != null)
+				.map(StockOperationItemDTO::getStockBatchUuid)
+				.distinct()
+				.collect(Collectors.toList());
+
+		
+		Map<String, StockBatchDTO> batchByUuid = new HashMap<>();
+		if (!batchUuids.isEmpty()) {
+			StockBatchSearchFilter batchFilter = new StockBatchSearchFilter();
+			batchFilter.setStockBatchIds(
+					// findStockBatches accepts IDs not UUIDs — resolve via stockBatchUuid field on
+					// item DTO
+					// We use UUID search instead: filter one at a time is expensive,
+					// so we rely on the stockBatchUuid already on StockBatchDTO after fetch
+					null 
+			);
+		}
+
+		for (String batchUuid : batchUuids) {
+			StockBatchSearchFilter batchFilter = new StockBatchSearchFilter();
+			batchFilter.setStockBatchUuid(batchUuid);
+			batchFilter.setIncludeVoided(true);
+			Result<StockBatchDTO> batchResult = getStockManagementService().findStockBatches(batchFilter);
+			if (!batchResult.getData().isEmpty()) {
+				batchByUuid.put(batchUuid, batchResult.getData().get(0));
 			}
 		}
+
+		for (StockOperationItemDTO item : items) {
+			StockOperationBatchNumbersDTO.StockOperationItemBatchNumber batchNumber = new StockOperationBatchNumbersDTO.StockOperationItemBatchNumber();
+			batchNumber.setId(item.getId());
+			batchNumber.setUuid(item.getUuid());
+			batchNumber.setBatchNo(item.getBatchNo());
+			batchNumber.setExpiration(item.getExpiration());
+
+			if (item.getStockBatchUuid() != null) {
+				StockBatchDTO batch = batchByUuid.get(item.getStockBatchUuid());
+				if (batch != null) {
+					batchNumber.setSscc(batch.getSscc());
+					batchNumber.setSgtin(batch.getSgtin());
+					batchNumber.setSgln(batch.getSgln());
+					batchNumber.setBrandName(batch.getBrandName());
+					batchNumber.setManufacturerName(batch.getManufacturerName());
+				}
+			}
+
+			batchNumbersDTO.getBatchNumbers().add(batchNumber);
+		}
+
 		return batchNumbersDTO;
 	}
 	

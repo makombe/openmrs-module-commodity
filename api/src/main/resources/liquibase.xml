@@ -5199,6 +5199,31 @@ CREATE TRIGGER stockmgmt_location_after_delete
     </insert>
 </changeSet>
 
+<changeSet id="stockmanagement-20260615-0844" author="makombe">
+    <preConditions onFail="MARK_RAN">
+        <sqlCheck expectedResult="0">
+            SELECT COUNT(*) FROM scheduler_task_config
+            WHERE schedulable_class = 'org.openmrs.module.stockmanagement.tasks.TrackAndTraceEventsTask'
+            AND name = 'TrackAndTraceEvents Task'
+        </sqlCheck>
+    </preConditions>
+    <comment>Inserting TrackAndTraceEvents Task into scheduler_task_config</comment>
+    <insert tableName="scheduler_task_config">
+        <column name="name" value="TrackAndTraceEvents Task" />
+        <column name="description" value="Pushes Track and Trace events updates" />
+        <column name="schedulable_class" 
+                value="org.openmrs.module.stockmanagement.tasks.TrackAndTraceEventsTask" />
+        <column name="start_time_pattern" value="MM/dd/yyyy HH:mm:ss" />
+        <column name="start_time" valueDate="2026-06-15T23:59:59" />
+        <column name="repeat_interval" value="7200" />
+        <column name="date_created" valueDate="CURRENT_TIMESTAMP" />
+        <column name="created_by" value="1" />
+        <column name="start_on_startup" value="0" />
+        <column name="started" value="0" />
+        <column name="uuid" value="8a66a8b2-fdd3-44f8-9835-0069ff7c0221" />
+    </insert>
+</changeSet>
+
   <changeSet id="stockmanagement-20260227-1600" author="makombe">
         <preConditions onFail="MARK_RAN">
             <not><tableExists tableName="stockmgmt_external_requisition_status" /></not>

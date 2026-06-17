@@ -1976,7 +1976,12 @@ public class StockManagementDao extends DaoBase {
                 "sb.batchNo as batchNo,\n" +
                 "sb.expiration as expiration,\n" +
                 "sb.expiryNotificationDate as expiryNotificationDate,\n" +
-                "sb.voided as voided\n" +
+                "sb.voided as voided,\n" +
+                "sb.sscc as sscc,\n" + 
+                "sb.sgtin as sgtin,\n" + 
+                "sb.sgln as sgln,\n" + 
+                "sb.brandName as brandName,\n" + 
+                "sb.manufacturerName as manufacturerName\n" +
                 "from stockmanagement.StockBatch sb join\n" +
                 "\t sb.stockItem si\n");
 
