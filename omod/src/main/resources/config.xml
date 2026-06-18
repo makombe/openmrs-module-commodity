@@ -416,6 +416,14 @@
 		</description>
 	</globalProperty>
 
+    <globalProperty>
+		<property>tnt.events.enabled</property>
+		<defaultValue>false</defaultValue>
+		<description>
+			Enables track and trace events
+		</description>
+	</globalProperty>
+
     <!-- /Global Properties -->
 </module>
 

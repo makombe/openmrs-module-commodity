@@ -41,11 +41,19 @@ import org.openmrs.module.stockmanagement.tasks.StockOperationNotificationTask;
 import org.openmrs.notification.Alert;
 import org.openmrs.notification.Template;
 import org.openmrs.util.OpenmrsConstants;
+import org.openmrs.util.PrivilegeConstants;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 
 import javax.mail.Session;
 import java.math.BigDecimal;
 import java.nio.file.Path;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -2661,6 +2669,7 @@ public class StockManagementServiceImpl extends BaseOpenmrsService implements St
                         stockItemTransaction.setEncounter(item.getEncounter());
                     }
                     dao.saveStockItemTransaction(stockItemTransaction);
+                    createDispenseTrackAndTraceEvent(stockItemTransaction, item.getStockItem(), item.getStockBatch());
 
                 }
             }
@@ -3951,6 +3960,143 @@ public class StockManagementServiceImpl extends BaseOpenmrsService implements St
         OpeningStockImportJob job = new OpeningStockImportJob(file, hasHeader, this.dao);
         job.execute();
         return job.getResult();
+    }
+
+    public void createDispenseTrackAndTraceEvent(StockItemTransaction transaction, StockItem stockItem,
+            StockBatch batch) {
+        if (!isTrackAndTraceDispenseEnabled()) {
+            // Feature disabled for this deployment (e.g. KenyaEMR) — no-op.
+            return;
+        }
+
+        if (transaction.getPatient() == null) {
+            // Not a patient-facing dispense — nothing to do.
+            return;
+        }
+
+        // stock_batch_id is nullable on stockmgmt_stock_item_transaction (see
+        // dispense transaction may legitimately have no batch at all — not just
+        // a batch present but missing an sgtin. Both cases are handled the same way.
+        String sgtin = batch != null ? batch.getSgtin() : null;
+        if (sgtin == null || sgtin.trim().isEmpty()) {
+            // Without a product identifier there's no meaningful EPC to emit.
+            // Log and skip rather than persisting a payload GS1 consumers can't use.
+            log.warn("createDispenseTrackAndTraceEvent: stock item id={} batch id={} has no sgtin — skipping event");
+            return;
+        }
+
+        try {
+            Context.addProxyPrivilege(PrivilegeConstants.GET_GLOBAL_PROPERTIES);
+            String destinationSgln = getGlobalProperty("tnt.facility.events.destination.sgln.identifier", "");
+
+            ObjectMapper mapper = new ObjectMapper();
+
+            // EPCIS timestamps lag 3 hours, matching the existing receipt/dispense
+            // builders.
+            Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+            cal.add(Calendar.HOUR_OF_DAY, -3);
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+            sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+            String timestamp = sdf.format(cal.getTime());
+
+            ObjectNode payload = mapper.createObjectNode();
+            ArrayNode contextArray = mapper.createArrayNode();
+            contextArray.add("https://ref.gs1.org/standards/epcis/epcis-context.jsonld");
+            payload.set("@context", contextArray);
+            payload.put("type", "EPCISDocument");
+            payload.put("schemaVersion", "2.0");
+            payload.put("creationDate", timestamp);
+
+            ObjectNode epcisBody = mapper.createObjectNode();
+            ArrayNode eventList = mapper.createArrayNode();
+            ObjectNode event = mapper.createObjectNode();
+
+            String eventId = UUID.randomUUID().toString();
+            event.put("type", "ObjectEvent");
+            event.put("eventID", "urn:uuid:" + eventId);
+            event.put("eventTime", timestamp);
+            event.put("eventTimeZoneOffset", "+03:00");
+
+            // epcList — one serialized EPC for this dispensed unit.
+            // Serial suffix is derived from the transaction id so each dispensed
+            // unit gets a distinct EPC rather than reusing a hardcoded counter.
+            ArrayNode epcList = mapper.createArrayNode();
+            String serial = String.format("%09d",
+                    transaction.getId() != null ? transaction.getId() : 0);
+            epcList.add("urn:epc:id:sgtin:" + sgtin + "." + serial);
+            event.set("epcList", epcList);
+
+            // quantityList — absolute value, since dispense transactions are stored
+            // negative.
+            ArrayNode quantityList = mapper.createArrayNode();
+            ObjectNode quantity = mapper.createObjectNode();
+            BigDecimal qty = transaction.getQuantity() != null
+                    ? transaction.getQuantity().abs()
+                    : BigDecimal.ZERO;
+            quantity.put("epcClass", "urn:epc:idpat:sgtin:" + sgtin + ".*");
+            quantity.put("quantity", qty);
+            quantity.put("uom", "EA");
+            quantityList.add(quantity);
+            event.set("quantityList", quantityList);
+
+            event.put("action", "OBSERVE");
+            event.put("bizStep", "dispensing");
+            event.put("disposition", "dispensed");
+
+            ObjectNode readPoint = mapper.createObjectNode();
+            readPoint.put("id", "urn:epc:id:sgln:" + destinationSgln);
+            event.set("readPoint", readPoint);
+
+            ObjectNode bizLocation = mapper.createObjectNode();
+            bizLocation.put("id", "urn:epc:id:sgln:" + destinationSgln);
+            event.set("bizLocation", bizLocation);
+
+            eventList.add(event);
+            epcisBody.set("eventList", eventList);
+            payload.set("epcisBody", epcisBody);
+
+            String jsonPayload = mapper.writeValueAsString(payload);
+
+            TrackAndTraceEvents ttEvent = new TrackAndTraceEvents();
+            ttEvent.setEventId(eventId);
+            ttEvent.setEventType("ObjectEvent");
+            ttEvent.setBizType("dispense");
+            ttEvent.setStatus("queued");
+            // Patient id captured here so the queued event can be traced back
+            // to the dispense that produced it.
+            ttEvent.setReference(transaction.getPatient() != null
+                    ? transaction.getPatient().getId().toString()
+                    : null);
+            ttEvent.setEventTime(cal.getTime());
+            ttEvent.setMessage(jsonPayload);
+            ttEvent.setCreator(transaction.getCreator().getId());
+            ttEvent.setRetired(0);
+            ttEvent.setDateCreated(new Date());
+            ttEvent.setUuid(UUID.randomUUID().toString());
+
+            saveTrackAndTraceEvent(ttEvent);
+
+            log.info(
+                    "createDispenseTrackAndTraceEvent: queued dispense event eventId={} for patientId={} stockItemId={}");
+
+        } catch (Exception e) {
+            // Track-and-trace is best-effort telemetry — never let it block the
+            // dispense transaction that triggered it.
+            log.error("createDispenseTrackAndTraceEvent: failed to build/persist dispense event for transaction id={}");
+        } finally {
+            Context.removeProxyPrivilege(PrivilegeConstants.GET_GLOBAL_PROPERTIES);
+        }
+    }
+
+    public static boolean isTrackAndTraceDispenseEnabled() {
+        String value = Context.getAdministrationService()
+                .getGlobalProperty("tnt.events.enabled");
+        return "true".equalsIgnoreCase(value);
+    }
+
+    private String getGlobalProperty(String propertyName, String fallback) {
+        String value = Context.getAdministrationService().getGlobalProperty(propertyName);
+        return (value != null && !value.isEmpty()) ? value : fallback;
     }
 
 
