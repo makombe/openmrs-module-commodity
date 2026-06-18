@@ -4067,7 +4067,7 @@ public class StockManagementServiceImpl extends BaseOpenmrsService implements St
             ttEvent.setReference(transaction.getPatient() != null
                     ? transaction.getPatient().getId().toString()
                     : null);
-            ttEvent.setEventTime(cal.getTime());
+            ttEvent.setEventTime(new Date());
             ttEvent.setMessage(jsonPayload);
             ttEvent.setCreator(transaction.getCreator().getId());
             ttEvent.setRetired(0);
