@@ -969,6 +969,30 @@ public class StockManagementServiceImpl extends BaseOpenmrsService implements St
         return partyDTOs;
     }
 
+    public List<PartyDTO> getAllParties(List<String> locationTagNames) {
+        List<PartyDTO> partyDTOs = dao.getAllParties(locationTagNames);
+        if (partyDTOs.isEmpty()) {
+            return partyDTOs;
+        }
+        List<Location> locations = Context.getLocationService().getAllLocations();
+        Map<String, Location> locationsByUuid = locations.stream()
+                .collect(Collectors.toMap(Location::getUuid, p -> p, (a, b) -> a));
+
+        for (PartyDTO partyDTO : partyDTOs) {
+            if (partyDTO.getLocationUuid() == null) {
+                continue;
+            }
+            Location location = locationsByUuid.get(partyDTO.getLocationUuid());
+            if (location != null) {
+                partyDTO.setTags(location.getTags().stream()
+                        .map(LocationTag::getName)
+                        .collect(Collectors.toList()));
+            }
+        }
+
+        return partyDTOs;
+    }
+
     private void invalidRequest(String messageKey) {
         throw new StockManagementException(Context.getMessageSourceService().getMessage(messageKey));
     }

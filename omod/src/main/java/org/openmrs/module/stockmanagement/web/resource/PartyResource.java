@@ -3,7 +3,12 @@ package org.openmrs.module.stockmanagement.web.resource;
 import io.swagger.models.Model;
 import io.swagger.models.ModelImpl;
 import io.swagger.models.properties.*;
-import io.swagger.models.properties.StringProperty;
+
+import java.util.Arrays;
+import java.util.List;
+import org.apache.commons.lang.StringUtils;
+
+
 import org.openmrs.module.stockmanagement.api.ModuleConstants;
 import org.openmrs.module.stockmanagement.api.dto.*;
 import org.openmrs.module.webservices.rest.web.RequestContext;
@@ -39,6 +44,11 @@ public class PartyResource extends ResourceBase<PartyDTO> {
 	
 	@Override
 	protected PageableResult doGetAll(RequestContext context) throws ResponseException {
+		String tagsParam = context.getRequest().getParameter("tags");
+		if (StringUtils.isNotBlank(tagsParam)) {
+			List<String> tags = Arrays.asList(tagsParam.split(","));
+			return toAlreadyPaged(getStockManagementService().getAllParties(tags), context);
+		}
 		return toAlreadyPaged(getStockManagementService().getAllParties(), context);
 	}
 	

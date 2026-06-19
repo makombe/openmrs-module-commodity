@@ -1425,6 +1425,33 @@ public class StockManagementDao extends DaoBase {
         return query.list();
     }
 
+    public List<PartyDTO> getAllParties(List<String> locationTagNames) {
+        StringBuilder hql = new StringBuilder(
+                "SELECT p.uuid as uuid, l.uuid as locationUuid, ss.uuid as stockSourceUuid,"
+                        + " coalesce(l.name, ss.name) as name, ss.acronym as acronym "
+                        + " FROM org.openmrs.module.stockmanagement.api.model.Party p "
+                        + " left join p.location l "
+                        + " left join p.stockSource ss "
+                        + " WHERE p.voided = 0 "
+                        + " AND (l is null OR l.retired = 0) "
+                        + " AND (ss is null OR ss.voided = 0)");
+
+        Map<String, Object> params = new HashMap<>();
+        if (locationTagNames != null && !locationTagNames.isEmpty()) {
+            hql.append(" AND (l is null OR exists ("
+                    + "   select 1 from l.tags t where t.name in (:tagNames)"
+                    + " ))");
+            params.put("tagNames", locationTagNames);
+        }
+
+        Query query = getSession().createQuery(hql.toString());
+        for (Map.Entry<String, Object> e : params.entrySet()) {
+            query.setParameterList(e.getKey(), (Collection) e.getValue());
+        }
+        query.setResultTransformer(new AliasToBeanResultTransformer(PartyDTO.class));
+        return query.list();
+    }
+
     public Map<Integer, String> getPartyNames(List<Integer> partyIds) {
         if (partyIds == null || partyIds.isEmpty())
             return new HashMap<>();
