@@ -239,6 +239,10 @@ public interface StockManagementService extends OpenmrsService {
 	List<PartyDTO> getAllParties();
 
 	@Transactional(readOnly = true)
+	@Authorized(Privileges.TASK_STOCKMANAGEMENT_PARTY_READ)
+	List<PartyDTO> getAllParties(List<String> locationTagNames);
+
+	@Transactional(readOnly = true)
 	SessionInfo getCurrentUserSessionInfo();
 
 	@Transactional(readOnly = true)
