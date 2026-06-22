@@ -6038,6 +6038,107 @@ CREATE TRIGGER stockmgmt_location_after_delete
     </addColumn>
 </changeSet>
 
+<!-- recall operation type -->
+ <changeSet id="stockmanagement-20260622-114121" author="makombe">
+    <preConditions onFail="MARK_RAN">
+      <sqlCheck expectedResult="0">SELECT COUNT(*) FROM stockmgmt_stock_operation_type WHERE operation_type =
+                'recall'
+            </sqlCheck>
+    </preConditions>
+    <comment>Creating the stock operation type recall</comment>
+    <insert tableName="stockmgmt_stock_operation_type">
+      <column name="name">Recall</column>
+      <column name="operation_type">recall</column>
+      <column name="description"> Stock recall caused by product defects, safety issues, or regulatory requirements, which requires removing inventory from circulation.
+            </column>
+      <column name="has_source" valueBoolean="true">
+      </column>
+      <column name="source_type">Location</column>
+      <column name="has_destination" valueBoolean="false">
+      </column>
+      <column name="available_when_reserved" valueBoolean="true">
+      </column>
+      <column name="acronym">REC</column>
+      <column name="creator">1</column>
+      <column name="date_created">2026-06-22</column>
+      <column name="uuid">52a44e5a-4b0b-4af4-ae75-86d68a872dd5</column>
+    </insert>
+  </changeSet>
+
+  <changeSet id="stockmanagement-20260622-113122" author="makombe">
+    <preConditions onFail="MARK_RAN">
+      <sqlCheck expectedResult="0">
+        SELECT COUNT(*)
+        FROM stockmgmt_operation_type_location_scope sotls
+        WHERE sotls.stock_operation_type_id = (SELECT sot.stock_operation_type_id FROM stockmgmt_stock_operation_type sot WHERE uuid='52a44e5a-4b0b-4af4-ae75-86d68a872dd5') AND
+        location_tag='Main Store'
+      </sqlCheck>
+    </preConditions>
+    <comment>Limiting stock recall from the main store only</comment>
+    <sql>
+      INSERT INTO stockmgmt_operation_type_location_scope(stock_operation_type_id,location_tag,is_source,is_destination,creator,date_created,uuid)
+      SELECT sot.stock_operation_type_id,'Main Store',1, 0,1,now(), '33fb831d-6325-41d6-a1f7-a8b1c73fe7f0'
+      FROM stockmgmt_stock_operation_type sot
+      WHERE uuid='52a44e5a-4b0b-4af4-ae75-86d68a872dd5'
+    </sql>
+  </changeSet>
+
+  <changeSet id="stockmanagement-20260622-114123" author="makombe">
+    <preConditions onFail="MARK_RAN">
+      <sqlCheck expectedResult="0">
+      SELECT COUNT(*)
+      FROM stockmgmt_operation_type_location_scope sotls
+      WHERE sotls.stock_operation_type_id = (SELECT sot.stock_operation_type_id FROM stockmgmt_stock_operation_type sot WHERE uuid='52a44e5a-4b0b-4af4-ae75-86d68a872dd5') AND
+      location_tag='Main Pharmacy'
+    </sqlCheck>
+    </preConditions>
+    <comment>stock recall from the Main Pharmacy</comment>
+    <sql>
+      INSERT INTO stockmgmt_operation_type_location_scope(stock_operation_type_id,location_tag,is_source,is_destination,creator,date_created,uuid)
+      SELECT sot.stock_operation_type_id,'Main Pharmacy',1, 0,1,now(), '26ec0784-92cd-4cba-a746-2aa8c7f6f7c4'
+      FROM stockmgmt_stock_operation_type sot
+      WHERE uuid='52a44e5a-4b0b-4af4-ae75-86d68a872dd5'
+    </sql>
+  </changeSet>
+
+  <changeSet id="stockmanagement-20260622-125223" author="makombe">
+    <preConditions onFail="MARK_RAN">
+      <sqlCheck expectedResult="0">
+        SELECT COUNT(*)
+        FROM stockmgmt_operation_type_location_scope sotls
+        WHERE sotls.stock_operation_type_id = (SELECT sot.stock_operation_type_id FROM stockmgmt_stock_operation_type sot WHERE uuid='52a44e5a-4b0b-4af4-ae75-86d68a872dd5') AND
+        location_tag='Dispensary'
+      </sqlCheck>
+    </preConditions>
+    <comment>stock recall from the Dispensary</comment>
+    <sql>
+      INSERT INTO stockmgmt_operation_type_location_scope(stock_operation_type_id,location_tag,is_source,is_destination,creator,date_created,uuid)
+      SELECT sot.stock_operation_type_id,'Dispensary',1, 0,1,now(), '13a3f95b-3827-49a6-8446-b7065427f657'
+      FROM stockmgmt_stock_operation_type sot
+      WHERE uuid='52a44e5a-4b0b-4af4-ae75-86d68a872dd5'
+    </sql>
+  </changeSet>
+
+    <changeSet id="stockmanagement-20260622-12900" author="makombe">
+    <preConditions onFail="MARK_RAN">
+      <sqlCheck expectedResult="0">
+        SELECT COUNT(*)
+        FROM stockmgmt_operation_type_location_scope sotls
+        WHERE sotls.stock_operation_type_id = (SELECT sot.stock_operation_type_id FROM stockmgmt_stock_operation_type sot WHERE uuid='52a44e5a-4b0b-4af4-ae75-86d68a872dd5') AND
+        location_tag='Sub Store'
+      </sqlCheck>
+    </preConditions>
+    <comment>stock recall from the Sub Store</comment>
+    <sql>
+      INSERT INTO stockmgmt_operation_type_location_scope(stock_operation_type_id,location_tag,is_source,is_destination,creator,date_created,uuid)
+      SELECT sot.stock_operation_type_id,'Sub Store',1, 0,1,now(), 'cb27449f-4bab-4668-847d-5d1d79bb93fc'
+      FROM stockmgmt_stock_operation_type sot
+      WHERE uuid='52a44e5a-4b0b-4af4-ae75-86d68a872dd5'
+    </sql>
+  </changeSet>
+
+
+
 
 
 </databaseChangeLog>
