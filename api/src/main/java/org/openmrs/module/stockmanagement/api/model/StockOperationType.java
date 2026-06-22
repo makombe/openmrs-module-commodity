@@ -106,6 +106,7 @@ public class StockOperationType extends BaseChangeableOpenmrsData implements Ser
 	public static final String REQUISITION = "requisition";
 	public static final String EXTERNAL_REQUISITION = "externalrequisition";
 	public static final String LOSS = "loss";
+	public static final String RECALL = "recall";
 	
 	public StockOperationType() {
 	}
@@ -249,6 +250,9 @@ public class StockOperationType extends BaseChangeableOpenmrsData implements Ser
 					break;
 				case LOSS:
 					stockOperationTypeProcessor = new LossOperationTypeProcessor(this);
+					break;
+				case RECALL:
+					stockOperationTypeProcessor = new RecallOperationTypeProcessor(this);
 					break;
 				default:
 					throw new RuntimeException("operation type " + operationType + " not supported");
