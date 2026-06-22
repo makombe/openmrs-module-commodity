@@ -6137,8 +6137,39 @@ CREATE TRIGGER stockmgmt_location_after_delete
     </sql>
   </changeSet>
 
+  <changeSet id="stockmanagement-20260622-recall-add-destination-1" author="makombe">
+  <preConditions onFail="MARK_RAN">
+    <sqlCheck expectedResult="1">
+      SELECT COUNT(*)
+      FROM stockmgmt_stock_operation_type
+      WHERE uuid='52a44e5a-4b0b-4af4-ae75-86d68a872dd5' AND has_destination = 0
+    </sqlCheck>
+  </preConditions>
+  <comment>Enable destination support on the recall operation type (like return)</comment>
+  <update tableName="stockmgmt_stock_operation_type">
+    <column name="has_destination" valueBoolean="true" />
+    <column name="destination_type">Location</column>
+    <where>uuid='52a44e5a-4b0b-4af4-ae75-86d68a872dd5'</where>
+  </update>
+</changeSet>
 
-
+<changeSet id="stockmanagement-20260622-recall-add-destination-2" author="makombe">
+  <preConditions onFail="MARK_RAN">
+    <sqlCheck expectedResult="0">
+      SELECT COUNT(*)
+      FROM stockmgmt_operation_type_location_scope sotls
+      WHERE sotls.stock_operation_type_id = (SELECT sot.stock_operation_type_id FROM stockmgmt_stock_operation_type sot WHERE uuid='52a44e5a-4b0b-4af4-ae75-86d68a872dd5') AND
+      location_tag='Main Store' AND is_destination=1
+    </sqlCheck>
+  </preConditions>
+  <comment>Limiting the destination of recalled stock to Main Store only</comment>
+  <sql>
+    INSERT INTO stockmgmt_operation_type_location_scope(stock_operation_type_id,location_tag,is_source,is_destination,creator,date_created,uuid)
+    SELECT sot.stock_operation_type_id,'Main Store',0, 1,1,now(), 'f3a1f0b5-9a37-4d2a-9e3b-2a8e6e3a9101'
+    FROM stockmgmt_stock_operation_type sot
+    WHERE uuid='52a44e5a-4b0b-4af4-ae75-86d68a872dd5'
+  </sql>
+</changeSet>
 
 
 </databaseChangeLog>

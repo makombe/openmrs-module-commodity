@@ -252,7 +252,7 @@ public class StockOperationType extends BaseChangeableOpenmrsData implements Ser
 					stockOperationTypeProcessor = new LossOperationTypeProcessor(this);
 					break;
 				case RECALL:
-					stockOperationTypeProcessor = new RecallOperationTypeProcessor(this);
+					stockOperationTypeProcessor = new ReturnOperationTypeProcessorProcessor(this);
 					break;
 				default:
 					throw new RuntimeException("operation type " + operationType + " not supported");
