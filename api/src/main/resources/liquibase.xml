@@ -6171,5 +6171,85 @@ CREATE TRIGGER stockmgmt_location_after_delete
   </sql>
 </changeSet>
 
+<!-- ================= EXTERNAL RETURN ================= -->
+<changeSet id="stockmanagement-20260622-extreturn-1400" author="makombe">
+  <preConditions onFail="MARK_RAN">
+    <sqlCheck expectedResult="0">SELECT COUNT(*) FROM stockmgmt_stock_operation_type WHERE operation_type = 'externalreturn'</sqlCheck>
+  </preConditions>
+  <comment>Creating the stock operation type external return (main store to external source, e.g. KEMSA)</comment>
+  <insert tableName="stockmgmt_stock_operation_type">
+    <column name="name">External Return</column>
+    <column name="operation_type">externalreturn</column>
+    <column name="description">Items returned from the main store to an external source/supplier (e.g. KEMSA) that originally supplied them.</column>
+    <column name="has_source" valueBoolean="true"></column>
+    <column name="source_type">Location</column>
+    <column name="has_destination" valueBoolean="true"></column>
+    <column name="destination_type">Other</column>
+    <column name="available_when_reserved" valueBoolean="true"></column>
+    <column name="acronym">EXRTN</column>
+    <column name="creator">1</column>
+    <column name="date_created">2026-06-22</column>
+    <column name="uuid">a1b2c3d4-1111-4e5f-8a9b-1c2d3e4f5061</column>
+  </insert>
+</changeSet>
+
+<changeSet id="stockmanagement-20260622-extreturn-1401" author="makombe">
+  <preConditions onFail="MARK_RAN">
+    <sqlCheck expectedResult="0">
+      SELECT COUNT(*)
+      FROM stockmgmt_operation_type_location_scope sotls
+      WHERE sotls.stock_operation_type_id = (SELECT sot.stock_operation_type_id FROM stockmgmt_stock_operation_type sot WHERE uuid='a1b2c3d4-1111-4e5f-8a9b-1c2d3e4f5061') AND
+      location_tag='Main Store' AND is_source=1
+    </sqlCheck>
+  </preConditions>
+  <comment>Limiting external return initiation to Main Store only (as source)</comment>
+  <sql>
+    INSERT INTO stockmgmt_operation_type_location_scope(stock_operation_type_id,location_tag,is_source,is_destination,creator,date_created,uuid)
+    SELECT sot.stock_operation_type_id,'Main Store',1, 0,1,now(), 'a1b2c3d4-2222-4e5f-8a9b-1c2d3e4f5062'
+    FROM stockmgmt_stock_operation_type sot
+    WHERE uuid='a1b2c3d4-1111-4e5f-8a9b-1c2d3e4f5061'
+  </sql>
+</changeSet>
+
+<!-- ================= EXTERNAL RECALL ================= -->
+<changeSet id="stockmanagement-20260622-extrecall-1410" author="makombe">
+  <preConditions onFail="MARK_RAN">
+    <sqlCheck expectedResult="0">SELECT COUNT(*) FROM stockmgmt_stock_operation_type WHERE operation_type = 'externalrecall'</sqlCheck>
+  </preConditions>
+  <comment>Creating the stock operation type external recall (main store to external source, e.g. KEMSA)</comment>
+  <insert tableName="stockmgmt_stock_operation_type">
+    <column name="name">External Recall</column>
+    <column name="operation_type">externalrecall</column>
+    <column name="description">Recalled items sent from the main store back out to an external source/supplier (e.g. KEMSA) due to product defects, safety issues, or regulatory requirements.</column>
+    <column name="has_source" valueBoolean="true"></column>
+    <column name="source_type">Location</column>
+    <column name="has_destination" valueBoolean="true"></column>
+    <column name="destination_type">Other</column>
+    <column name="available_when_reserved" valueBoolean="true"></column>
+    <column name="acronym">EXREC</column>
+    <column name="creator">1</column>
+    <column name="date_created">2026-06-22</column>
+    <column name="uuid">a1b2c3d4-3333-4e5f-8a9b-1c2d3e4f5063</column>
+  </insert>
+</changeSet>
+
+<changeSet id="stockmanagement-20260622-extrecall-1411" author="makombe">
+  <preConditions onFail="MARK_RAN">
+    <sqlCheck expectedResult="0">
+      SELECT COUNT(*)
+      FROM stockmgmt_operation_type_location_scope sotls
+      WHERE sotls.stock_operation_type_id = (SELECT sot.stock_operation_type_id FROM stockmgmt_stock_operation_type sot WHERE uuid='a1b2c3d4-3333-4e5f-8a9b-1c2d3e4f5063') AND
+      location_tag='Main Store' AND is_source=1
+    </sqlCheck>
+  </preConditions>
+  <comment>Limiting external recall initiation to Main Store only (as source)</comment>
+  <sql>
+    INSERT INTO stockmgmt_operation_type_location_scope(stock_operation_type_id,location_tag,is_source,is_destination,creator,date_created,uuid)
+    SELECT sot.stock_operation_type_id,'Main Store',1, 0,1,now(), 'a1b2c3d4-4444-4e5f-8a9b-1c2d3e4f5064'
+    FROM stockmgmt_stock_operation_type sot
+    WHERE uuid='a1b2c3d4-3333-4e5f-8a9b-1c2d3e4f5063'
+  </sql>
+</changeSet>
+
 
 </databaseChangeLog>
