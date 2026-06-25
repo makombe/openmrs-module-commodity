@@ -116,9 +116,10 @@ public class TrackAndTraceEventsTask extends AbstractTask {
         } else if (BIZ_TYPE_DISPENSE.equalsIgnoreCase(bizType)) {
             endpoint = "/dispense";
         } else {
-            log.warn("TrackAndTraceEventsTask: unknown biz_type='{}' uuid={}", bizType, uuid);
-            markFailedEntity(entity, stockService, "Unknown biz_type: " + bizType);
-            return;
+            endpoint = "";
+            //log.warn("TrackAndTraceEventsTask: unknown biz_type='{}' uuid={}", bizType, uuid);
+            //markFailedEntity(entity, stockService, "Unknown biz_type: " + bizType);
+            //return;
         }
 
         ResponseEntity<String> response = tntService.executePost(endpoint, payload, apiKey);
