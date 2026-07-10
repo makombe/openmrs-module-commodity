@@ -137,7 +137,7 @@ public class StockItemResource extends ResourceBase<StockItemDTO> {
 		
 		param = context.getParameter("conceptUuid");
 		if (!StringUtils.isBlank(param)) {
-			Concept concept = Context.getConceptService().getConcept(param);
+			Concept concept = Context.getConceptService().getConceptByUuid(param);
 			if (concept == null) {
 				return emptyResult(context);
 			}
@@ -146,7 +146,7 @@ public class StockItemResource extends ResourceBase<StockItemDTO> {
 		
 		param = context.getParameter("categoryUuid");
 		if (!StringUtils.isBlank(param)) {
-			Concept concept = Context.getConceptService().getConcept(param);
+			Concept concept = Context.getConceptService().getConceptByUuid(param);
 			if (concept == null) {
 				return emptyResult(context);
 			}
@@ -206,7 +206,7 @@ public class StockItemResource extends ResourceBase<StockItemDTO> {
 
 		param = context.getParameter("conceptUuid");
 		if (!StringUtils.isBlank(param)) {
-			Concept concept = Context.getConceptService().getConcept(param);
+			Concept concept = Context.getConceptService().getConceptByUuid(param);
 			if (concept == null) {
 				return emptyResult(context);
 			}
@@ -215,7 +215,7 @@ public class StockItemResource extends ResourceBase<StockItemDTO> {
 
 		param = context.getParameter("categoryUuid");
 		if (!StringUtils.isBlank(param)) {
-			Concept concept = Context.getConceptService().getConcept(param);
+			Concept concept = Context.getConceptService().getConceptByUuid(param);
 			if (concept == null) {
 				return emptyResult(context);
 			}
