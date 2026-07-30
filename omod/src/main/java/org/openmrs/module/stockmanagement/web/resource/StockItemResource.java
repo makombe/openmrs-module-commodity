@@ -34,12 +34,25 @@ import org.springframework.web.client.RestClientException;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Resource(name = RestConstants.VERSION_1 + "/" + ModuleConstants.MODULE_ID + "/stockitem", supportedClass = StockItemDTO.class, supportedOpenmrsVersions = {
         "1.9.*", "1.10.*", "1.11.*", "1.12.*", "2.*" })
 public class StockItemResource extends ResourceBase<StockItemDTO> {
-	
+
+	/**
+	 * Matches a strength/dose token in a search string, e.g. "900mg", "7.5 mg",
+	 * "5%". Strength is only ever encoded in the drug name, never in the shared
+	 * concept name, so its presence in the search text is used to decide whether
+	 * concept-based matching should be skipped (see {@link #searchDrugsAndConcepts}).
+	 */
+	private static final Pattern STRENGTH_TOKEN_PATTERN = Pattern
+	        .compile("\\d+(\\.\\d+)?\\s?(mg|mcg|g|kg|ml|l|iu|%)", Pattern.CASE_INSENSITIVE);
+	private static final int STRENGTH_CANDIDATE_POOL_MULTIPLIER = 10;
+	private static final int MIN_STRENGTH_CANDIDATE_POOL = 200;
+
 	@Override
 	public StockItemDTO getByUniqueId(String uniqueId) {
 		StockItemSearchFilter filter = new StockItemSearchFilter();
@@ -115,6 +128,50 @@ public class StockItemResource extends ResourceBase<StockItemDTO> {
 		if (StringUtils.isBlank(isDrug))
 			return null;
 		return "true".equalsIgnoreCase(isDrug);
+	}
+
+	/**
+	 * True when the search text contains a strength/dose token (e.g. "900 mg",
+	 * "7.5mg", "5%"). Strength is only ever encoded in the drug name, never in
+	 * the shared concept name, so a strength-bearing search should not fall back
+	 * to a broad concept match — doing so previously pulled in every other
+	 * strength sharing the same underlying concept/ingredient.
+	 */
+	private boolean containsStrengthToken(String searchToken) {
+		if (StringUtils.isBlank(searchToken))
+			return false;
+		return STRENGTH_TOKEN_PATTERN.matcher(searchToken).find();
+	}
+
+	private List<String> extractStrengthTokens(String searchToken) {
+		List<String> tokens = new ArrayList<>();
+		Matcher matcher = STRENGTH_TOKEN_PATTERN.matcher(searchToken);
+		while (matcher.find()) {
+			tokens.add(matcher.group().replaceAll("\\s+", "").toLowerCase());
+		}
+		return tokens;
+	}
+
+	private String extractIngredientQuery(String searchToken) {
+		Matcher digitMatcher = Pattern.compile("\\d").matcher(searchToken);
+		if (!digitMatcher.find()) {
+			return searchToken;
+		}
+		String ingredientPortion = searchToken.substring(0, digitMatcher.start()).trim();
+		return StringUtils.isBlank(ingredientPortion) ? searchToken : ingredientPortion;
+	}
+
+	private boolean drugNameMatchesStrengthTokens(String drugName, List<String> strengthTokens) {
+		if (StringUtils.isBlank(drugName))
+			return false;
+		String normalized = drugName.replaceAll("\\s+", "").toLowerCase();
+		for (String token : strengthTokens) {
+			Pattern boundaryPattern = Pattern.compile("(?<![0-9.])" + Pattern.quote(token) + "(?![0-9])");
+			if (!boundaryPattern.matcher(normalized).find()) {
+				return false;
+			}
+		}
+		return true;
 	}
 	
 	protected PageableResult getStockItemsDirect(RequestContext context) {
@@ -235,6 +292,13 @@ public class StockItemResource extends ResourceBase<StockItemDTO> {
 		ConceptService service = Context.getConceptService();
 		Integer maxIntermediateResult = GlobalProperties.getStockItemSearchMaxDrugConceptIntermediateResult();
 
+		boolean searchTokenHasStrength = containsStrengthToken(searchToken);
+		List<String> strengthTokens = searchTokenHasStrength ? extractStrengthTokens(searchToken)
+		        : Collections.emptyList();
+		if (searchTokenHasStrength && searchConcepts) {
+			searchConcepts = false;
+		}
+
 		// Pass the resolved isDrug flag to the common-name search so it can still
 		// apply a type filter at the DB level. For LAB_COMMODITY we pass null so
 		// concept-based lab items are included (the itemType column will do the
@@ -242,17 +306,42 @@ public class StockItemResource extends ResourceBase<StockItemDTO> {
 		Boolean isDrugForCommonNameSearch = itemTypeFilter == null ? null
 		        : (itemTypeFilter == ItemType.PHARMACEUTICAL ? Boolean.TRUE : Boolean.FALSE);
 
-		List<Integer> itemsFound = getStockManagementService().searchStockItemCommonName(
-		        searchToken, isDrugForCommonNameSearch, context.getIncludeAll(), maxIntermediateResult);
-		if (!itemsFound.isEmpty()) {
-			filter.setStockItemIds(itemsFound);
-			maxIntermediateResult = Math.max(0, maxIntermediateResult - itemsFound.size());
+		if (!searchTokenHasStrength) {
+			List<Integer> itemsFound = getStockManagementService().searchStockItemCommonName(
+			        searchToken, isDrugForCommonNameSearch, context.getIncludeAll(), maxIntermediateResult);
+			if (!itemsFound.isEmpty()) {
+				filter.setStockItemIds(itemsFound);
+				maxIntermediateResult = Math.max(0, maxIntermediateResult - itemsFound.size());
+			}
+		}
+
+		if (searchDrugs) {
+			String drugSearchText = searchTokenHasStrength ? extractIngredientQuery(searchToken) : searchToken;
+			int drugFetchLimit = searchTokenHasStrength
+			        ? Math.max(maxIntermediateResult * STRENGTH_CANDIDATE_POOL_MULTIPLIER, MIN_STRENGTH_CANDIDATE_POOL)
+			        : maxIntermediateResult;
+
+			List<Drug> drugs = service.getDrugs(drugSearchText, null, true, false, true, 0, drugFetchLimit);
+			if (searchTokenHasStrength) {
+				drugs = drugs.stream()
+				        .filter(d -> drugNameMatchesStrengthTokens(d.getName(), strengthTokens))
+				        .collect(Collectors.toList());
+				if (drugs.size() > maxIntermediateResult) {
+					drugs = drugs.subList(0, maxIntermediateResult);
+				}
+			}
+			if (drugs.isEmpty())
+				searchDrugs = false;
+			else
+				filter.setDrugs(drugs);
 		}
 
 		if (searchConcepts) {
+			int drugsUsed = filter.getDrugs() != null ? filter.getDrugs().size() : 0;
+			int remainingBudget = Math.max(0, maxIntermediateResult - drugsUsed);
 			List<Locale> locales = new ArrayList<>(LocaleUtility.getLocalesInOrder());
 			List<Concept> searchResults = service.getConcepts(searchToken, locales, true, null, null, null, null, null, 0,
-			        maxIntermediateResult + (searchDrugs ? 0 : maxIntermediateResult))
+			        remainingBudget)
 			        .stream()
 			        .map(p -> p.getConcept())
 			        .collect(Collectors.toList());
@@ -260,17 +349,6 @@ public class StockItemResource extends ResourceBase<StockItemDTO> {
 				searchConcepts = false;
 			else
 				filter.setConcepts(searchResults);
-		}
-
-		if (searchDrugs) {
-			List<Drug> drugs = service.getDrugs(searchToken, null, true, false, true, 0,
-			        maxIntermediateResult + (searchConcepts
-			                ? Math.max(0, maxIntermediateResult - (filter.getConcepts() != null ? filter.getConcepts().size() : 0))
-			                : maxIntermediateResult));
-			if (drugs.isEmpty())
-				searchDrugs = false;
-			else
-				filter.setDrugs(drugs);
 		}
 
 		if (searchConcepts && searchDrugs) {
