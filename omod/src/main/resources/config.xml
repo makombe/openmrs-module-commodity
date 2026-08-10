@@ -394,7 +394,7 @@
 
 	<globalProperty>
 		<property>tnt.facility.events.destination.sgln.identifier</property>
-		<defaultValue>8888888888888</defaultValue>
+		<defaultValue>8888888.88888.0</defaultValue>
 		<description>
 			Identifies location for GS1 products
 		</description>
