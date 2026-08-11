@@ -31,6 +31,7 @@ import org.openmrs.module.stockmanagement.api.model.StockItem.ItemType;
 import org.openmrs.module.stockmanagement.api.utils.DateUtil;
 
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.*;
@@ -6288,19 +6289,13 @@ public class StockManagementDao extends DaoBase {
             dto.setBizType(e.getBizType());
             dto.setStatus(e.getStatus());
             dto.setReference(e.getReference());
-            dto.setEventTime(e.getEventTime() != null
-                    ? e.getEventTime().toString()
-                    : null);
+            dto.setEventTime(e.getEventTime() != null ? ISO_UTC_FORMAT.get().format(e.getEventTime()) : null);
             dto.setMessage(e.getMessage());
             dto.setErrorMessage(e.getErrorMessage());
             dto.setCreator(e.getCreator());
             dto.setRetired(e.getRetired());
-            dto.setDateCreated(e.getDateCreated() != null
-                    ? e.getDateCreated().toString()
-                    : null);
-            dto.setDateUpdated(e.getDateUpdated() != null
-                    ? e.getDateUpdated().toString()
-                    : null);
+            dto.setDateCreated(e.getDateCreated() != null ? ISO_UTC_FORMAT.get().format(e.getDateCreated()) : null);
+            dto.setDateUpdated(e.getDateUpdated() != null ? ISO_UTC_FORMAT.get().format(e.getDateUpdated()) : null);
             return dto;
         }).collect(java.util.stream.Collectors.toList()));
 
@@ -6328,5 +6323,11 @@ public class StockManagementDao extends DaoBase {
         cal.set(Calendar.MILLISECOND, 999);
         return cal.getTime();
     }
+
+    private static final ThreadLocal<SimpleDateFormat> ISO_UTC_FORMAT = ThreadLocal.withInitial(() -> {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return sdf;
+    });
 
 }
